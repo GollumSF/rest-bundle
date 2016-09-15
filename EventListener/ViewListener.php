@@ -33,6 +33,11 @@ class ViewListener implements EventSubscriberInterface {
 	 * @var Serializer
 	 */
 	private $serializer;
+	
+	/**
+	 * @var array
+	 */
+	private $configurations;
 
 	/**
 	 * Constructor.
@@ -40,9 +45,10 @@ class ViewListener implements EventSubscriberInterface {
 	 * @param ContainerInterface $container The service container instance
 	 */
 	public function __construct(ContainerInterface $container) {
-		$this->container  = $container;
-		$this->reader     = $container->get('annotation_reader');
-		$this->serializer = $container->get('jms_serializer');
+		$this->container      = $container;
+		$this->reader         = $container->get('annotation_reader');
+		$this->serializer     = $container->get('jms_serializer');
+		$this->configurations = $container->getParameter('gollum_sf_rest.configurations');
 	}
 
 	/**
@@ -52,7 +58,7 @@ class ViewListener implements EventSubscriberInterface {
 	 * @param GetResponseForControllerResultEvent $event
 	 */
 	public function onKernelView(GetResponseForControllerResultEvent $event) {
-
+		
 		$request  = $event->getRequest();
 		list($controller, $action) = $this->getControllerAction($request);
 
@@ -73,9 +79,10 @@ class ViewListener implements EventSubscriberInterface {
 
 		$code       = $anno->code;
 		$data       = $event->getControllerResult();
-		$serialized = $this->serialize ($data, $request->get('_format'));
+		
+		$serialized = $this->serialize ($data, $this->getFormat($request));
 		$header     = [
-			'Content-type' => 'application/json; charset=utf-8',
+			'Content-type' => 'application/'.$this->getFormat($request).'; charset=utf-8',
 			'Content-length' => mb_strlen($serialized),
 		];
 
@@ -89,6 +96,11 @@ class ViewListener implements EventSubscriberInterface {
 
 	protected function serialize ($data, $format) {
 		return $this->serializer->serialize($data, $format);
+	}
+	
+	protected function getFormat(Request $request) {
+		dump($request->get('_format')); die();
+		return $request->get('_format') ? $request->get('_format') : $this->configurations['defaultFormat'];
 	}
 
 	public static function getSubscribedEvents() {

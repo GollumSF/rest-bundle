@@ -19,6 +19,7 @@ services:
         class: "%gsf_rest.listenerroute_class%"
         arguments:
             - "@annotation_reader"
+            - "%gsf_rest.configurations%"
         tags:
             - { name: kernel.event_listener, event: gsf_core.route_created }
             

@@ -20,20 +20,29 @@ class RouteListener {
 	protected $reader;
 	
 	/**
+	 * @var array
+	 */
+	protected $configurations;
+	
+	/**
 	 * Constructor.
 	 * @param Reader $reader
 	 */
-	public function __construct(Reader $reader) {
-		$this->reader = $reader;
+	public function __construct(Reader $reader, array $configurations) {
+		$this->reader         = $reader;
+		$this->configurations = $configurations;
 	}
 	
 	public function onGSFCoreRouteCreated(RouteCreatedEvent $event) {
 		$route = $event->getRoute();
 		$this->setFormat($route);
-		$this->forceSheme($route);
 	}
 	
 	protected function setFormat (Route $route) {
+		if (!$this->configurations['overrideUrlExtension']) {
+			return;
+		}
+		
 		$controllerAction = explode('::', $route->getDefault('_controller'));
 		
 		$controller = new \ReflectionClass($controllerAction[0]);
@@ -41,13 +50,13 @@ class RouteListener {
 		$anno	    = $this->reader->getMethodAnnotation($action, Rest::class);
 		if ($anno) {
 			$route->setPath($route->getPath().'.{_format}');
-			$route->setRequirement('_format', implode('|', [ 'json', 'xml' ])); // TODO add option on bundle
-			$route->setDefault('_format', 'json');
+			$route->setRequirement('_format', implode('|', $this->configurations['format']));
+			$this->forceSchemes($route);
 		}
 	}
 	
-	protected function forceSheme (Route $route) {
-		$route->setSchemes(['http', 'https']); // TODO add option on bundle
+	protected function forceSchemes(Route $route) {
+		$route->setSchemes($this->configurations['schemes']);
 	}
 
 }
