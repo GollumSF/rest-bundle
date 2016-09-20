@@ -48,7 +48,7 @@ class ViewListener implements EventSubscriberInterface {
 		$this->container      = $container;
 		$this->reader         = $container->get('annotation_reader');
 		$this->serializer     = $container->get('jms_serializer');
-		$this->configurations = $container->getParameter('gollum_sf_rest.configurations');
+		$this->configurations = $container->getParameter('gsf_rest.configurations');
 	}
 
 	/**
