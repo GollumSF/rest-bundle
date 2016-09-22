@@ -99,7 +99,6 @@ class ViewListener implements EventSubscriberInterface {
 	}
 	
 	protected function getFormat(Request $request) {
-		dump($request->get('_format')); die();
 		return $request->get('_format') ? $request->get('_format') : $this->configurations['defaultFormat'];
 	}
 

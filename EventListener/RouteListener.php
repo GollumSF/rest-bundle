@@ -51,6 +51,7 @@ class RouteListener {
 		if ($anno) {
 			$route->setPath($route->getPath().'.{_format}');
 			$route->setRequirement('_format', implode('|', $this->configurations['format']));
+			$route->setDefault('_format', $this->configurations['defaultFormat']);
 			$this->forceSchemes($route);
 		}
 	}
