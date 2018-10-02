@@ -10,19 +10,19 @@ services:
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     Serializer\:
-        resource: '../../Serializer/*'
-        exclude: '../../Serializer/{Annotation}'
+        resource: '../../*'
+        exclude: '../../{Annotation}'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
     Serializer\Serializer\Normalizer\:
-        resource: '../../src/Serializer/Serializer/Normalizer/*'
+        resource: '../../Serializer/Normalizer/*'
         public: false
         tags: [ 'serializer.normalizer' ]
 
     Serializer\Request\ParamConverter\:
-        resource: '../../Serializer/Request/ParamConverter/*'
+        resource: '../../Request/ParamConverter/*'
         tags:
             - { name: request.param_converter, priority: -2 }
 

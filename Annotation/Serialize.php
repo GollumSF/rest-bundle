@@ -1,6 +1,6 @@
 <?php
+namespace GollumSF\RestBundle\Annotation;
 
-namespace Serializer\Annotation;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

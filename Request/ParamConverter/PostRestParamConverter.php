@@ -1,10 +1,10 @@
 <?php
-namespace Serializer\Request\ParamConverter;
+namespace GollumSF\RestBundle\Request\ParamConverter;
 
+use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
-use Serializer\Annotation\Unserialize;
-use Serializer\Traits\AnnotationControllerReader;
 use Symfony\Component\HttpFoundation\Request;
 
 class PostRestParamConverter implements ParamConverterInterface {

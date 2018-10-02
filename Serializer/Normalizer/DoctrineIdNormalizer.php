@@ -1,5 +1,5 @@
 <?php
-namespace Serializer\Serializer\Normalizer;
+namespace GollumSF\RestBundle\Serializer\Normalizer;
 
 
 use Doctrine\ORM\EntityManagerInterface;
