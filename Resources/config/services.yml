@@ -1,25 +1,29 @@
-parameters:
-    gsf_rest.listenerview_class: GollumSF\RestBundle\EventListener\ViewListener
-    gsf_rest.listenerroute_class: GollumSF\RestBundle\EventListener\RouteListener
-
 services:
-  
-    ##########
-    # Events #
-    ##########
-    
-    gsf_rest.listener.view:
-        class: "%gsf_rest.listenerview_class%"
-        arguments:
-            - "@service_container"
-        tags:
-            - { name: kernel.event_listener, event: kernel.view }
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: false       # Allows optimizing the container by removing unused services; this also means
+                            # fetching services directly from the container via $container->get() won't work.
+                            # The best practice is to be explicit about your dependencies anyway.
 
-    gsf_rest.listener.route:
-        class: "%gsf_rest.listenerroute_class%"
-        arguments:
-            - "@annotation_reader"
-            - "%gsf_rest.configurations%"
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    Serializer\:
+        resource: '../../Serializer/*'
+        exclude: '../../Serializer/{Annotation}'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    Serializer\Serializer\Normalizer\:
+        resource: '../../src/Serializer/Serializer/Normalizer/*'
+        public: false
+        tags: [ 'serializer.normalizer' ]
+
+    Serializer\Request\ParamConverter\:
+        resource: '../../Serializer/Request/ParamConverter/*'
         tags:
-            - { name: kernel.event_listener, event: gsf_core.route_created }
+            - { name: request.param_converter, priority: -2 }
+
             

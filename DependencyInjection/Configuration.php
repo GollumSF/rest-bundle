@@ -10,7 +10,7 @@ class Configuration implements ConfigurationInterface {
 		
 		$treeBuilder = new TreeBuilder();;
 		$rootNode = $treeBuilder->root('gollum_sf_rest');
-		
+		/*
 		$rootNode
 			->children()
 				->arrayNode('format')
@@ -30,7 +30,7 @@ class Configuration implements ConfigurationInterface {
 					->defaultValue('json')
 				->end()
 			->end()
-		;
+		;*/
 		
 		return $treeBuilder;
 	}
