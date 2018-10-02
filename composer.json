@@ -1,5 +1,5 @@
 {
-	"name" : "gollumsf/user-bundle",
+	"name" : "gollumsf/rest-bundle",
 	"type" : "symfony-bundle",
 	"description" : "Very simple REST Api implementation",
 	"keywords" : [
