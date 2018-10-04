@@ -26,8 +26,8 @@
 	},
 	"autoload" : {
 		"psr-0" : {
-			"GollumSF\\UserBundle" : ""
+			"GollumSF\\RestBundle" : ""
 		}
 	},
-	"target-dir" : "GollumSF/UserBundle"
+	"target-dir" : "GollumSF/RestBundle"
 }
