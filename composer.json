@@ -1,33 +1,35 @@
 {
-	"name" : "gollumsf/rest-bundle",
-	"type" : "symfony-bundle",
-	"description" : "Very simple REST Api implementation",
-	"keywords" : [
-		"api",
-		"simple",
-		"rest",
-		"gollumsf"
-	],
-	"homepage" : "https://github.com/GollumSF/rest-bundle",
-	"license" : "GPL-3.0-or-later",
-	"authors" : [{
-			"name" : "Damien Duboeuf",
-			"email" : "smeagolworms4@gmail.com"
-		}
-	],
-	"support" : {
-		"email" : "smeagolworms4@gmail.com",
-		"wiki" : "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
-	},
-	"minimum-stability": "dev",
-	"require" : {
-		"php" : ">=7.0",
-		"symfony/framework-bundle" : ">=4.0"
-	},
-	"autoload" : {
-		"psr-0" : {
-			"GollumSF\\RestBundle" : ""
-		}
-	},
-	"target-dir" : "GollumSF/RestBundle"
+    "name": "gollumsf/rest-bundle",
+    "type": "symfony-bundle",
+    "description": "Very simple REST Api implementation",
+    "keywords" : [
+        "api",
+        "simple",
+        "rest",
+        "gollumsf"
+    ],
+    "homepage": "https://github.com/GollumSF/rest-bundle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Damien Duboeuf",
+            "email": "smeagolworms4@gmail.com"
+        }
+    ],
+    "support" : {
+        "email": "smeagolworms4@gmail.com",
+        "wiki": "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
+    },
+    "minimum-stability": "dev",
+    "require": {},
+    "require" : {
+        "php" : ">=7.1",
+        "symfony/framework-bundle" : ">=4",
+        "symfony/serializer-pack": "*"
+    },
+    "autoload" : {
+        "psr-4" : {
+            "GollumSF\\RestBundle\\" : "src/"
+        }
+    }
 }

@@ -1,3 +1,5 @@
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -10,11 +12,7 @@ services:
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     Serializer\:
-        resource: '../../*'
-        exclude: '../../{Annotation}'
-
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+        resource: '../../EventListener/*'
 
     Serializer\Serializer\Normalizer\:
         resource: '../../Serializer/Normalizer/*'
@@ -25,5 +23,3 @@ services:
         resource: '../../Request/ParamConverter/*'
         tags:
             - { name: request.param_converter, priority: -2 }
-
-            

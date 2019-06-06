@@ -1,5 +1,5 @@
 <?php
-namespace GollumSF\RestBundle\Serializer\Transform;
+namespace Serializer\Serializer\Transform;
 
 
 interface SerializerTransformInterface {
