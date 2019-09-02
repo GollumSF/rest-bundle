@@ -1,5 +1,5 @@
 <?php
-namespace Serializer\Traits;
+namespace GollumSF\RestBundle\Traits;
 
 use Doctrine\Common\Annotations\Reader;
 use Symfony\Component\HttpFoundation\Request;

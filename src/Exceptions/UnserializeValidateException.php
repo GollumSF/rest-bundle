@@ -1,5 +1,5 @@
 <?php
-namespace Serializer\Exceptions;
+namespace GollumSF\RestBundle\Exceptions;
 
 use Symfony\Component\Validator\ConstraintViolationList;
 

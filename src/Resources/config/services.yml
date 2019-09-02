@@ -11,15 +11,15 @@ services:
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    Serializer\:
+    GollumSF\RestBundle\EventListener\:
         resource: '../../EventListener/*'
 
-    Serializer\Serializer\Normalizer\:
+    GollumSF\RestBundle\Serializer\Normalizer\:
         resource: '../../Serializer/Normalizer/*'
         public: false
         tags: [ 'serializer.normalizer' ]
 
-    Serializer\Request\ParamConverter\:
+    GollumSF\RestBundle\Request\ParamConverter\:
         resource: '../../Request/ParamConverter/*'
         tags:
             - { name: request.param_converter, priority: -2 }

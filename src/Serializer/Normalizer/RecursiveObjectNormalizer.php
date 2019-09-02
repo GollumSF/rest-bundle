@@ -1,5 +1,5 @@
 <?php
-namespace Serializer\Serializer\Normalizer;
+namespace GollumSF\RestBundle\Serializer\Normalizer;
 
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;

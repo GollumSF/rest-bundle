@@ -1,6 +1,6 @@
 <?php
 
-namespace Serializer\Annotation;
+namespace GollumSF\RestBundle\Annotation;
 
 /**
  * @Annotation

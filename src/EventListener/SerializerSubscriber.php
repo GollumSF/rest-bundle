@@ -1,14 +1,14 @@
 <?php
-namespace Serializer\EventListener;
+namespace GollumSF\RestBundle\EventListener;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Serializer\Annotation\Serialize;
-use Serializer\Annotation\Unserialize;
-use Serializer\Annotation\Validate;
-use Serializer\Exceptions\UnserializeValidateException;
-use Serializer\Serializer\Transform\SerializerTransformInterface;
-use Serializer\Serializer\Transform\UnserializerTransformInterface;
-use Serializer\Traits\AnnotationControllerReader;
+use GollumSF\RestBundle\Annotation\Serialize;
+use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
+use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
+use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
+use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
