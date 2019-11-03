@@ -28,7 +28,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 	}
 	
 	function supports(ParamConverter $configuration) {
-		return strpos($configuration->getClass(), 'App\\Entity\\') === 0;
+		return true;
 	}
 	
 }

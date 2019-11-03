@@ -1,5 +1,5 @@
 <?php
-namespace GollumSF\RestBundle\EventListener;
+namespace GollumSF\RestBundle\EventSubscriber;
 
 use Doctrine\ORM\EntityManagerInterface;
 use GollumSF\RestBundle\Annotation\Serialize;
