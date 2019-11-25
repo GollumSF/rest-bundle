@@ -24,7 +24,7 @@
     "require": {},
     "require" : {
         "php" : ">=7.1",
-        "symfony/framework-bundle" : ">=4",
+        "symfony/framework-bundle" : ">=5",
         "symfony/serializer-pack": "*"
     },
     "autoload" : {
