@@ -12,9 +12,8 @@ use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
@@ -67,7 +66,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	 * @throws \Doctrine\ORM\ORMException
 	 * @throws \Doctrine\ORM\OptimisticLockException
 	 */
-	public function onKernelControllerArguments(FilterControllerEvent $event) {
+	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
 		
 		if (!$event->isMasterRequest()) {
 			return;
@@ -121,7 +120,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 	}
 	
-	public function onKernelView(GetResponseForControllerResultEvent $event) {
+	public function onKernelView(ViewEvent $event) {
 		
 		$request  = $event->getRequest();
 		
@@ -150,8 +149,8 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 	}
 	
-	public function onKernelException(GetResponseForExceptionEvent $event) {
-		$e = $event->getException();
+	public function onKernelException(ExceptionEvent $event) {
+		$e = $event->getThrowable();
 		
 		if ($e instanceof UnserializeValidateException) {
 			$rtn = [];
