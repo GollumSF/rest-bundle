@@ -41,7 +41,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	public static function getSubscribedEvents() {
 		return [
 			KernelEvents::CONTROLLER_ARGUMENTS => [
-				['onKernelControllerArguments', 255],
+				['onKernelControllerArguments', -1],
 			],
 			KernelEvents::VIEW => [
 				['onKernelView', -1],
