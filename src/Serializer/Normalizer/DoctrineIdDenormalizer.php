@@ -4,7 +4,7 @@ namespace GollumSF\RestBundle\Serializer\Normalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
-class DoctrineIdNormalizer implements DenormalizerInterface {
+class DoctrineIdDenormalizer implements DenormalizerInterface {
 	
 	/**
 	 * @var EntityManagerInterface
@@ -27,7 +27,7 @@ class DoctrineIdNormalizer implements DenormalizerInterface {
 	public function supportsDenormalization($data, $type, $format = null) {
 		return
 			(isset($this->cache[$type]) ? $this->cache[$type] : $this->cache[$type] = class_exists($type)) &&
-			is_int($data)
+			(is_int($data) || is_string($data))
 		;
 	}
 }

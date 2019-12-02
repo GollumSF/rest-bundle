@@ -10,7 +10,17 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 class RecursiveObjectNormalizer extends ObjectNormalizer {
 	
-	public function __construct(ClassMetadataFactoryInterface $classMetadataFactory = null, NameConverterInterface $nameConverter = null, PropertyAccessorInterface $propertyAccessor = null) {
-		parent::__construct($classMetadataFactory, $nameConverter, $propertyAccessor, new ReflectionExtractor());
+	public function __construct(
+		ClassMetadataFactoryInterface $classMetadataFactory = null, 
+		NameConverterInterface $nameConverter = null, 
+		PropertyAccessorInterface $propertyAccessor = 
+		null
+	) {
+		parent::__construct(
+			$classMetadataFactory, 
+			$nameConverter, 
+			$propertyAccessor, 
+			new ReflectionExtractor()
+		);
 	}
 }
