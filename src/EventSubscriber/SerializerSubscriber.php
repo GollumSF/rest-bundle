@@ -73,7 +73,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			return;
 		}
 		
-		$request  = $event->getRequest();
+		$request = $event->getRequest();
 		
 		/** @var Unserialize $annotation */
 		$annotation = $this->getAnnotation($request, Unserialize::class);
@@ -88,7 +88,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			
 			try {
 				$this->serializer->deserialize($content, get_class($entity), 'json', [
-					'groups' => $annotation->groups,
+					'groups' => array_merge([ strtolower($request->getMethod()) ], $annotation->groups),
 					'object_to_populate' => $entity,
 				]);
 			} catch (NotEncodableValueException $e) {
