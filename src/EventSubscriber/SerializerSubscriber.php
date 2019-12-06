@@ -114,7 +114,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			
 			if ($annotation->save) {
 				$this->em->persist($entity);
-				$this->em->flush($entity);
+				$this->em->flush();
 			}
 			
 		}
