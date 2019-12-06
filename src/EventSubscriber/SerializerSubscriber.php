@@ -17,7 +17,6 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -91,7 +90,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 					'groups' => array_merge([ strtolower($request->getMethod()) ], $annotation->groups),
 					'object_to_populate' => $entity,
 				]);
-			} catch (NotEncodableValueException $e) {
+			} catch (\UnexpectedValueException $e) {
 				throw new BadRequestHttpException($e->getMessage());
 			}
 			
