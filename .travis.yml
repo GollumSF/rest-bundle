@@ -8,7 +8,7 @@ matrix:
 
 install: composer update --prefer-dist --dev --no-interaction $COMPOSER_FLAGS
 
-script: vendor/bin/phpunit --coverage-text tests/
+script: vendor/bin/phpunit --coverage-text --whitelist src tests/
 
 notifications:
     discord:

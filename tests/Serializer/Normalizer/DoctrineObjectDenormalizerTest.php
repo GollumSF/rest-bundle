@@ -73,6 +73,47 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 			$entity
 		);
 	}
+
+	public function testDenormalizeNoIds() {
+
+		$em = $this->getMockBuilder(EntityManagerInterface::class)
+			->getMockForAbstractClass()
+		;
+		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+		$metadata = $this->getMockBuilder(ClassMetadata::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$entity = new \stdClass();
+
+		$em
+			->method('getClassMetadata')
+			->with('STUB_CLASS')
+			->willReturn($metadata)
+		;
+
+		$metadata
+			->method('getIdentifier')
+			->willReturn([])
+		;
+
+		$recursiveObjectNormalizer
+			->method('denormalize')
+			->with([ 'ID' => 'VALUE_ID' ], 'STUB_CLASS', 'format', [])
+			->willReturn($entity)
+		;
+
+		$doctrineObjectDenormalizer = new DoctrineObjectDenormalizer($em, $recursiveObjectNormalizer);
+
+		$this->assertEquals(
+			$doctrineObjectDenormalizer->denormalize([ 'ID' => 'VALUE_ID' ], 'STUB_CLASS', 'format'),
+			$entity
+		);
+	}
 	
 	public function testDenormalizeNoEntity() {
 
@@ -129,6 +170,25 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 		$this->assertEquals(
 			$doctrineObjectDenormalizer->denormalize('ID', 'STUB_CLASS', 'format', $context),
 			$entity
+		);
+	}
+
+
+	public function testDenormalizeObjectNull() {
+
+		$em = $this->getMockBuilder(EntityManagerInterface::class)
+			->getMockForAbstractClass()
+		;
+		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+		
+		$doctrineObjectDenormalizer = new DoctrineObjectDenormalizer($em, $recursiveObjectNormalizer);
+
+		$this->assertEquals(
+			$doctrineObjectDenormalizer->denormalize(null, 'STUB_CLASS', 'format'),
+			null
 		);
 	}
 	
