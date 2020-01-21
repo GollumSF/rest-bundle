@@ -21,7 +21,6 @@
         "wiki": "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
     },
     "minimum-stability": "dev",
-    "require": {},
     "require" : {
         "php" : ">=7.1",
         "symfony/framework-bundle" : ">=5",
