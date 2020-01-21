@@ -20,15 +20,26 @@
         "email": "smeagolworms4@gmail.com",
         "wiki": "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
     },
-    "minimum-stability": "dev",
     "require" : {
-        "php" : ">=7.1",
-        "symfony/framework-bundle" : ">=5",
-        "symfony/serializer-pack": "*"
+        "symfony/validator": "^5.0",
+        "symfony/serializer": "^5.0",
+        "symfony/event-dispatcher": "^5.0",
+        "symfony/http-foundation": "^5.0",
+        "symfony/http-kernel": "^5.0",
+        "doctrine/orm": "^2.7"
+    },
+    "require-dev": {
+        "symfony/phpunit-bridge": "^5.0",
+        "phpunit/phpunit": "^8.5"
     },
     "autoload" : {
         "psr-4" : {
             "GollumSF\\RestBundle\\" : "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Test\\GollumSF\\RestBundle\\" : "tests/"
         }
     }
 }
