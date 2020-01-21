@@ -30,7 +30,8 @@
     },
     "require-dev": {
         "symfony/phpunit-bridge": "^5.0",
-        "phpunit/phpunit": "^8.5"
+        "phpunit/phpunit": "^8.5",
+        "gollumsf/reflection-property-test": "^1.0"
     },
     "autoload" : {
         "psr-4" : {

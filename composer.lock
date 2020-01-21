@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "4693e6aa90728258187bbc8ab5435cb5",
+    "content-hash": "e97b6c333c67e27fcdb83fe662d59f37",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -2178,6 +2178,45 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "gollumsf/reflection-property-test",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/GollumSF/reflection-property-test.git",
+                "reference": "1f17d98d6609015f9bdd019e3015c51e61604edb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/GollumSF/reflection-property-test/zipball/1f17d98d6609015f9bdd019e3015c51e61604edb",
+                "reference": "1f17d98d6609015f9bdd019e3015c51e61604edb",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GollumSF\\ReflectionPropertyTest\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Damien Duboeuf",
+                    "email": "smeagolworms4@gmail.com"
+                }
+            ],
+            "description": "Add trait for reflection data",
+            "homepage": "https://github.com/GollumSF/reflection-property-test",
+            "keywords": [
+                "gollumsf",
+                "reflection",
+                "test"
+            ],
+            "time": "2020-01-21T13:33:31+00:00"
+        },
         {
             "name": "myclabs/deep-copy",
             "version": "1.9.5",
