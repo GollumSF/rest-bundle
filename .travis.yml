@@ -6,12 +6,9 @@ php:
 matrix:
   fast_finish: true
 
-before_install:
-    - mkdir ~/bin; wget -O ~/bin/phpunit https://phar.phpunit.de/phpunit-8.5.2.phar; chmod +x ~/bin/phpunit
-  
-install: composer update --prefer-dist --no-interaction $COMPOSER_FLAGS
+install: composer update --prefer-dist --dev --no-interaction $COMPOSER_FLAGS
 
-script: ~/bin/phpunit --coverage-text tests/
+script: vendor/bin/phpunit --coverage-text tests/
 
 notifications:
     discord:
