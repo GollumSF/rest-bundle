@@ -1,11 +1,13 @@
 <?php
-namespace GollumSF\RestBundle\Serializer\Normalizer;
+namespace Test\GollumSF\RestBundle\Serializer\Normalizer;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\MappingException;
 use Doctrine\Persistence\ObjectRepository;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
+use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use PHPUnit\Framework\TestCase;
 
 class DoctrineObjectDenormalizerTest extends TestCase {

@@ -1,7 +1,8 @@
 <?php
-namespace GollumSF\RestBundle\Serializer\Normalizer;
+namespace Test\GollumSF\RestBundle\Serializer\Normalizer;
 
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;

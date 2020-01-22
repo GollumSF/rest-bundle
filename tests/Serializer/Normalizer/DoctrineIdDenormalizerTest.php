@@ -1,9 +1,10 @@
 <?php
-namespace GollumSF\RestBundle\Serializer\Normalizer;
+namespace Test\GollumSF\RestBundle\Serializer\Normalizer;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
 use PHPUnit\Framework\TestCase;
 
 class DoctrineIdDenormalizerTest extends TestCase {
