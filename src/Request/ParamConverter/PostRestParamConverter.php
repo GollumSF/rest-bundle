@@ -10,8 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 class PostRestParamConverter implements ParamConverterInterface {
 	
 	use AnnotationControllerReader;
-	
-	function apply(Request $request, ParamConverter $configuration) {
+
+	public function apply(Request $request, ParamConverter $configuration) {
 		/** @var Unserialize $unserializeAnnotation */
 		$unserializeAnnotation = $this->getAnnotation($request, Unserialize::class);
 		if (
@@ -26,8 +26,8 @@ class PostRestParamConverter implements ParamConverterInterface {
 		}
 		return false;
 	}
-	
-	function supports(ParamConverter $configuration) {
+
+	public function supports(ParamConverter $configuration) {
 		return true;
 	}
 	
