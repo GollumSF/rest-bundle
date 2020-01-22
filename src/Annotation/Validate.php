@@ -8,7 +8,6 @@ namespace GollumSF\RestBundle\Annotation;
  */
 class Validate {
 	
-	
 	/**
 	 * @var string|string[]
 	 */
@@ -18,7 +17,7 @@ class Validate {
 	 * @param string $class
 	 */
 	public function __construct ($param) {
-		$this->groups = isset ($param["value"]) ? $param["value"] : [];
+		$this->groups = isset ($param["value"]) ? $param["value"] : [ 'Default' ];
 	}
 	
 }

@@ -2,7 +2,9 @@
 namespace Test\GollumSF\RestBundle\EventSubscriber;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\Mapping\ClassMetadataFactory;
 use Doctrine\Persistence\Proxy;
+use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
@@ -16,7 +18,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -24,12 +25,15 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Serializer\Encoder\DecoderInterface;
 use Symfony\Component\Serializer\Encoder\EncoderInterface;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
@@ -83,6 +87,49 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 	}
 }
 
+class SerializerSubscriberOnKernelControllerArgumentsTestSave extends SerializerSubscriberOnKernelControllerArgumentsTest {
+
+	private $isEntity;
+
+	public function __construct(
+		SerializerInterface $serializer,
+		EntityManagerInterface $em,
+		ValidatorInterface $validator,
+		bool $isEntity,
+		bool $save
+	) {
+		parent::__construct($serializer, $em, $validator, new Unserialize([
+			'name' => 'ENTITY_NAME',
+			'save' => $save
+		]));
+		$this->isEntity = $isEntity;
+	}
+	
+	protected function isEntity($class) {
+		return $this->isEntity;
+	}
+}
+
+
+class SerializerSubscriberValidateTest extends SerializerSubscriber {
+
+	private $annotation;
+
+	public function __construct(
+		SerializerInterface $serializer,
+		EntityManagerInterface $em,
+		ValidatorInterface $validator,
+		Validate $annotation
+	) {
+		parent::__construct($serializer, $em, $validator);
+		$this->annotation = $annotation;
+	}
+
+	public function getAnnotation(Request $request, string $annotationClass) {
+		return $this->annotation;
+	}
+}
+
 class StubEntity implements SerializerTransformInterface, UnserializerTransformInterface{
 
 	private $serializeCallback;
@@ -109,11 +156,21 @@ class StubEntity implements SerializerTransformInterface, UnserializerTransformI
 	}
 }
 
-interface StubSerializer extends SerializerInterface, NormalizerInterface, EncoderInterface {
+interface StubSerializer extends SerializerInterface, NormalizerInterface, EncoderInterface, DenormalizerInterface, DecoderInterface {
 }
 
-class SerializerSubscriberTest extends TestCase {
+class StubProxy extends \stdClass implements Proxy {
+	public function __load() {
+	}
+	public function __isInitialized() {
+	}
+}
 
+
+class SerializerSubscriberTest extends TestCase {
+	
+	use ReflectionPropertyTrait;
+	
 	public function testGetSubscribedEvents() {
 		$this->assertEquals(SerializerSubscriber::getSubscribedEvents(), [
 			KernelEvents::CONTROLLER_ARGUMENTS => [
@@ -135,17 +192,6 @@ class SerializerSubscriberTest extends TestCase {
 			[ 'patch', [], [ 'patch' ] ],
 			[ 'POST', 'group1', [ 'post', 'group1' ] ],
 			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ] ],
-//			[ new StubEntity(
-//				function ($data, array $groups) {
-//					$this->assertTrue(false);
-//				},
-//				function ($data, array $groups) {
-//					dump($data);
-//					die();
-//					$this->assertEquals($data, 'CONTENT');
-//					$this->assertEquals($groups, [ 'post' ]);
-//				}
-//			), StubEntity::class, 'POST', [], [ 'post' ] ],
 		];
 	}
 	
@@ -191,15 +237,6 @@ class SerializerSubscriberTest extends TestCase {
 			->willReturn($entity)
 		;
 		
-//		$serializer
-//			->expects($this->once())
-//			->method('deserialize')
-//			->with('CONTENT', \stdClass::class, 'json', [
-//				'groups' => $groupResults,
-//				'object_to_populate' => $entity
-//			])
-//		;
-		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer,
 			$em,
@@ -209,14 +246,357 @@ class SerializerSubscriberTest extends TestCase {
 		
 		$serializerSubscriber->onKernelControllerArguments($event);
 	}
-//
-//	private function isEntity($class) {
-//		if (is_object($class)) {
-//			$class = ($class instanceof Proxy) ? get_parent_class($class) : get_class($class);
-//		}
-//		return ! $this->em->getMetadataFactory()->isTransient($class);
-//	}
-//	
+	
+	public function providerOnKernelControllerArgumentsSave() {
+		return [
+			[true, true, true ],
+			[true, false, false ],
+			[false, true, false ],
+			[false, false, false ]
+		];
+	}
+
+	/**
+	 * @dataProvider providerOnKernelControllerArgumentsSave
+	 */
+	public function testOnKernelControllerArgumentsSave($isEntity, $save, $called) {
+		
+		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
+		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
+		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+
+
+		$entity = new \stdClass();
+		$controller = function () {};
+		
+		$event = new ControllerArgumentsEvent($kernel, $controller, [ 'ARGUMENTS' ], $request, HttpKernelInterface::MASTER_REQUEST);
+
+		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTestSave(
+			$serializer,
+			$em,
+			$validator,
+			$isEntity,
+			$save
+		);
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn('CONTENT')
+		;
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn('post')
+		;
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('ENTITY_NAME')
+			->willReturn($entity)
+		;
+	
+		if ($called) {
+			$em
+				->expects($this->once())
+				->method('persist')
+				->with($entity)
+			;
+			$em
+				->expects($this->once())
+				->method('flush')
+			;
+		} else {
+			$em
+				->expects($this->never())
+				->method('persist')
+			;
+			$em
+				->expects($this->never())
+				->method('flush')
+			;
+		}
+		
+		$serializerSubscriber->onKernelControllerArguments($event);
+	}
+
+	public function providerUnserialize() {
+		return [
+			[ new \stdClass(), \stdClass::class, []],
+			[ new \stdClass(), \stdClass::class, [ 'group1' ]],
+			[ new StubEntity(
+				function ($data, array $groups) {
+					$this->assertTrue(false);
+				},
+				function ($data, array $groups) {
+					$this->assertEquals($data, ['Decode' => 'Data']);
+					$this->assertEquals($groups, [ 'group1' ]);
+				}
+			), StubEntity::class, [ 'group1' ]],
+		];
+	}
+	
+	/**
+	 * @dataProvider providerUnserialize
+	 */
+	public function testUnserialize($entity, $class, $groups) {
+		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
+		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+
+		$context = [
+			'groups' => $groups,
+			'object_to_populate' => $entity,
+		];
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer,
+			$em,
+			$validator
+		);
+
+		$serializer
+			->method('supportsDecoding')
+			->with('json', $context)
+			->willReturn(true)
+		;
+
+		$serializer
+			->expects($this->once())
+			->method('decode')
+			->with('CONTENT', 'json', $context)
+			->willReturn(['Decode' => 'Data'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('denormalize')
+			->with(['Decode' => 'Data'], $class, 'json', $context)
+		;
+
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, $groups ]);
+	}
+
+	public function testUnserializeNotSupport() {
+		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
+		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+
+		$entity = new \stdClass();
+		$context = [
+			'groups' => [],
+			'object_to_populate' => $entity,
+		];
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer,
+			$em,
+			$validator
+		);
+
+		$serializer
+			->method('supportsDecoding')
+			->with('json', $context)
+			->willReturn(false)
+		;
+
+		$serializer
+			->expects($this->never())
+			->method('decode')
+		;
+		$serializer
+			->expects($this->never())
+			->method('denormalize')
+		;
+
+		$this->expectException(BadRequestHttpException::class);
+
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, [] ]);
+	}
+	
+	public function testUnserializeException() {
+		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
+		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+
+		$entity = new \stdClass();
+		$context = [
+			'groups' => [],
+			'object_to_populate' => $entity,
+		];
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer,
+			$em,
+			$validator
+		);
+
+		$serializer
+			->method('supportsDecoding')
+			->with('json', $context)
+			->willReturn(true)
+		;
+
+		$serializer
+			->expects($this->once())
+			->method('decode')
+			->with('CONTENT', 'json', $context)
+			->willReturn(['Decode' => 'Data'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('denormalize')
+			->with(['Decode' => 'Data'], \stdClass::class, 'json', $context)
+			->willThrowException(new \UnexpectedValueException())
+		;
+
+		$this->expectException(BadRequestHttpException::class);
+		
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, [] ]);
+	}
+
+	public function providerValidate() {
+		return  [
+			[ []                      , 'POST' , [ 'post' ] ],
+			[ []                      , 'post' , [ 'post' ] ],
+			[ []                      , 'patch', [ 'patch' ] ],
+			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
+			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
+		];
+	}
+
+	/**
+	 * @dataProvider providerValidate
+	 */
+	public function testValidate($groups, $method, $groupsFinal) {
+		$serializer              = $this->getMockBuilder(SerializerInterface::class             )->getMockForAbstractClass();
+		$em                      = $this->getMockBuilder(EntityManagerInterface::class          )->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
+		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
+		
+		$request = $this->getMockBuilder(Request::class)->getMock();
+		
+		$entity = new \stdClass();
+		
+		$serializerSubscriber = new SerializerSubscriberValidateTest(
+			$serializer,
+			$em,
+			$validator,
+			new Validate([
+				'value' => $groups
+			])
+		);
+
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn($method)
+		;
+		
+		$validator
+			->expects($this->once())
+			->method('validate')
+			->with($entity, null, $groupsFinal)
+			->willReturn($constraintViolationList)
+		;
+
+		$constraintViolationList
+			->expects($this->once())
+			->method('count')
+			->willReturn(0)
+		;
+		
+		$this->reflectionCallMethod($serializerSubscriber, 'validate', [ $request, $entity ]);
+	}
+
+	public function testValidateException() {
+		$serializer              = $this->getMockBuilder(SerializerInterface::class             )->getMockForAbstractClass();
+		$em                      = $this->getMockBuilder(EntityManagerInterface::class          )->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
+		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
+
+		$request = $this->getMockBuilder(Request::class)->getMock();
+
+		$entity = new \stdClass();
+
+		$serializerSubscriber = new SerializerSubscriberValidateTest(
+			$serializer,
+			$em,
+			$validator,
+			new Validate([])
+		);
+
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn('get')
+		;
+
+		$validator
+			->expects($this->once())
+			->method('validate')
+			->with($entity, null, [ 'get', 'Default' ])
+			->willReturn($constraintViolationList)
+		;
+
+		$constraintViolationList
+			->expects($this->once())
+			->method('count')
+			->willReturn(2)
+		;
+		
+		$this->expectException(UnserializeValidateException::class);
+
+		$this->reflectionCallMethod($serializerSubscriber, 'validate', [ $request, $entity ]);
+	}
+
+
+	public function providerIsEntity() {
+		return [
+			[ new \stdClass(), \stdClass::class, true, false ],
+			[ new StubProxy(), \stdClass::class, true, false ],
+			[ new \stdClass(), \stdClass::class, false, true ],
+		];
+	}
+
+	/**
+	 * @dataProvider providerIsEntity
+	 */
+	public function testIsEntity($entity, $class, $transiantResult, $result) {
+		$serializer      = $this->getMockBuilder(SerializerInterface::class     )->getMockForAbstractClass();
+		$em              = $this->getMockBuilder(EntityManagerInterface::class  )->getMockForAbstractClass();
+		$validator       = $this->getMockBuilder(ValidatorInterface::class      )->getMockForAbstractClass();
+		$metadataFactory = $this->getMockBuilder(ClassMetadataFactory::class)->getMockForAbstractClass();
+		
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer,
+			$em,
+			$validator
+		);
+		
+		$em
+			->method('getMetadataFactory')
+			->willReturn($metadataFactory)
+		;
+		
+		$metadataFactory
+			->method('isTransient')
+			->with($class)
+			->willReturn($transiantResult)
+		;
+
+		
+		$this->assertEquals(
+			$this->reflectionCallMethod($serializerSubscriber, 'isEntity', [ $entity ]),
+			$result
+		);
+	}
+	
 	
 	public function provideOnKernelView() {
 		return [

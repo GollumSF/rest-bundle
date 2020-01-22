@@ -25,6 +25,6 @@ services:
         tags:
             - { name: request.param_converter, priority: 1 }
 
-    GollumSF\RestDocBundle\Reflection\ControllerActionExtractorInterface:
-        class: GollumSF\RestDocBundle\Reflection\ControllerActionExtractor
+    GollumSF\RestBundle\Reflection\ControllerActionExtractorInterface:
+        class: GollumSF\RestBundle\Reflection\ControllerActionExtractor
     

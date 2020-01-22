@@ -63,10 +63,6 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		$this->validator = $validator;
 	}
 	
-	/**
-	 * @throws \Doctrine\ORM\ORMException
-	 * @throws \Doctrine\ORM\OptimisticLockException
-	 */
 	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
 		
 		$request = $event->getRequest();
@@ -95,19 +91,82 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			
 		}
 	}
+
+	public function onKernelView(ViewEvent $event) {
+
+		$request  = $event->getRequest();
+
+		/** @var Serialize $annotation */
+		$annotation = $this->getAnnotation($request, Serialize::class);
+		if ($annotation) {
+
+			if (!is_array($annotation->groups)) {
+				$annotation->groups = [ $annotation->groups ];
+			}
+
+			$data = $event->getControllerResult();
+			$groups = array_merge([ 'get' ], $annotation->groups);
+
+			$content = $this->serialize($data,'json', $groups);
+
+			$annotation->headers['Content-Type']   = 'application/json';
+			$annotation->headers['Content-Length'] = mb_strlen($content, 'UTF-8');
+
+			$event->setResponse(new Response($content, $annotation->code, $annotation->headers));
+		}
+	}
+
+	public function onKernelException(ExceptionEvent $event) {
+		$e = $event->getThrowable();
+
+		if ($e instanceof UnserializeValidateException) {
+			$rtn = [];
+
+			foreach ($e->getConstraints() as $violation) {
+
+				$prop = $violation->getPropertyPath();
+				if (!$prop) {
+					$prop = '_root_';
+				}
+				if (!array_key_exists($prop, $rtn)) {
+					$rtn[$prop] = [];
+				}
+				$rtn[$prop][] = $violation->getMessage();
+			}
+
+			$content = $this->serializer->serialize($rtn, 'json');
+
+			$headers = [
+				'Content-Type'   => 'application/json',
+				'Content-Length' => mb_strlen($content, 'UTF-8')
+			];
+
+			$event->setResponse(new Response($content, Response::HTTP_BAD_REQUEST, $headers));
+		}
+	}
 	
 	protected function unserialize(string $content, $entity, array $groups): void {
 		try {
-			$this->serializer->deserialize($content, get_class($entity), 'json', [
+			$format = 'json';
+			$context = [
 				'groups' => $groups,
 				'object_to_populate' => $entity,
-			]);
+			];
+			
+			if (!$this->serializer->supportsDecoding($format, $context)) {
+				throw new NotEncodableValueException(sprintf('Deserialization for the format %s is not supported', $format));
+			}
+
+			$data = $this->serializer->decode($content, $format, $context);
+			
+			$this->serializer->denormalize($data, get_class($entity), $format, $context);
+
+			if ($entity instanceof UnserializerTransformInterface) {
+				$entity->unserializeTransform($data, $groups);
+			}
+			
 		} catch (\UnexpectedValueException $e) {
 			throw new BadRequestHttpException($e->getMessage());
-		}
-
-		if ($entity instanceof UnserializerTransformInterface) {
-			$entity->unserializeTransform(\json_decode($content), $groups);
 		}
 	}
 
@@ -116,11 +175,14 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		$annotationValidate = $this->getAnnotation($request, Validate::class);
 		if ($annotationValidate) {
 
-			if (!is_array($annotationValidate->groups)) {
-				$annotationValidate->groups = [$annotationValidate->groups];
+			$groups = $annotationValidate->groups;
+			if (!is_array($groups)) {
+				$groups = [ $groups ];
 			}
-
-			$errors = $this->validator->validate($entity, null, $annotationValidate->groups);
+			
+			$groups = array_merge([ strtolower($request->getMethod()) ], $groups);
+			
+			$errors = $this->validator->validate($entity, null, $groups);
 			if ($errors->count()) {
 				throw new UnserializeValidateException($errors);
 			}
@@ -131,31 +193,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		if (is_object($class)) {
 			$class = ($class instanceof Proxy) ? get_parent_class($class) : get_class($class);
 		}
-		return ! $this->em->getMetadataFactory()->isTransient($class);
-	}
-	
-	public function onKernelView(ViewEvent $event) {
-		
-		$request  = $event->getRequest();
-		
-		/** @var Serialize $annotation */
-		$annotation = $this->getAnnotation($request, Serialize::class);
-		if ($annotation) {
-			
-			if (!is_array($annotation->groups)) {
-				$annotation->groups = [ $annotation->groups ];
-			}
-			
-			$data = $event->getControllerResult();
-			$groups = array_merge([ 'get' ], $annotation->groups);
-			
-			$content = $this->serialize($data,'json', $groups);
-			
-			$annotation->headers['Content-Type']   = 'application/json';
-			$annotation->headers['Content-Length'] = mb_strlen($content, 'UTF-8');
-			
-			$event->setResponse(new Response($content, $annotation->code, $annotation->headers));
-		}
+		return !$this->em->getMetadataFactory()->isTransient($class);
 	}
 	
 	protected function serialize($data, string $format, array $groups) {
@@ -175,34 +213,5 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 		
 		return $this->serializer->encode($json, $format, $context);
-	}
-	
-	public function onKernelException(ExceptionEvent $event) {
-		$e = $event->getThrowable();
-
-		if ($e instanceof UnserializeValidateException) {
-			$rtn = [];
-			
-			foreach ($e->getConstraints() as $violation) {
-				
-				$prop = $violation->getPropertyPath();
-				if (!$prop) {
-					$prop = '_root_';
-				}
-				if (!array_key_exists($prop, $rtn)) {
-					$rtn[$prop] = [];
-				}
-				$rtn[$prop][] = $violation->getMessage();
-			}
-
-			$content = $this->serializer->serialize($rtn, 'json');
-			
-			$headers = [
-				'Content-Type'   => 'application/json',
-				'Content-Length' => mb_strlen($content, 'UTF-8')
-			];
-
-			$event->setResponse(new Response($content, Response::HTTP_BAD_REQUEST, $headers));
-		}
 	}
 }

@@ -13,7 +13,7 @@ class ValidateTest extends TestCase
 	
 	public function provideConstruct() {
 		return [
-			[ [],  [] ],
+			[ [],  [ 'Default' ] ],
 			[ [
 				'value' => 'group1'
 			],  'group1' ],
