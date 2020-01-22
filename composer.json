@@ -21,21 +21,21 @@
         "wiki": "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
     },
     "require" : {
-        "symfony/validator": "^5.0",
-        "symfony/serializer": "^5.0",
-        "symfony/event-dispatcher": "^5.0",
-        "symfony/http-foundation": "^5.0",
-        "symfony/http-kernel": "^5.0",
+        "symfony/validator": "^4.",
+        "symfony/serializer": "^4.",
+        "symfony/event-dispatcher": "^4.",
+        "symfony/http-foundation": "^4.",
+        "symfony/http-kernel": "^4.",
         "doctrine/orm": "^2.7",
-        "symfony/property-access": "^5.0",
-        "symfony/property-info": "^5.0",
-        "symfony/dependency-injection": "^5.0",
-        "symfony/config": "^5.0",
+        "symfony/property-access": "^4.",
+        "symfony/property-info": "^4.",
+        "symfony/dependency-injection": "^4.",
         "sensio/framework-extra-bundle": "^5.5",
-        "symfony/yaml": "^5.0"
+        "symfony/framework-bundle": "^4.",
+        "symfony/yaml": "^4."
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^5.0",
+        "symfony/phpunit-bridge": "^4",
         "phpunit/phpunit": "^8.5",
         "gollumsf/reflection-property-test": "^1.0",
         "matthiasnoback/symfony-dependency-injection-test": "^4.1"
