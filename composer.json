@@ -21,18 +21,9 @@
         "wiki": "https://github.com/GollumSF/rest-bundle/blob/master/README.md"
     },
     "require" : {
-        "symfony/validator": "^5.0",
-        "symfony/serializer": "^5.0",
-        "symfony/event-dispatcher": "^5.0",
-        "symfony/http-foundation": "^5.0",
-        "symfony/http-kernel": "^5.0",
-        "doctrine/orm": "^2.7",
-        "symfony/property-access": "^5.0",
-        "symfony/property-info": "^5.0",
-        "symfony/dependency-injection": "^5.0",
-        "symfony/config": "^5.0",
-        "sensio/framework-extra-bundle": "^5.5",
-        "symfony/yaml": "^5.0"
+        "symfony/symfony": "^5.",
+        "symfony/orm-pack": "^1.0",
+        "sensio/framework-extra-bundle": "^5.5"
     },
     "require-dev": {
         "symfony/phpunit-bridge": "^5.0",
