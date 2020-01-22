@@ -6,9 +6,17 @@ php:
 matrix:
   fast_finish: true
 
-install: composer update --prefer-dist --dev --no-interaction $COMPOSER_FLAGS
+install: 
+    - composer require --dev satooshi/php-coveralls
+    - composer update --prefer-dist --dev --no-interaction $COMPOSER_FLAGS
 
-script: vendor/bin/phpunit --coverage-text --whitelist src tests/
+before_script:
+    - mkdir -p build/logs
+
+script: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml --whitelist src tests/
+
+after_script:
+    - vendor/bin/php-coveralls -v
 
 notifications:
     discord:
