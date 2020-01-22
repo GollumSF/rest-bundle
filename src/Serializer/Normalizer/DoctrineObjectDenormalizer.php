@@ -26,7 +26,7 @@ class DoctrineObjectDenormalizer implements DenormalizerInterface {
 		$this->recursiveObjectNormalizer = $recursiveObjectNormalizer;
 	}
 	
-	public function denormalize($data, string $class, string $format = null, array $context = array()) {
+	public function denormalize($data, $class, $format = null, array $context = array()) {
 		
 		if (is_null($data)) {
 			return null;
@@ -59,7 +59,7 @@ class DoctrineObjectDenormalizer implements DenormalizerInterface {
 		return $this->recursiveObjectNormalizer->denormalize($data, $class, $format, $context);
 	}
 	
-	public function supportsDenormalization($data, string $type, string $format = null) {
+	public function supportsDenormalization($data, $type, $format = null) {
 		if (!array_key_exists($type, $this->cache)) {
 			$this->cache[$type] = class_exists($type) && (is_array($data) || is_null($data));
 		}
