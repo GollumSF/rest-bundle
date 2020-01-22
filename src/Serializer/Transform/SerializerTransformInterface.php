@@ -9,6 +9,6 @@ interface SerializerTransformInterface {
 	 * @param string[] $groups
 	 * @return string
 	 */
-	public function serializeTransform($content, array $groups): void;
+	public function serializeTransform($data, array $groups);
 	
 }

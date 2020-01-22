@@ -2,6 +2,7 @@
 namespace GollumSF\RestBundle\EventSubscriber;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\Proxy;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -62,7 +64,6 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 	
 	/**
-	 * @param FilterControllerEvent $event
 	 * @throws \Doctrine\ORM\ORMException
 	 * @throws \Doctrine\ORM\OptimisticLockException
 	 */
@@ -112,12 +113,19 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				}
 			}
 			
-			if ($annotation->save) {
+			if ($annotation->save && $this->isEntity($entity)) {
 				$this->em->persist($entity);
 				$this->em->flush();
 			}
 			
 		}
+	}
+
+	private function isEntity($class) {
+		if (is_object($class)) {
+			$class = ($class instanceof Proxy) ? get_parent_class($class) : get_class($class);
+		}
+		return ! $this->em->getMetadataFactory()->isTransient($class);
 	}
 	
 	public function onKernelView(ViewEvent $event) {
@@ -133,14 +141,9 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			}
 			
 			$data = $event->getControllerResult();
+			$groups = array_merge([ 'get' ], $annotation->groups);
 			
-			$content = $this->serializer->serialize($data,'json', [
-				'groups' =>  array_merge([ 'get' ], $annotation->groups),
-			]);
-			
-			if ($data instanceof SerializerTransformInterface) {
-				$content = $data->serialize($content, $annotation->groups);
-			}
+			$content = $this->serialize($data,'json', $groups);
 			
 			$annotation->headers['Content-Type']   = 'application/json';
 			$annotation->headers['Content-Length'] = mb_strlen($content, 'UTF-8');
@@ -149,12 +152,33 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 	}
 	
+	protected function serialize($data, string $format, array $groups) {
+		
+		$context = [
+			'groups' =>  $groups,
+		];
+		
+		if (!$this->serializer->supportsEncoding($format, $context)) {
+			throw new NotEncodableValueException(sprintf('Serialization for the format %s is not supported', $format));
+		}
+
+		$json = $this->serializer->normalize($data, $format, $context);
+		
+		if ($data instanceof SerializerTransformInterface) {
+			$json = $data->serializeTransform($json, $groups);
+		}
+		
+		return $this->serializer->encode($json, $format, $context);
+	}
+	
 	public function onKernelException(ExceptionEvent $event) {
 		$e = $event->getThrowable();
-		
+
 		if ($e instanceof UnserializeValidateException) {
 			$rtn = [];
+			
 			foreach ($e->getConstraints() as $violation) {
+				
 				$prop = $violation->getPropertyPath();
 				if (!$prop) {
 					$prop = '_root_';
@@ -164,8 +188,15 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				}
 				$rtn[$prop][] = $violation->getMessage();
 			}
+
+			$content = $this->serializer->serialize($rtn, 'json');
 			
-			$event->setResponse(new JsonResponse($rtn, Response::HTTP_BAD_REQUEST));
+			$headers = [
+				'Content-Type'   => 'application/json',
+				'Content-Length' => mb_strlen($content, 'UTF-8')
+			];
+
+			$event->setResponse(new Response($content, Response::HTTP_BAD_REQUEST, $headers));
 		}
 	}
 }
