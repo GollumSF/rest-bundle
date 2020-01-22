@@ -11,7 +11,7 @@ use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
 use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -69,10 +69,6 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	 */
 	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
 		
-		if (!$event->isMasterRequest()) {
-			return;
-		}
-		
 		$request = $event->getRequest();
 		
 		/** @var Unserialize $annotation */
@@ -82,37 +78,16 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			$content = $request->getContent();
 			$entity = $request->attributes->get($annotation->name);
 			
-			if (!is_array($annotation->groups)) {
-				$annotation->groups = [ $annotation->groups ];
+			$groups = $annotation->groups;
+			if (!is_array($groups)) {
+				$groups = [ $groups ];
 			}
-			
-			try {
-				$this->serializer->deserialize($content, get_class($entity), 'json', [
-					'groups' => array_merge([ strtolower($request->getMethod()) ], $annotation->groups),
-					'object_to_populate' => $entity,
-				]);
-			} catch (\UnexpectedValueException $e) {
-				throw new BadRequestHttpException($e->getMessage());
-			}
-			
-			if ($entity instanceof UnserializerTransformInterface) {
-				$entity->unserializeTransform(\json_decode($content), $annotation->groups);
-			}
-			
-			/** @var Validate $annotationValidate */
-			$annotationValidate = $this->getAnnotation($request, Validate::class);
-			if ($annotationValidate) {
-				
-				if (!is_array($annotationValidate->groups)) {
-					$annotationValidate->groups = [ $annotationValidate->groups ];
-				}
-				
-				$errors = $this->validator->validate($entity, null, $annotationValidate->groups);
-				if($errors->count()) {
-					throw new UnserializeValidateException($errors);
-				}
-			}
-			
+			$groups = array_merge([ strtolower($request->getMethod()) ], $groups);
+
+			$this->unserialize($content, $entity, $groups);
+
+			$this->validate($request, $entity);
+
 			if ($annotation->save && $this->isEntity($entity)) {
 				$this->em->persist($entity);
 				$this->em->flush();
@@ -120,8 +95,39 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			
 		}
 	}
+	
+	protected function unserialize(string $content, $entity, array $groups): void {
+		try {
+			$this->serializer->deserialize($content, get_class($entity), 'json', [
+				'groups' => $groups,
+				'object_to_populate' => $entity,
+			]);
+		} catch (\UnexpectedValueException $e) {
+			throw new BadRequestHttpException($e->getMessage());
+		}
 
-	private function isEntity($class) {
+		if ($entity instanceof UnserializerTransformInterface) {
+			$entity->unserializeTransform(\json_decode($content), $groups);
+		}
+	}
+
+	protected function validate(Request $request, $entity): void {
+		/** @var Validate $annotationValidate */
+		$annotationValidate = $this->getAnnotation($request, Validate::class);
+		if ($annotationValidate) {
+
+			if (!is_array($annotationValidate->groups)) {
+				$annotationValidate->groups = [$annotationValidate->groups];
+			}
+
+			$errors = $this->validator->validate($entity, null, $annotationValidate->groups);
+			if ($errors->count()) {
+				throw new UnserializeValidateException($errors);
+			}
+		}
+	}
+
+	protected  function isEntity($class) {
 		if (is_object($class)) {
 			$class = ($class instanceof Proxy) ? get_parent_class($class) : get_class($class);
 		}

@@ -14,6 +14,7 @@ use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
@@ -50,6 +51,36 @@ class SerializerSubscriberOnKernelViewTest extends SerializerSubscriber {
 		return $this->annotation;
 	}
 
+}
+
+
+class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubscriber {
+
+	private $annotation;
+
+	public function __construct(
+		SerializerInterface $serializer,
+		EntityManagerInterface $em,
+		ValidatorInterface $validator,
+		Unserialize $annotation
+	) {
+		parent::__construct($serializer, $em, $validator);
+		$this->annotation = $annotation;
+	}
+
+	public function getAnnotation(Request $request, string $annotationClass) {
+		return $this->annotation;
+	}
+
+	protected function validate(Request $request, $entity): void {
+	}
+
+	protected function isEntity($class) {
+		return false;
+	}
+
+	protected function unserialize(string $content, $entity, array $groups): void {
+	}
 }
 
 class StubEntity implements SerializerTransformInterface, UnserializerTransformInterface{
@@ -96,103 +127,88 @@ class SerializerSubscriberTest extends TestCase {
 			],
 		]);
 	}
+
+	public function providerOnKernelControllerArguments() {
+		return [
+			[ 'POST', [], [ 'post' ] ],
+			[ 'post', [], [ 'post' ] ],
+			[ 'patch', [], [ 'patch' ] ],
+			[ 'POST', 'group1', [ 'post', 'group1' ] ],
+			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ] ],
+//			[ new StubEntity(
+//				function ($data, array $groups) {
+//					$this->assertTrue(false);
+//				},
+//				function ($data, array $groups) {
+//					dump($data);
+//					die();
+//					$this->assertEquals($data, 'CONTENT');
+//					$this->assertEquals($groups, [ 'post' ]);
+//				}
+//			), StubEntity::class, 'POST', [], [ 'post' ] ],
+		];
+	}
 	
-//	use AnnotationControllerReader;
-//	
-//	/**
-//	 * @var SerializerInterface
-//	 */
-//	private $serializer;
-//	/**
-//	 * @var EntityManagerInterface
-//	 */
-//	private $em;
-//	/**
-//	 * @var ValidatorInterface
-//	 */
-//	private $validator;
-//	
-//	public static function getSubscribedEvents() {
-//		return [
-//			KernelEvents::CONTROLLER_ARGUMENTS => [
-//				['onKernelControllerArguments', -1],
-//			],
-//			KernelEvents::VIEW => [
-//				['onKernelView', -1],
-//			],
-//			KernelEvents::EXCEPTION => [
-//				['onKernelException', 256],
-//			],
-//		];
-//	}
-//	
-//	public function __construct(
-//		SerializerInterface $serializer,
-//		EntityManagerInterface $em,
-//		ValidatorInterface $validator
-//	) {
-//		$this->serializer = $serializer;
-//		$this->em = $em;
-//		$this->validator = $validator;
-//	}
-//	
-//	/**
-//	 * @throws \Doctrine\ORM\ORMException
-//	 * @throws \Doctrine\ORM\OptimisticLockException
-//	 */
-//	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
-//		
-//		if (!$event->isMasterRequest()) {
-//			return;
-//		}
-//		
-//		$request = $event->getRequest();
-//		
-//		/** @var Unserialize $annotation */
-//		$annotation = $this->getAnnotation($request, Unserialize::class);
-//		if ($annotation) {
-//			
-//			$content = $request->getContent();
-//			$entity = $request->attributes->get($annotation->name);
-//			
-//			if (!is_array($annotation->groups)) {
-//				$annotation->groups = [ $annotation->groups ];
-//			}
-//			
-//			try {
-//				$this->serializer->deserialize($content, get_class($entity), 'json', [
-//					'groups' => array_merge([ strtolower($request->getMethod()) ], $annotation->groups),
-//					'object_to_populate' => $entity,
-//				]);
-//			} catch (\UnexpectedValueException $e) {
-//				throw new BadRequestHttpException($e->getMessage());
-//			}
-//			
-//			if ($entity instanceof UnserializerTransformInterface) {
-//				$entity->unserializeTransform(\json_decode($content), $annotation->groups);
-//			}
-//			
-//			/** @var Validate $annotationValidate */
-//			$annotationValidate = $this->getAnnotation($request, Validate::class);
-//			if ($annotationValidate) {
-//				
-//				if (!is_array($annotationValidate->groups)) {
-//					$annotationValidate->groups = [ $annotationValidate->groups ];
-//				}
-//				
-//				$errors = $this->validator->validate($entity, null, $annotationValidate->groups);
-//				if($errors->count()) {
-//					throw new UnserializeValidateException($errors);
-//				}
-//			}
-//			
-//			if ($annotation->save && $this->isEntity($entity)) {
-//				$this->em->persist($entity);
-//				$this->em->flush();
-//			}
-//			
-//		}
-//	}
+	/**
+	 * @dataProvider providerOnKernelControllerArguments
+	 */
+	public function testOnKernelControllerArguments($method, $groups, $groupResults) {
+
+		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
+		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
+		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+		
+		$entity = new \stdClass();
+		$controller = function () {};
+		
+		$annotation = new Unserialize([
+			'name' => 'ENTITY_NAME',
+			'groups' => $groups
+		]);
+			
+		$event = new ControllerArgumentsEvent($kernel, $controller, [ 'ARGUMENTS' ], $request, HttpKernelInterface::MASTER_REQUEST);
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn('CONTENT')
+		;
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn($method)
+		;
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('ENTITY_NAME')
+			->willReturn($entity)
+		;
+		
+//		$serializer
+//			->expects($this->once())
+//			->method('deserialize')
+//			->with('CONTENT', \stdClass::class, 'json', [
+//				'groups' => $groupResults,
+//				'object_to_populate' => $entity
+//			])
+//		;
+		
+		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
+			$serializer,
+			$em,
+			$validator,
+			$annotation
+		);
+		
+		$serializerSubscriber->onKernelControllerArguments($event);
+	}
 //
 //	private function isEntity($class) {
 //		if (is_object($class)) {
@@ -211,8 +227,8 @@ class SerializerSubscriberTest extends TestCase {
 			[ [ 'key' => 'value' ], [ 'group1', 'group2' ], [ 'groups' => [ 'get', 'group1', 'group2' ] ], 'normalize_data' ],
 			[ [ 'key' => 'value' ], []                    , [ 'groups' => [ 'get' ] ]                    , 'normalize_data' ],
 			[ new StubEntity(
-				function ($content, array $groups) {
-					$this->assertEquals($content, 'normalize_data');
+				function ($data, array $groups) {
+					$this->assertEquals($data, 'normalize_data');
 					$this->assertEquals($groups, [ 'get' ]);
 					return 'new_normalize_data';
 				},
