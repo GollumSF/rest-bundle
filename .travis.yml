@@ -22,7 +22,7 @@ before_script:
 script: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml --whitelist src tests/
 
 after_success:
-    - composer global require satooshi/php-coveralls
+    - composer global require php-coveralls/php-coveralls
     - travis_retry php $HOME/.composer/vendor/bin/coveralls -v
 
 notifications:
