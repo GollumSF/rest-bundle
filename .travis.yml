@@ -23,7 +23,7 @@ script: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.x
 
 after_success:
     - composer global require php-coveralls/php-coveralls
-    - travis_retry php $HOME/.composer/vendor/bin/coveralls -v
+    - travis_retry php $HOME/.composer/vendor/bin/php-coveralls -v
 
 notifications:
     discord:
