@@ -5,6 +5,7 @@
 [![License](https://poser.pugx.org/gollumsf/rest-bundle/license)](https://packagist.org/packages/gollumsf/rest-bundle)
 [![Latest Stable Version](https://poser.pugx.org/gollumsf/rest-bundle/v/stable)](https://packagist.org/packages/gollumsf/rest-bundle)
 [![Latest Unstable Version](https://poser.pugx.org/gollumsf/rest-bundle/v/unstable)](https://packagist.org/packages/gollumsf/rest-bundle)
+[![Discord](https://img.shields.io/discord/671741944149573687?color=purple&label=discord)](https://discord.gg/xMBc5SQ)
 
 
 ## Installation:

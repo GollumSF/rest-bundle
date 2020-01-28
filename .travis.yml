@@ -24,15 +24,11 @@ script: vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.x
 after_success:
     - composer global require php-coveralls/php-coveralls
     - travis_retry php $HOME/.config/composer/vendor/bin/php-coveralls -v
-
-notifications:
-    discord:
-        channels:
-          - 312160566291971:V7pRJV-3rzpjDuYxKIlbQ7Eihfg4PlIUShhesTdyg4IlRK0G7Akr_jm7SjzK-oqgFc6N
-        pull_request_template:
-          - 'Build [#%{build_number}](%{build_url}) ([%{commit}](%{compare_url})) of %{repository}@%{branch} in PR [#%{pull_request_number}](%{pull_request_url}) by %{author} %{result} in %{duration}'
-        branch_template:
-          - 'Build [#%{build_number}](%{build_url}) ([%{commit}](%{compare_url})) of %{repository}@%{branch} by %{author} %{result} in %{duration}'
-    slack: redori:zPaW8aAbTCF9NJh13BtWq9UV
-    email:
-        - smeagolworms4@gmail.com
+    
+    - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh success $WEBHOOK_URL
+after_failure:
+    - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/master/send.sh
+    - chmod +x send.sh
+    - ./send.sh failure $WEBHOOK_URL
