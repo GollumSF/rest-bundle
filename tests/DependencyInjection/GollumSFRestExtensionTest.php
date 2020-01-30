@@ -13,14 +13,13 @@ use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractExtensionTestCase;
 class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 
 	protected function getContainerExtensions(): array {
-		return array(
+		return [
 			new GollumSFRestExtension()
-		);
+		];
 	}
 	
 	public function testLoad() {
 		$this->load();
-		$this->assertTrue(true);
 		$this->assertContainerBuilderHasService(DoctrineIdDenormalizer::class);
 		$this->assertContainerBuilderHasService(DoctrineObjectDenormalizer::class);
 		$this->assertContainerBuilderHasService(RecursiveObjectNormalizer::class);
