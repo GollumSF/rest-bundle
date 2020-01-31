@@ -117,7 +117,13 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 
 	public function onKernelException(ExceptionEvent $event) {
-		$e = $event->getThrowable();
+		
+		if (method_exists($event, 'getThrowable')) {
+			$e = $event->getThrowable();
+		}
+		if (method_exists($event, 'getException')) {
+			$e = $event->getException();
+		}
 
 		if ($e instanceof UnserializeValidateException) {
 			$rtn = [];
