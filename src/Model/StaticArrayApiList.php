@@ -27,7 +27,7 @@ class StaticArrayApiList extends ApiList {
 		$limit     = (int)$this->request->get('limit', ApiFinderRepositoryInterface::DEFAULT_LIMIT_ITEM);
 		$page      = (int)$this->request->get('page' , 0);
 		$order     = $this->request->get('order');
-		$direction = strtoupper($this->request->get('direction'));
+		$direction = strtoupper($this->request->get('direction', ApiFinderRepositoryInterface::DIRECTION_ASC));
 		if (!in_array($direction, [ ApiFinderRepositoryInterface::DIRECTION_ASC, ApiFinderRepositoryInterface::DIRECTION_DESC ])) {
 			$direction = null;
 		}
