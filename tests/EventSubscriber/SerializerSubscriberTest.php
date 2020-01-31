@@ -166,23 +166,6 @@ class StubProxy extends \stdClass implements Proxy {
 	}
 }
 
-class ExceptionEventFixed extends ExceptionEvent {
-	public function getThrowable() {
-		try {
-			return parent::getThrowable();
-		} catch (\Throwable $e)  {
-		}
-		return parent::getException();
-	}
-	public function getException() {
-		try {
-			return parent::getThrowable();
-		} catch (\Throwable $e)  {
-		}
-		return parent::getException();
-	}
-}
-
 class SerializerSubscriberTest extends TestCase {
 	
 	use ReflectionPropertyTrait;
@@ -736,7 +719,7 @@ class SerializerSubscriberTest extends TestCase {
 			
 		$e = new UnserializeValidateException($constraintViolationList);
 
-		$event = new ExceptionEventFixed($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $e);
+		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $e);
 
 		$constraintViolation1->method('getPropertyPath')->willReturn('');
 		$constraintViolation2->method('getPropertyPath')->willReturn('propName');
