@@ -10,8 +10,8 @@ class StaticArrayApiList extends ApiList {
 	/** @var Request */
 	private $request;
 	
-	public function __construct(array $data, int $total, Request $request) {
-		parent::__construct($data, $total);
+	public function __construct(array $data, Request $request) {
+		parent::__construct($data, count($data));
 		$this->request = $request;
 	}
 	
@@ -55,6 +55,9 @@ class StaticArrayApiList extends ApiList {
 					$method = 'has'.ucfirst($order);
 					if (!method_exists($b, $method)) {
 						$method = 'is'.ucfirst($order);
+						if (!method_exists($b, $method)) {
+							throw new \LogicException(sprintf('Method get, has, is nor exist for fiel %s', $order));
+						}
 					}
 				}
 				if (method_exists($b, $method)) {
