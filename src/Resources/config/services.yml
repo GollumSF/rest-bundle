@@ -27,4 +27,7 @@ services:
 
     GollumSF\RestBundle\Reflection\ControllerActionExtractorInterface:
         class: GollumSF\RestBundle\Reflection\ControllerActionExtractor
+        
+    GollumSF\RestBundle\Search\ApiSearchInterface:
+        class: GollumSF\RestBundle\Search\ApiSearch
     
