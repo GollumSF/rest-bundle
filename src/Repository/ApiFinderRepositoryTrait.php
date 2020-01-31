@@ -48,14 +48,13 @@ trait ApiFinderRepositoryTrait {
 			->setMaxResults($limit)
 			->setFirstResult($limit * $page)
 		;
-		
-		$order = $order ? preg_replace("/[^(a-zA-Z0-9\-_)]/", '', $order): null;
+
+		$order = $order !== null ? preg_replace("/[^(a-zA-Z0-9\-_)]/", '', $order): null;
 		if ($order) {
 			$queryBuilder->orderBy('t.'.$order, $direction);
 		}
 		
 		$data  = $queryBuilder->getQuery()->getResult();
-		
 		
 		return new ApiList($data, $total);
 	}
