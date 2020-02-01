@@ -108,7 +108,20 @@ class ApiSearchTest extends TestCase {
 			$this->reflectionCallMethod($apiSearch, 'getRepository', [ \stdClass::class ])
 		);
 	}
-	public function testApiFind() {
+	
+	public function providerApiFind() {
+		return [
+			[ 25 , 25, null, null ],
+			[ 101 , 100, null, null ],
+			[ 25 , 25, Direction::ASC, Direction::ASC ],
+			[ 25 , 25, 'BAD_DIRECTIOn', null ],
+		];
+	}
+
+	/**
+	 * @dataProvider providerApiFind
+	 */
+	public function testApiFind($limit, $limitResult, $direction, $directionResult) {
 
 		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
@@ -117,12 +130,23 @@ class ApiSearchTest extends TestCase {
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
 		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
 		$closure         = function () {};
+
+		$configuration
+			->expects($this->at(0))
+			->method('getDefaultLimitItem')
+			->willReturn(25)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('getMaxLimitItem')
+			->willReturn(100)
+		;
 		
 		$request
 			->expects($this->at(0))
 			->method('get')
 			->with('limit')
-			->willReturn(25)
+			->willReturn($limit)
 		;
 		$request
 			->expects($this->at(1))
@@ -140,13 +164,13 @@ class ApiSearchTest extends TestCase {
 			->expects($this->at(3))
 			->method('get')
 			->with('direction')
-			->willReturn(Direction::ASC)
+			->willReturn($direction)
 		;
 
 		$repository
 			->expects($this->once())
 			->method('apiFindBy')
-			->with(25, 0, 'prop1', Direction::ASC, $closure)
+			->with($limitResult, 0, 'prop1', $directionResult, $closure)
 			->willReturn($list)
 		;
 
@@ -166,6 +190,17 @@ class ApiSearchTest extends TestCase {
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
+
+		$configuration
+			->expects($this->at(0))
+			->method('getDefaultLimitItem')
+			->willReturn(25)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('getMaxLimitItem')
+			->willReturn(100)
+		;
 		
 		$request
 			->expects($this->at(0))
@@ -208,6 +243,17 @@ class ApiSearchTest extends TestCase {
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
+		$configuration
+			->expects($this->at(0))
+			->method('getDefaultLimitItem')
+			->willReturn(25)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('getMaxLimitItem')
+			->willReturn(100)
+		;
+
 		$request
 			->expects($this->at(0))
 			->method('get')
@@ -240,39 +286,4 @@ class ApiSearchTest extends TestCase {
 
 		$apiSearch->apiFindBy(\stdClass::class);
 	}
-	
-//	public function apiFindBy(string $entityClass, \Closure $queryCallback = null): ApiList {
-//
-//		$request   = $this->getMasterRequest();
-//		$limit     = (int)$request->get('limit', $this->apiConfiguration->getDefaultLimitItem());
-//		$page      = (int)$request->get('page' , 0);
-//		$order     = $request->get('order');
-//		$direction = strtoupper($request->get('direction'));
-//		
-//		$maxtLimitItem = $this->apiConfiguration->getMaxLimitItem();
-//		if ($maxtLimitItem && $limit >  $maxtLimitItem) {
-//			$limit = $maxtLimitItem;
-//		}
-//		
-//		if (!Direction::isValid($direction)) {
-//			$direction = null;
-//		}
-//
-//		/** @var ApiFinderRepositoryInterface $repository */
-//		$repository = $this->getRepository($entityClass);
-//		if (!$repository) {
-//			throw new \LogicException(sprintf('Repository not found for class %s', $entityClass));
-//		}
-//		if (!($repository instanceof ApiFinderRepositoryInterface)) {
-//			throw new \LogicException(sprintf('Repository of class %s must implement ApiFinderRepositoryInterface or extends ApiFinderRepository', $entityClass));
-//		}
-//		return $repository->apiFindBy($limit, $page, $order, $direction, $queryCallback);
-//	}
-//	
-//	public function staticArrayList(array $data): StaticArrayApiList {
-//		$request   = $this->getMasterRequest();
-//		$arrayList = new StaticArrayApiList($data, $request);
-//		$arrayList->setMaxLimitItem($this->apiConfiguration->getMaxLimitItem());
-//		$arrayList->setDefaultLimitItem($this->apiConfiguration->getDefaultLimitItem());
-//	}
 }
