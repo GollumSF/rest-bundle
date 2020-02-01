@@ -13,8 +13,8 @@ class Configuration implements ConfigurationInterface {
 		$treeBuilder = new TreeBuilder('gollum_sf_rest');
 
 		$treeBuilder->getRootNode()->children()
-			->integerNode('maxLimitItem')->defaultValue(ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM)->end()
-			->integerNode('defaultLimitItem')->defaultValue(ApiConfigurationInterface::DEFAULT_DEFAULT_LIMIT_ITEM)->end()
+			->integerNode('max_limit_item')->defaultValue(ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM)->end()
+			->integerNode('default_limit_item')->defaultValue(ApiConfigurationInterface::DEFAULT_DEFAULT_LIMIT_ITEM)->end()
 		->end();
 
 		return $treeBuilder;

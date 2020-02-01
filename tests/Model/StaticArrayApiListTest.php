@@ -536,8 +536,7 @@ class StaticArrayApiListTest extends TestCase {
 			->expects($this->at(0))
 			->method('get')
 			->with('limit')
-			->willReturn([
-			])
+			->willReturn(25)
 		;
 		$request
 			->expects($this->at(1))

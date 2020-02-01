@@ -24,6 +24,8 @@ return [
 
 config.yml
 
-```yml
+```yaml
 gollum_sf_rest:
+    max_limit_item:     100  # optional, default : 100
+    default_limit_item: 25   # optional, default : 25
 ```

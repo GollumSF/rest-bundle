@@ -18,8 +18,8 @@ class GollumSFRestExtension extends Extension
 
 		$container
 			->register(ApiConfigurationInterface::class, ApiConfiguration::class)
-			->addArgument($config['maxLimitItem'])
-			->addArgument($config['defaultLimitItem'])
+			->addArgument($config['max_limit_item'])
+			->addArgument($config['default_limit_item'])
 		;
 		
 		
