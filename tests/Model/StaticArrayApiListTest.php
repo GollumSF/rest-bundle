@@ -59,7 +59,7 @@ class StaticArrayApiListTest extends TestCase {
 
 		$apiList = new StaticArrayApiList([], $request);
 
-		$this->assertNotEquals($this->reflectionGetValue($apiList, 'maxtLimitItem'), 42);
+		$this->assertNotEquals($this->reflectionGetValue($apiList, 'maxLimitItem'), 42);
 		$this->assertNotEquals($this->reflectionGetValue($apiList, 'defaultLimitItem'), 42);
 		$this->assertNotEquals($this->reflectionGetValue($apiList, 'sortPropertiesCallback')(null, null, null, null, null), 42);
 		
@@ -67,7 +67,7 @@ class StaticArrayApiListTest extends TestCase {
 		$apiList->setDefaultLimitItem(42);
 		$apiList->setSortPropertiesCallback($closureProperties);
 
-		$this->assertEquals($this->reflectionGetValue($apiList, 'maxtLimitItem'), 42);
+		$this->assertEquals($this->reflectionGetValue($apiList, 'maxLimitItem'), 42);
 		$this->assertEquals($this->reflectionGetValue($apiList, 'defaultLimitItem'), 42);
 		$this->assertEquals($this->reflectionGetValue($apiList, 'sortPropertiesCallback')(null, null, null, null, null), 42);
 

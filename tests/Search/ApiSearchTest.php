@@ -286,4 +286,52 @@ class ApiSearchTest extends TestCase {
 
 		$apiSearch->apiFindBy(\stdClass::class);
 	}
+
+	public function testStaticArrayList() {
+		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
+		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
+		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+
+		$configuration
+			->expects($this->at(0))
+			->method('getMaxLimitItem')
+			->willReturn(4242)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('getDefaultLimitItem')
+			->willReturn(42)
+		;
+		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch->request = $request;
+
+		$arrayList = $apiSearch->staticArrayList([
+			'DATA1',
+			'DATA3',
+			'DATA2'
+		]);
+		
+		$this->assertEquals($this->reflectionGetValue($arrayList, 'data', ApiList::class), [
+			'DATA1',
+			'DATA3',
+			'DATA2'
+		]);
+		$this->assertEquals($this->reflectionGetValue($arrayList, 'total', ApiList::class), 3);
+		$this->assertEquals($this->reflectionGetValue($arrayList, 'maxLimitItem'), 4242);
+		$this->assertEquals($this->reflectionGetValue($arrayList, 'defaultLimitItem'), 42);
+
+		$closureProperties = function ($valueA, $valueB, $objA, $objB, $order) {
+			return 212121;
+		};
+		$closureGlobal = function ($objA, $objB, $order, $direction) {
+			return 424242;
+		};
+
+		$arrayList2 = $apiSearch->staticArrayList([ 'DATA1' ], $closureProperties);
+		$arrayList3 = $apiSearch->staticArrayList([ 'DATA1' ], $closureGlobal, true);
+
+		$this->assertEquals($this->reflectionGetValue($arrayList2, 'sortPropertiesCallback')(null, null, null, null, null), 212121);
+		$this->assertEquals($this->reflectionGetValue($arrayList3, 'sortGlobalCallback')(null, null, null, null), 424242);
+	}
 }

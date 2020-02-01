@@ -72,10 +72,20 @@ class ApiSearch implements ApiSearchInterface {
 		return $repository->apiFindBy($limit, $page, $order, $direction, $queryCallback);
 	}
 	
-	public function staticArrayList(array $data): StaticArrayApiList {
+	public function staticArrayList(array $data, \Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {
 		$request   = $this->getMasterRequest();
 		$arrayList = new StaticArrayApiList($data, $request);
 		$arrayList->setMaxLimitItem($this->apiConfiguration->getMaxLimitItem());
 		$arrayList->setDefaultLimitItem($this->apiConfiguration->getDefaultLimitItem());
+
+		if ($sortCallback) {
+			if ($globalSort) {
+				$arrayList->setSortPropertiesCallback($sortCallback);
+			} else {
+				$arrayList->setSortPropertiesCallback($sortCallback);
+			}
+		}
+		
+		return $arrayList;
 	}
 }

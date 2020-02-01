@@ -11,7 +11,7 @@ class StaticArrayApiList extends ApiList {
 	private $request;
 
 	/** @var int */
-	protected $maxtLimitItem = ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM;
+	protected $maxLimitItem = ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM;
 
 	/** @var int */
 	protected $defaultLimitItem = ApiConfigurationInterface::DEFAULT_DEFAULT_LIMIT_ITEM;
@@ -92,8 +92,8 @@ class StaticArrayApiList extends ApiList {
 	// Setters //
 	/////////////
 	
-	public function setMaxLimitItem(int $maxtLimitItem): self {
-		$this->maxtLimitItem = $maxtLimitItem;
+	public function setMaxLimitItem(int $maxLimitItem): self {
+		$this->maxLimitItem = $maxLimitItem;
 		return $this;
 	}
 
@@ -126,8 +126,8 @@ class StaticArrayApiList extends ApiList {
 		$order     = $this->request->get('order');
 		$direction = strtoupper($this->request->get('direction'));
 		
-		if ($this->maxtLimitItem && $limit > $this->maxtLimitItem) {
-			$limit = $this->maxtLimitItem;
+		if ($this->maxLimitItem && $limit > $this->maxLimitItem) {
+			$limit = $this->maxLimitItem;
 		}
 
 		$order = $order !== null ? preg_replace("/[^(a-zA-Z0-9_)]/", '', $order): null;
