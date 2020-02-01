@@ -31,4 +31,29 @@ class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 		$this->assertContainerBuilderHasService(ApiSearchInterface::class);
 		$this->assertContainerBuilderHasService(ApiConfigurationInterface::class);
 	}
+
+	public function providerLoadConfiguration() {
+		return [
+			[ [], ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM, ApiConfigurationInterface::DEFAULT_DEFAULT_LIMIT_ITEM ],
+			
+			[ 
+				[
+					'max_limit_item'=> 4242,
+					'default_limit_item'=> 42,
+				], 4242, 42 
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider providerLoadConfiguration
+	 */
+	public function testLoadConfiguration(
+		$config,
+		$secret
+	) {
+		$this->load($config);
+
+		$this->assertContainerBuilderHasServiceDefinitionWithArgument(ApiConfigurationInterface::class, 0, $secret);
+	}
 }
