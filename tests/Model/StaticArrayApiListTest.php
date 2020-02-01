@@ -1,6 +1,8 @@
 <?php
 namespace Test\GollumSF\RestBundle\Model;
 
+use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use PHPUnit\Framework\TestCase;
@@ -48,12 +50,40 @@ class DumyClassIs {
 
 class StaticArrayApiListTest extends TestCase {
 	
+	use ReflectionPropertyTrait;
+	
+	public function testSetter() {
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$closureProperties = function ($valueA, $valueB, $roder) { return 42; };
+		$closureGlobal = function ($valueA, $valueB, $roder) { return 42; };
+
+		$apiList = new StaticArrayApiList([], $request);
+
+		$this->assertNotEquals($this->reflectionGetValue($apiList, 'maxtLimitItem'), 42);
+		$this->assertNotEquals($this->reflectionGetValue($apiList, 'defaultLimitItem'), 42);
+		$this->assertNotEquals($this->reflectionGetValue($apiList, 'sortPropertiesCallback')(null, null, null, null, null), 42);
+		
+		$apiList->setMaxLimitItem(42);
+		$apiList->setDefaultLimitItem(42);
+		$apiList->setSortPropertiesCallback($closureProperties);
+
+		$this->assertEquals($this->reflectionGetValue($apiList, 'maxtLimitItem'), 42);
+		$this->assertEquals($this->reflectionGetValue($apiList, 'defaultLimitItem'), 42);
+		$this->assertEquals($this->reflectionGetValue($apiList, 'sortPropertiesCallback')(null, null, null, null, null), 42);
+
+		$apiList2 = new StaticArrayApiList([], $request);
+		$this->assertNotEquals($this->reflectionGetValue($apiList2, 'sortGlobalCallback')(null, null, null, null), 42);
+		$apiList->setSortGlobalCallback($closureGlobal);
+		$this->assertNotEquals($this->reflectionGetValue($apiList2, 'sortGlobalCallback')(null, null, null, null), 42);
+	}
+	
 	public function providerGetData() {
 
 		$AAA = new DumyClass('AAA');
 		$BBB = new DumyClass('BBB');
 		$CCC = new DumyClass('CCC');
 		$DDD = new DumyClass('DDD');
+		$EEE = new DumyClass('EEE');
 		$NULL = new DumyClass(null);
 
 		$AAAHas = new DumyClassHas('AAA');
@@ -74,7 +104,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 				],
-				20, 0, null, ApiFinderRepositoryInterface::DIRECTION_ASC,
+				20, 0, null, null,
 				[
 					$AAA,
 					$CCC,
@@ -90,7 +120,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 				],
-				2, 1, null, ApiFinderRepositoryInterface::DIRECTION_ASC,
+				2, 1, null, null,
 				[
 					$DDD,
 					$BBB,
@@ -99,16 +129,46 @@ class StaticArrayApiListTest extends TestCase {
 
 			[
 				[
+					null,
+					$NULL,
+					null,
 					$AAA,
 					$CCC,
 					$DDD,
+					$NULL,
+					$AAA,
 					$BBB,
+					$EEE,
 					$NULL,
 				],
-				2, 1, 'prop1', ApiFinderRepositoryInterface::DIRECTION_ASC,
+				25, 0, 'prop1', Direction::ASC,
 				[
+					null,
+					null,
+					$NULL,
+					$NULL,
+					$NULL,
+					$AAA,
+					$AAA,
+					$BBB,
 					$CCC,
 					$DDD,
+					$EEE,
+				]
+			],
+
+			[
+				[
+					$AAA,
+					$CCC,
+					$DDD,
+					$NULL,
+					$EEE,
+				],
+				2, 0, 'prop1', Direction::ASC,
+				[
+					$NULL,
+					$AAA,
 				]
 			],
 
@@ -119,7 +179,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDDHas,
 					$BBBHas,
 				],
-				2, 1, 'prop1', ApiFinderRepositoryInterface::DIRECTION_ASC,
+				2, 1, 'prop1', Direction::ASC,
 				[
 					$CCCHas,
 					$DDDHas,
@@ -133,7 +193,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDDIs,
 					$BBBIs,
 				],
-				2, 1, 'prop1', ApiFinderRepositoryInterface::DIRECTION_ASC,
+				2, 1, 'prop1', Direction::ASC,
 				[
 					$CCCIs,
 					$DDDIs,
@@ -147,11 +207,42 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 					$NULL,
+					$EEE,
 				],
-				2, 1, 'prop1', 'BAD_DIRECTION',
+				100, 0, 'prop1', 'BAD_DIRECTION',
 				[
+					$NULL,
+					$AAA,
+					$BBB,
 					$CCC,
 					$DDD,
+					$EEE,
+				]
+			],
+
+			[
+				[
+					$NULL,
+					$AAA,
+					$CCC,
+					$DDD,
+					$NULL,
+					$AAA,
+					$BBB,
+					$EEE,
+					$NULL,
+				],
+				99, 0, 'prop1', Direction::DESC,
+				[
+					$EEE,
+					$DDD,
+					$CCC,
+					$BBB,
+					$AAA,
+					$AAA,
+					$NULL,
+					$NULL,
+					$NULL,
 				]
 			],
 
@@ -162,16 +253,51 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 					$NULL,
+					$EEE,
 				],
-				2, 1, 'prop1', ApiFinderRepositoryInterface::DIRECTION_DESC,
+				999, 0, 'prop1', Direction::ASC,
 				[
-					$BBB,
+					$NULL,
 					$AAA,
+					$BBB,
+					$CCC,
+					$DDD,
+					$EEE,
+				]
+			],
+
+			[
+				[
+					null,
+					null,
+					null,
+					'AAA',
+					'CCC',
+					'DDD',
+					null,
+					'AAA',
+					'BBB',
+					'EEE',
+					null,
+				],
+				25, 0, null, Direction::ASC,
+				[
+					null,
+					null,
+					null,
+					null,
+					null,
+					'AAA',
+					'AAA',
+					'BBB',
+					'CCC',
+					'DDD',
+					'EEE',
 				]
 			],
 		];
 	}
-
+	
 	/**
 	 * @dataProvider providerGetData
 	 */
@@ -204,8 +330,203 @@ class StaticArrayApiListTest extends TestCase {
 		;
 
 		$apiList = new StaticArrayApiList($list, $request);
-
+		
 		$this->assertEquals($apiList->getData(), $result);
+	}
+
+	public function providerGetDataClosure() {
+
+		$AAA = new DumyClass('AAA');
+		$BBB = new DumyClass('BBB');
+		$CCC = new DumyClass('CCC');
+		$DDD = new DumyClass('DDD');
+		$EEE = new DumyClass('EEE');
+		$NULL = new DumyClass(null);
+		
+		return [
+			[
+				[
+					null,
+					$NULL,
+					null,
+					$AAA,
+					$CCC,
+					$DDD,
+					$NULL,
+					$AAA,
+					$BBB,
+					$EEE,
+					$NULL,
+				],
+				Direction::ASC,
+				[
+					null,
+					null,
+					$NULL,
+					$NULL,
+					$NULL,
+					$EEE,
+					$DDD,
+					$CCC,
+					$BBB,
+					$AAA,
+					$AAA,
+				]
+			],
+
+			[
+				[
+					null,
+					$NULL,
+					null,
+					$AAA,
+					$CCC,
+					$DDD,
+					$NULL,
+					$AAA,
+					$BBB,
+					$EEE,
+					$NULL,
+				],
+				Direction::DESC,
+				[
+					$AAA,
+					$AAA,
+					$BBB,
+					$CCC,
+					$DDD,
+					$EEE,
+					$NULL,
+					$NULL,
+					$NULL,
+					null,
+					null,
+				]
+			]
+		];
+	}
+	
+	/**
+	 * @dataProvider providerGetDataClosure
+	 */
+	public function testGetDataClosureProperties($list, $direction, $result) {
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request
+			->expects($this->at(0))
+			->method('get')
+			->with('limit')
+			->willReturn(100)
+		;
+		$request
+			->expects($this->at(1))
+			->method('get')
+			->with('page')
+			->willReturn(0)
+		;
+		$request
+			->expects($this->at(2))
+			->method('get')
+			->with('order')
+			->willReturn('prop1')
+		;
+		$request
+			->expects($this->at(3))
+			->method('get')
+			->with('direction')
+			->willReturn($direction)
+		;
+		
+		$apiList = new StaticArrayApiList($list, $request);
+
+		$called = false;
+		$apiList->setSortPropertiesCallback(function ($valueA, $valueB, $objA, $objB, $order) use (&$called) {
+			$called = true;
+			$this->assertEquals($order, 'prop1');
+			if ($valueA === null && $valueB) {
+				return -1;
+			}
+			if ($valueB === null && $valueA) {
+				return 1;
+			}
+			if ($valueA === null && $valueB === null ) {
+				if ($objA === null && $objB) {
+					return -1;
+				}
+				if ($objA && $objB === null) {
+					return 1;
+				}
+				return 0;
+			}
+
+			if ($valueA === $valueB) {
+				return 0;
+			}
+			return ($valueA < $valueB) ? 1 : -1;
+		});
+		
+		$this->assertEquals($apiList->getData(), $result);
+		$this->assertTrue($called);
+	}
+
+
+	public function testGetDataClosureGlobal() {
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request
+			->expects($this->at(0))
+			->method('get')
+			->with('limit')
+			->willReturn(100)
+		;
+		$request
+			->expects($this->at(1))
+			->method('get')
+			->with('page')
+			->willReturn(0)
+		;
+		$request
+			->expects($this->at(2))
+			->method('get')
+			->with('order')
+			->willReturn('ORDER')
+		;
+		$request
+			->expects($this->at(3))
+			->method('get')
+			->with('direction')
+			->willReturn(Direction::DESC)
+		;
+
+		$apiList = new StaticArrayApiList([
+			'AAA',
+			'CCC',
+			'AAA',
+			'BBB',
+			'DDD',
+			'AAA',
+		], $request);
+
+		$called = false;
+		$apiList->setSortGlobalCallback(function ($objA, $objB, $order, $direction) use (&$called) {
+			$called = true;
+			$this->assertEquals($order, 'ORDER');
+			$this->assertEquals($direction, Direction::DESC);
+			if ($objA === $objB) {
+				return 0;
+			}
+			return ($objA < $objB) ? -1 : 1;
+		});
+
+		$this->assertEquals($apiList->getData(), [
+			'AAA',
+			'AAA',
+			'AAA',
+			'BBB',
+			'CCC',
+			'DDD',
+		]);
+		$this->assertTrue($called);
 	}
 
 	public function testGetDataException() {
@@ -228,19 +549,23 @@ class StaticArrayApiListTest extends TestCase {
 			->expects($this->at(2))
 			->method('get')
 			->with('order')
-			->willReturn('bad_param')
+			->willReturn('prop1')
 		;
 		$request
 			->expects($this->at(3))
 			->method('get')
 			->with('direction')
-			->willReturn(ApiFinderRepositoryInterface::DIRECTION_ASC)
+			->willReturn(Direction::ASC)
 		;
 
 		$apiList = new StaticArrayApiList([
 			new DumyClass('BBB'),
 			new DumyClass('AAA'),
 		], $request);
+
+		$apiList->setSortGlobalCallback(function ($objA, $objB, $order, $direction) use (&$called) {
+			throw new \Exception();
+		});
 		
 		$this->expectException(BadRequestHttpException::class);
 		

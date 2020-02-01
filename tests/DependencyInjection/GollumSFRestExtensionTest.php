@@ -1,10 +1,12 @@
 <?php
 namespace Test\GollumSF\RestBundle\DependencyInjection;
 
+use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\DependencyInjection\GollumSFRestExtension;
 use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use GollumSF\RestBundle\Reflection\ControllerActionExtractorInterface;
 use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
+use GollumSF\RestBundle\Search\ApiSearchInterface;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
@@ -26,5 +28,7 @@ class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 		$this->assertContainerBuilderHasService(PostRestParamConverter::class);
 		$this->assertContainerBuilderHasService(SerializerSubscriber::class);
 		$this->assertContainerBuilderHasService(ControllerActionExtractorInterface::class);
+		$this->assertContainerBuilderHasService(ApiSearchInterface::class);
+		$this->assertContainerBuilderHasService(ApiConfigurationInterface::class);
 	}
 }
