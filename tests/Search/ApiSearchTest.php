@@ -9,6 +9,7 @@ use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\Model\ApiList;
 use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
+use GollumSF\RestBundle\Repository\ApiFinderRepository;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use GollumSF\RestBundle\Search\ApiSearch;
 use PHPUnit\Framework\TestCase;
@@ -105,6 +106,56 @@ class ApiSearchTest extends TestCase {
 
 		$this->assertNull(
 			$this->reflectionCallMethod($apiSearch, 'getRepository', [ \stdClass::class ])
+		);
+	}
+	public function testApiFind() {
+
+		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
+		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
+		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
+		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
+		$closure         = function () {};
+		
+		$request
+			->expects($this->at(0))
+			->method('get')
+			->with('limit')
+			->willReturn(25)
+		;
+		$request
+			->expects($this->at(1))
+			->method('get')
+			->with('page')
+			->willReturn(0)
+		;
+		$request
+			->expects($this->at(2))
+			->method('get')
+			->with('order')
+			->willReturn('prop1')
+		;
+		$request
+			->expects($this->at(3))
+			->method('get')
+			->with('direction')
+			->willReturn(Direction::ASC)
+		;
+
+		$repository
+			->expects($this->once())
+			->method('apiFindBy')
+			->with(25, 0, 'prop1', Direction::ASC, $closure)
+			->willReturn($list)
+		;
+
+		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch->repository = $repository;
+		$apiSearch->request = $request;
+
+		$this->assertEquals(
+			$apiSearch->apiFindBy(\stdClass::class, $closure), $list
 		);
 	}
 
