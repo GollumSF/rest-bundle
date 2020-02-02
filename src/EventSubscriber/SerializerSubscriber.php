@@ -9,7 +9,6 @@ use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
-use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,8 +22,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SerializerSubscriber implements EventSubscriberInterface {
-	
-	use AnnotationControllerReader;
 	
 	/**
 	 * @var SerializerInterface
@@ -68,23 +65,22 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		$request = $event->getRequest();
 		
 		/** @var Unserialize $annotation */
-		$annotation = $this->getAnnotation($request, Unserialize::class);
+		$annotation = $request->attributes->get('_'.Unserialize::ALIAS_NAME);
 		if ($annotation) {
 			
 			$content = $request->getContent();
-			$entity = $request->attributes->get($annotation->name);
+			$entity = $request->attributes->get($annotation->getName());
 			
-			$groups = $annotation->groups;
-			if (!is_array($groups)) {
-				$groups = [ $groups ];
-			}
-			$groups = array_merge([ strtolower($request->getMethod()) ], $groups);
+			$groups = array_merge(
+				[ strtolower($request->getMethod()) ], 
+				$annotation->getGroups()
+			);
 
 			$this->unserialize($content, $entity, $groups);
 
 			$this->validate($request, $entity);
 
-			if ($annotation->save && $this->isEntity($entity)) {
+			if ($annotation->isSave() && $this->isEntity($entity)) {
 				$this->em->persist($entity);
 				$this->em->flush();
 			}
@@ -97,22 +93,19 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		$request  = $event->getRequest();
 
 		/** @var Serialize $annotation */
-		$annotation = $this->getAnnotation($request, Serialize::class);
+		$annotation = $request->attributes->get('_'.Serialize::ALIAS_NAME);
 		if ($annotation) {
 
-			if (!is_array($annotation->groups)) {
-				$annotation->groups = [ $annotation->groups ];
-			}
-
 			$data = $event->getControllerResult();
-			$groups = array_merge([ 'get' ], $annotation->groups);
+			$groups = array_merge([ 'get' ], $annotation->getGroups());
 
 			$content = $this->serialize($data,'json', $groups);
 
-			$annotation->headers['Content-Type']   = 'application/json';
-			$annotation->headers['Content-Length'] = mb_strlen($content, 'UTF-8');
+			$headers = $annotation->getHeaders();
+			$headers['Content-Type']   = 'application/json';
+			$headers['Content-Length'] = mb_strlen($content, 'UTF-8');
 
-			$event->setResponse(new Response($content, $annotation->code, $annotation->headers));
+			$event->setResponse(new Response($content, $annotation->getCode(), $headers));
 		}
 	}
 
@@ -173,15 +166,13 @@ class SerializerSubscriber implements EventSubscriberInterface {
 
 	protected function validate(Request $request, $entity): void {
 		/** @var Validate $annotationValidate */
-		$annotationValidate = $this->getAnnotation($request, Validate::class);
+		$annotationValidate = $request->attributes->get('_'.Validate::ALIAS_NAME);
 		if ($annotationValidate) {
 
-			$groups = $annotationValidate->groups;
-			if (!is_array($groups)) {
-				$groups = [ $groups ];
-			}
-			
-			$groups = array_merge([ strtolower($request->getMethod()) ], $groups);
+			$groups = array_merge([
+				strtolower($request->getMethod()) ],
+				$annotationValidate->getGroups()
+			);
 			
 			$errors = $this->validator->validate($entity, null, $groups);
 			if ($errors->count()) {

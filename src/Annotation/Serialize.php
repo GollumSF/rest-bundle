@@ -1,36 +1,78 @@
 <?php
 
 namespace GollumSF\RestBundle\Annotation;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationAnnotation;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"CLASS", "METHOD"})
  */
-class Serialize {
-	
+class Serialize extends ConfigurationAnnotation {
+
+	const ALIAS_NAME = 'gsf_serialize';
+
 	/**
 	 * @var int
 	 */
-	public $code;
-	
-	/**
-	 * @var string|string[]
-	 */
-	public $groups;
-	
+	private $code = Response::HTTP_OK;
+
 	/**
 	 * @var string[]
 	 */
-	public $headers;
-	
+	private $groups = [];
+
 	/**
-	 * @param string $class
+	 * @var string[]
 	 */
-	public function __construct ($param) {
-		$this->groups  = isset ($param["groups"]) ? $param["groups"] : [];
-		$this->code    = isset ($param["code"])   ? $param["code"] : Response::HTTP_OK;
-		$this->headers = isset ($param["headers"])   ? $param["headers"] : [];
+	private $headers = [];
+
+	/////////////
+	// Getters //
+	/////////////
+
+	public function getCode(): int {
+		return $this->code;
 	}
-	
+
+	public function getGroups(): array {
+		return $this->groups;
+	}
+
+	public function getHeaders(): array {
+		return $this->headers;
+	}
+
+	public function getAliasName() {
+		return self::ALIAS_NAME;
+	}
+
+	public function allowArray() {
+		return false;
+	}
+
+	/////////////
+	// Setters //
+	/////////////
+
+	public function setCode(int $code): self {
+		$this->code = $code;
+		return $this;
+	}
+
+	/**
+	 * @param string|string[] $groups
+	 */
+	public function setGroups($groups): self {
+		if (!is_array($groups)) {
+			$groups = [$groups];
+		}
+		$this->groups = $groups;
+		return $this;
+	}
+
+	public function setHeaders(array $headers): self {
+		$this->headers = $headers;
+		return $this;
+	}
 }

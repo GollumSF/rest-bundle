@@ -17,7 +17,7 @@ class SerializeTest extends TestCase
 			],  ['header_key' => 'header_value'], [], Response::HTTP_OK ],
 			[ [
 				'groups' => 'group1'
-			],  [], 'group1', Response::HTTP_OK ],
+			],  [], ['group1'], Response::HTTP_OK ],
 			[ [
 				'groups' => [ 'group1' ]
 			],  [], ['group1'], Response::HTTP_OK ],
@@ -32,9 +32,11 @@ class SerializeTest extends TestCase
 	 */
 	public function testConstruct($param, $headers, $groups, $code) {
 		$annotation = new Serialize($param);
-		$this->assertEquals($annotation->headers, $headers);
-		$this->assertEquals($annotation->groups, $groups);
-		$this->assertEquals($annotation->code, $code);
+		$this->assertEquals($annotation->getHeaders(), $headers);
+		$this->assertEquals($annotation->getGroups(), $groups);
+		$this->assertEquals($annotation->getCode(), $code);
+		$this->assertEquals($annotation->getAliasName(), Serialize::ALIAS_NAME);
+		$this->assertFalse($annotation->allowArray());
 	}
 	
 }

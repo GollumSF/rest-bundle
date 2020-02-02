@@ -27,7 +27,6 @@ class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 		$this->assertContainerBuilderHasService(RecursiveObjectNormalizer::class);
 		$this->assertContainerBuilderHasService(PostRestParamConverter::class);
 		$this->assertContainerBuilderHasService(SerializerSubscriber::class);
-		$this->assertContainerBuilderHasService(ControllerActionExtractorInterface::class);
 		$this->assertContainerBuilderHasService(ApiSearchInterface::class);
 		$this->assertContainerBuilderHasService(ApiConfigurationInterface::class);
 	}

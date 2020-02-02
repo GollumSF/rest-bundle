@@ -5,28 +5,11 @@ use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
 use PHPUnit\Framework\TestCase;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use GollumSF\RestBundle\Annotation\Unserialize;
-use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use function foo\func;
 
-class PostRestParamConverterApplyTest extends PostRestParamConverter {
-
-	private $annotation;
-	
-	public function __construct($annotation) {
-		$this->annotation = $annotation;
-	}
-
-	protected function getAnnotation(Request $request, string $annotationClass) {
-		return $this->annotation;
-	}
-	
-}
-
 class PostRestParamConverterTest extends TestCase {
-	
-	use AnnotationControllerReader;
 	
 	public function providerApply() {
 		return [
@@ -47,8 +30,7 @@ class PostRestParamConverterTest extends TestCase {
 			->getMock()
 		;
 
-		$request = $this->getMockBuilder(Request::class)
-			->disableOriginalConstructor()
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
 			->getMock()
 		;
 		$request->attributes = $attributes;
@@ -79,7 +61,14 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-		
+
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
 		$attributes
 			->method('set')
 			->willReturnCallback(function ($name, $value) use ($configurationName) {
@@ -88,7 +77,7 @@ class PostRestParamConverterTest extends TestCase {
 			})
 		;
 		
-		$postRestParamConverter = new PostRestParamConverterApplyTest($annotation);
+		$postRestParamConverter = new PostRestParamConverter();
 		
 		$this->assertEquals(
 			$postRestParamConverter->apply($request, $configuration), $result

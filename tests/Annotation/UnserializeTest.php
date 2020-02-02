@@ -21,7 +21,7 @@ class UnserializeTest extends TestCase
 			],  'anno_name', [], Response::HTTP_OK ],
 			[ [
 				'groups' => 'group1'
-			],  '', 'group1', true ],
+			],  '', ['group1'], true ],
 			[ [
 				'groups' => [ 'group1' ]
 			],  '', ['group1'], true ],
@@ -36,9 +36,11 @@ class UnserializeTest extends TestCase
 	 */
 	public function testConstruct($param, $name, $groups, $save) {
 		$annotation = new Unserialize($param);
-		$this->assertEquals($annotation->name, $name);
-		$this->assertEquals($annotation->groups, $groups);
-		$this->assertEquals($annotation->save, $save);
+		$this->assertEquals($annotation->getName(), $name);
+		$this->assertEquals($annotation->getGroups(), $groups);
+		$this->assertEquals($annotation->isSave(), $save);
+		$this->assertEquals($annotation->getAliasName(), Unserialize::ALIAS_NAME);
+		$this->assertFalse($annotation->allowArray());
 	}
 	
 }

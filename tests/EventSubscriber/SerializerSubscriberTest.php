@@ -12,10 +12,7 @@ use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
-use GollumSF\RestBundle\Traits\AnnotationControllerReader;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
@@ -37,45 +34,10 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
-class SerializerSubscriberOnKernelViewTest extends SerializerSubscriber {
-	
-	private $annotation;
-	
-	public function __construct(
-		SerializerInterface $serializer,
-		EntityManagerInterface $em,
-		ValidatorInterface $validator,
-		Serialize $annotation
-	) {
-		parent::__construct($serializer, $em, $validator);
-		$this->annotation = $annotation;
-	}
-	
-	public function getAnnotation(Request $request, string $annotationClass) {
-		return $this->annotation;
-	}
-
-}
-
-
 class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubscriber {
-
-	private $annotation;
-
-	public function __construct(
-		SerializerInterface $serializer,
-		EntityManagerInterface $em,
-		ValidatorInterface $validator,
-		Unserialize $annotation
-	) {
-		parent::__construct($serializer, $em, $validator);
-		$this->annotation = $annotation;
-	}
-
-	public function getAnnotation(Request $request, string $annotationClass) {
-		return $this->annotation;
-	}
-
+	
+	public $groups;
+	
 	protected function validate(Request $request, $entity): void {
 	}
 
@@ -84,6 +46,7 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 	}
 
 	protected function unserialize(string $content, $entity, array $groups): void {
+		$this->groups = $groups;
 	}
 }
 
@@ -95,38 +58,14 @@ class SerializerSubscriberOnKernelControllerArgumentsTestSave extends Serializer
 		SerializerInterface $serializer,
 		EntityManagerInterface $em,
 		ValidatorInterface $validator,
-		bool $isEntity,
-		bool $save
+		bool $isEntity
 	) {
-		parent::__construct($serializer, $em, $validator, new Unserialize([
-			'name' => 'ENTITY_NAME',
-			'save' => $save
-		]));
+		parent::__construct($serializer, $em, $validator);
 		$this->isEntity = $isEntity;
 	}
 	
 	protected function isEntity($class) {
 		return $this->isEntity;
-	}
-}
-
-
-class SerializerSubscriberValidateTest extends SerializerSubscriber {
-
-	private $annotation;
-
-	public function __construct(
-		SerializerInterface $serializer,
-		EntityManagerInterface $em,
-		ValidatorInterface $validator,
-		Validate $annotation
-	) {
-		parent::__construct($serializer, $em, $validator);
-		$this->annotation = $annotation;
-	}
-
-	public function getAnnotation(Request $request, string $annotationClass) {
-		return $this->annotation;
 	}
 }
 
@@ -230,7 +169,13 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->once())
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
 			->method('get')
 			->with('ENTITY_NAME')
 			->willReturn($entity)
@@ -239,11 +184,11 @@ class SerializerSubscriberTest extends TestCase {
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer,
 			$em,
-			$validator,
-			$annotation
+			$validator
 		);
 		
 		$serializerSubscriber->onKernelControllerArguments($event);
+		$this->assertEquals($serializerSubscriber->groups, $groupResults);
 	}
 	
 	public function providerOnKernelControllerArgumentsSave() {
@@ -268,7 +213,10 @@ class SerializerSubscriberTest extends TestCase {
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
-
+		$annotation = new Unserialize([
+			'name' => 'ENTITY_NAME',
+			'save' => $save
+		]);
 
 		$entity = new \stdClass();
 		$controller = function () {};
@@ -279,8 +227,7 @@ class SerializerSubscriberTest extends TestCase {
 			$serializer,
 			$em,
 			$validator,
-			$isEntity,
-			$save
+			$isEntity
 		);
 
 		$request
@@ -295,12 +242,18 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->once())
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
 			->method('get')
 			->with('ENTITY_NAME')
 			->willReturn($entity)
 		;
-	
+		
 		if ($called) {
 			$em
 				->expects($this->once())
@@ -462,10 +415,10 @@ class SerializerSubscriberTest extends TestCase {
 	public function providerValidate() {
 		return  [
 			[ []                      , 'POST' , [ 'post' ] ],
-			[ []                      , 'post' , [ 'post' ] ],
-			[ []                      , 'patch', [ 'patch' ] ],
-			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
-			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
+//			[ []                      , 'post' , [ 'post' ] ],
+//			[ []                      , 'patch', [ 'patch' ] ],
+//			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
+//			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
 		];
 	}
 
@@ -478,23 +431,32 @@ class SerializerSubscriberTest extends TestCase {
 		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
 		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
 		
-		$request = $this->getMockBuilder(Request::class)->getMock();
-		
+		$request    = $this->getMockBuilder(Request::class)->getMock();
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+			
 		$entity = new \stdClass();
+		$annotation = new Validate([
+			'value' => $groups
+		]);
 		
-		$serializerSubscriber = new SerializerSubscriberValidateTest(
+		$serializerSubscriber = new SerializerSubscriber(
 			$serializer,
 			$em,
-			$validator,
-			new Validate([
-				'value' => $groups
-			])
+			$validator
 		);
 
 		$request
 			->expects($this->once())
 			->method('getMethod')
 			->willReturn($method)
+		;
+		
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Validate::ALIAS_NAME)
+			->willReturn($annotation)
 		;
 		
 		$validator
@@ -519,21 +481,30 @@ class SerializerSubscriberTest extends TestCase {
 		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
 		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
 
-		$request = $this->getMockBuilder(Request::class)->getMock();
+		$request    = $this->getMockBuilder(Request::class)->getMock();
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
 
 		$entity = new \stdClass();
+		$annotation = new Validate([]);
 
-		$serializerSubscriber = new SerializerSubscriberValidateTest(
+		$serializerSubscriber = new SerializerSubscriber(
 			$serializer,
 			$em,
-			$validator,
-			new Validate([])
+			$validator
 		);
 
 		$request
 			->expects($this->once())
 			->method('getMethod')
 			->willReturn('get')
+		;
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Validate::ALIAS_NAME)
+			->willReturn($annotation)
 		;
 
 		$validator
@@ -628,7 +599,9 @@ class SerializerSubscriberTest extends TestCase {
 		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
 		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
 
 		$event = new ViewEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $controllerResult);
 		
@@ -653,12 +626,18 @@ class SerializerSubscriberTest extends TestCase {
 			->with($result, 'json', $serializeGroup)
 			->willReturn('encoded_data')
 		;
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Serialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
 		
-		$serializerSubscriber = new SerializerSubscriberOnKernelViewTest(
+		$serializerSubscriber = new SerializerSubscriber(
 			$serializer,
 			$em,
-			$validator,
-			$annotation
+			$validator
 		);
 
 		$serializerSubscriber->onKernelView($event);
@@ -676,23 +655,31 @@ class SerializerSubscriberTest extends TestCase {
 		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
 		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
 
 		$event = new ViewEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, 'data');
 
 		$annotation = new Serialize([]);
 
-		$serializerSubscriber = new SerializerSubscriberOnKernelViewTest(
+		$serializerSubscriber = new SerializerSubscriber(
 			$serializer,
 			$em,
-			$validator,
-			$annotation
+			$validator
 		);
 		
 		$serializer
 			->method('supportsEncoding')
 			->with('json', [ 'groups' => [ 'get' ] ])
 			->willReturn(false)
+		;
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Serialize::ALIAS_NAME)
+			->willReturn($annotation)
 		;
 
 		$this->expectException(NotEncodableValueException::class);
