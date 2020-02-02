@@ -37,7 +37,7 @@
         "gollumsf/enum": "^1.0"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^5.0",
+        "symfony/phpunit-bridge": "^4.4|^5.0",
         "phpunit/phpunit": "^8.5",
         "gollumsf/reflection-property-test": "^1.0",
         "matthiasnoback/symfony-dependency-injection-test": "^4.1"
