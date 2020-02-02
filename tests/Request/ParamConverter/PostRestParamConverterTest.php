@@ -7,7 +7,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
-use function foo\func;
 
 class PostRestParamConverterTest extends TestCase {
 	
