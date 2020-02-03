@@ -1,8 +1,7 @@
 <?php
 namespace Test\GollumSF\RestBundle\EventSubscriber;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\Mapping\ClassMetadataFactory;
+use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\Proxy;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Annotation\Serialize;
@@ -41,7 +40,7 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 	protected function validate(Request $request, $entity): void {
 	}
 
-	protected function isEntity($class) {
+	protected function isEntity($class): bool {
 		return false;
 	}
 
@@ -52,20 +51,25 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 
 class SerializerSubscriberOnKernelControllerArgumentsTestSave extends SerializerSubscriberOnKernelControllerArgumentsTest {
 
+	private $em;
 	private $isEntity;
 
 	public function __construct(
 		SerializerInterface $serializer,
-		EntityManagerInterface $em,
-		ValidatorInterface $validator,
+		ObjectManager $em,
 		bool $isEntity
 	) {
-		parent::__construct($serializer, $em, $validator);
+		parent::__construct($serializer);
+		$this->em = $em;
 		$this->isEntity = $isEntity;
 	}
-	
-	protected function isEntity($class) {
+
+	protected function isEntity($class): bool {
 		return $this->isEntity;
+	}
+
+	protected function getEntityManagerForClass($entityOrClass): ?ObjectManager {
+		return $this->em;
 	}
 }
 
@@ -138,10 +142,8 @@ class SerializerSubscriberTest extends TestCase {
 	 */
 	public function testOnKernelControllerArguments($method, $groups, $groupResults) {
 
-		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -182,9 +184,7 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 		
 		$serializerSubscriber->onKernelControllerArguments($event);
@@ -205,10 +205,9 @@ class SerializerSubscriberTest extends TestCase {
 	 */
 	public function testOnKernelControllerArgumentsSave($isEntity, $save, $called) {
 		
-		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$em         = $this->getMockForAbstractClass(ObjectManager::class);
+		$kernel     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -226,7 +225,6 @@ class SerializerSubscriberTest extends TestCase {
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTestSave(
 			$serializer,
 			$em,
-			$validator,
 			$isEntity
 		);
 
@@ -298,9 +296,7 @@ class SerializerSubscriberTest extends TestCase {
 	 * @dataProvider providerUnserialize
 	 */
 	public function testUnserialize($entity, $class, $groups) {
-		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 
 		$context = [
 			'groups' => $groups,
@@ -308,9 +304,7 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 
 		$serializer
@@ -335,9 +329,7 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testUnserializeNotSupport() {
-		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 
 		$entity = new \stdClass();
 		$context = [
@@ -346,9 +338,7 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 
 		$serializer
@@ -372,9 +362,7 @@ class SerializerSubscriberTest extends TestCase {
 	}
 	
 	public function testUnserializeException() {
-		$serializer              = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em                      = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 
 		$entity = new \stdClass();
 		$context = [
@@ -383,9 +371,7 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 
 		$serializer
@@ -415,10 +401,10 @@ class SerializerSubscriberTest extends TestCase {
 	public function providerValidate() {
 		return  [
 			[ []                      , 'POST' , [ 'post' ] ],
-//			[ []                      , 'post' , [ 'post' ] ],
-//			[ []                      , 'patch', [ 'patch' ] ],
-//			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
-//			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
+			[ []                      , 'post' , [ 'post' ] ],
+			[ []                      , 'patch', [ 'patch' ] ],
+			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
+			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
 		];
 	}
 
@@ -426,9 +412,8 @@ class SerializerSubscriberTest extends TestCase {
 	 * @dataProvider providerValidate
 	 */
 	public function testValidate($groups, $method, $groupsFinal) {
-		$serializer              = $this->getMockBuilder(SerializerInterface::class             )->getMockForAbstractClass();
-		$em                      = $this->getMockBuilder(EntityManagerInterface::class          )->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
+		$serializer              = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
 		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
 		
 		$request    = $this->getMockBuilder(Request::class)->getMock();
@@ -441,10 +426,9 @@ class SerializerSubscriberTest extends TestCase {
 		]);
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
+		$serializerSubscriber->setValidator($validator);
 
 		$request
 			->expects($this->once())
@@ -476,9 +460,8 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testValidateException() {
-		$serializer              = $this->getMockBuilder(SerializerInterface::class             )->getMockForAbstractClass();
-		$em                      = $this->getMockBuilder(EntityManagerInterface::class          )->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class              )->getMockForAbstractClass();
+		$serializer              = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$validator               = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
 		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
 
 		$request    = $this->getMockBuilder(Request::class)->getMock();
@@ -489,10 +472,9 @@ class SerializerSubscriberTest extends TestCase {
 		$annotation = new Validate([]);
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
+		$serializerSubscriber->setValidator($validator);
 
 		$request
 			->expects($this->once())
@@ -524,49 +506,34 @@ class SerializerSubscriberTest extends TestCase {
 
 		$this->reflectionCallMethod($serializerSubscriber, 'validate', [ $request, $entity ]);
 	}
-
-
-	public function providerIsEntity() {
-		return [
-			[ new \stdClass(), \stdClass::class, true, false ],
-			[ new StubProxy(), \stdClass::class, true, false ],
-			[ new \stdClass(), \stdClass::class, false, true ],
-		];
-	}
-
-	/**
-	 * @dataProvider providerIsEntity
-	 */
-	public function testIsEntity($entity, $class, $transiantResult, $result) {
-		$serializer      = $this->getMockBuilder(SerializerInterface::class     )->getMockForAbstractClass();
-		$em              = $this->getMockBuilder(EntityManagerInterface::class  )->getMockForAbstractClass();
-		$validator       = $this->getMockBuilder(ValidatorInterface::class      )->getMockForAbstractClass();
-		$metadataFactory = $this->getMockBuilder(ClassMetadataFactory::class)->getMockForAbstractClass();
-		
-		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
-		);
-		
-		$em
-			->method('getMetadataFactory')
-			->willReturn($metadataFactory)
-		;
-		
-		$metadataFactory
-			->method('isTransient')
-			->with($class)
-			->willReturn($transiantResult)
-		;
-
-		
-		$this->assertEquals(
-			$this->reflectionCallMethod($serializerSubscriber, 'isEntity', [ $entity ]),
-			$result
-		);
-	}
 	
+	public function testValidateNoService() {
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+
+		$request    = $this->getMockBuilder(Request::class)->getMock();
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+
+		$entity = new \stdClass();
+		$annotation = new Validate([
+			'value' => [ 'group1' ]
+		]);
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer
+		);
+
+		$attributes
+			->expects($this->once())
+			->method('get')
+			->with('_'.Validate::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		
+		$this->expectException(\LogicException::class);
+
+		$this->reflectionCallMethod($serializerSubscriber, 'validate', [ $request, $entity ]);
+	}
 	
 	public function provideOnKernelView() {
 		return [
@@ -594,10 +561,8 @@ class SerializerSubscriberTest extends TestCase {
 	 */
 	public function testOnKernelView($controllerResult, $annoGroup, $serializeGroup, $result) {
 
-		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$kernel     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
@@ -635,9 +600,7 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 
 		$serializerSubscriber->onKernelView($event);
@@ -650,9 +613,7 @@ class SerializerSubscriberTest extends TestCase {
 	}
 	
 	public function testOnKernelViewNotSuport() {
-		$serializer = $this->getMockBuilder(StubSerializer::class        )->getMockForAbstractClass();
-		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
 
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -664,9 +625,7 @@ class SerializerSubscriberTest extends TestCase {
 		$annotation = new Serialize([]);
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 		
 		$serializer
@@ -688,9 +647,7 @@ class SerializerSubscriberTest extends TestCase {
 	
 	public function testOnKernelException() {
 
-		$serializer = $this->getMockBuilder(SerializerInterface::class   )->getMockForAbstractClass();
-		$em         = $this->getMockBuilder(EntityManagerInterface::class)->getMockForAbstractClass();
-		$validator  = $this->getMockBuilder(ValidatorInterface::class    )->getMockForAbstractClass();
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
 		
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -726,9 +683,7 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer,
-			$em,
-			$validator
+			$serializer
 		);
 		
 		$serializerSubscriber->onKernelException($event);

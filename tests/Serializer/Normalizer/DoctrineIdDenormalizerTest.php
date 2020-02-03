@@ -1,11 +1,23 @@
 <?php
 namespace Test\GollumSF\RestBundle\Serializer\Normalizer;
 
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
 use PHPUnit\Framework\TestCase;
+
+class DoctrineIdDenormalizerTestDenormalize extends DoctrineIdDenormalizer {
+	public $repository;
+	protected function getEntityRepositoryForClass($entityOrClass): ?ObjectRepository {
+		return $this->repository;
+	}
+}
+class DoctrineIdDenormalizerTestSupportsDenormalization extends DoctrineIdDenormalizer {
+	public $isEntity;
+	protected function isEntity($entityOrClass): bool {
+		return $this->isEntity;
+	}
+}
 
 class DoctrineIdDenormalizerTest extends TestCase {
 	
@@ -13,19 +25,10 @@ class DoctrineIdDenormalizerTest extends TestCase {
 	
 	public function testDenormalize() {
 
-		$em = $this->getMockBuilder(EntityManagerInterface::class)
-			->getMockForAbstractClass()
-		;
 		$repository = $this->getMockBuilder(ObjectRepository::class)
 			->getMockForAbstractClass()
 		;
 		$entity = new \stdClass();
-
-		$em
-			->method('getRepository')
-			->with('STUB_CLASS')
-			->willReturn($repository)
-		;
 
 		$repository
 			->method('find')
@@ -33,7 +36,8 @@ class DoctrineIdDenormalizerTest extends TestCase {
 			->willReturn($entity)
 		;
 		
-		$doctrineIdDenormalizer = new DoctrineIdDenormalizer($em);
+		$doctrineIdDenormalizer = new DoctrineIdDenormalizerTestDenormalize();
+		$doctrineIdDenormalizer->repository = $repository;
 		$this->assertEquals(
 			$doctrineIdDenormalizer->denormalize('ID', 'STUB_CLASS', 'format'),
 			$entity
@@ -42,33 +46,40 @@ class DoctrineIdDenormalizerTest extends TestCase {
 	
 	public function provideSupportsDenormalization() {
 		return [
-			[ 'STRING', \stdClass::class, true],
-			[ 1, \stdClass::class, true],
-			[ 'STRING', 'STUB_CLASS',false],
-			[ 1, 'STUB_CLASS', false],
-			[ [], \stdClass::class, false],
-			[ new \stdClass(), \stdClass::class, false],
-			[ null, \stdClass::class, false]
+			[ 'STRING', true, \stdClass::class, true],
+			[ 1, true, \stdClass::class, true],
+			[ 'STRING', true, 'STUB_CLASS',false],
+			[ 1, true, 'STUB_CLASS', false],
+			[ [], true, \stdClass::class, false],
+			[ new \stdClass(), true, \stdClass::class, false],
+			[ null, true, \stdClass::class, false],
+			[ 'STRING', false, \stdClass::class, false],
+			[ 1, false, \stdClass::class, false],
 		];
 	}
 
 	/**
 	 * @dataProvider provideSupportsDenormalization
 	 */
-	public function testSupportsDenormalization($data, $type, $result) {
-		$em = $this->getMockBuilder(EntityManagerInterface::class)
-			->getMockForAbstractClass()
-		;
-		$doctrineIdDenormalizer =  new DoctrineIdDenormalizer($em);
-		
+	public function testSupportsDenormalization($data, $isEntity, $type, $result) {
+		$doctrineIdDenormalizer = new DoctrineIdDenormalizerTestSupportsDenormalization();
+		$doctrineIdDenormalizer->isEntity = $isEntity;
+
 		$this->assertEquals(
 			$doctrineIdDenormalizer->supportsDenormalization($data, $type),
 			$result
 		);
 
-		$cache = $this->reflectionGetValue($doctrineIdDenormalizer, 'cache');
+		$cache = $this->reflectionGetValue($doctrineIdDenormalizer, 'cache', DoctrineIdDenormalizer::class);
 		$this->assertTrue(array_key_exists($type, $cache));
 		$this->assertEquals($cache[$type], $result);
 
+	}
+
+	public function testSupportsDenormalizationNoDoctrine() {
+		$doctrineIdDenormalizer = new DoctrineIdDenormalizer();
+		$this->assertFalse(
+			$doctrineIdDenormalizer->supportsDenormalization('STRING', \stdClass::class)
+		);
 	}
 }

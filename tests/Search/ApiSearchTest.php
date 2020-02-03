@@ -24,7 +24,7 @@ class ApiSearchTestApiFind extends ApiSearch {
 	public function getMasterRequest(): Request {
 		return $this->request;
 	}
-	public function getRepository(string $entityClass) {
+	protected function getEntityRepositoryForClass($entityOrClass): ?ObjectRepository {
 		return $this->repository;
 	}
 }
@@ -46,69 +46,13 @@ class ApiSearchTest extends TestCase {
 			->willReturn($request)
 		;
 
-		$apiSearch = new ApiSearch($managerRegistry, $requestStack, $configuration);
+		$apiSearch = new ApiSearch($requestStack, $configuration);
 
 		$this->assertEquals(
 			$this->reflectionCallMethod($apiSearch, 'getMasterRequest'), $request
 		);
 	}
 
-	public function testGetRepository() {
-
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$em              = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
-
-		$managerRegistry
-			->expects($this->once())
-			->method('getManagerForClass')
-			->with(\stdClass::class)
-			->willReturn($em)
-		;
-		$em
-			->expects($this->once())
-			->method('getRepository')
-			->with(\stdClass::class)
-			->willReturn($repository)
-		;
-
-		$apiSearch = new ApiSearch($managerRegistry, $requestStack, $configuration);
-
-		$this->assertEquals(
-			$this->reflectionCallMethod($apiSearch, 'getRepository', [ \stdClass::class ]), $repository
-		);
-	}
-
-	public function testGetRepositoryNull() {
-
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$em              = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
-
-		$managerRegistry
-			->expects($this->once())
-			->method('getManagerForClass')
-			->with(\stdClass::class)
-			->willReturn(null)
-		;
-		$em
-			->expects($this->never())
-			->method('getRepository')
-			->with(\stdClass::class)
-			->willReturn($repository)
-		;
-
-		$apiSearch = new ApiSearch($managerRegistry, $requestStack, $configuration);
-
-		$this->assertNull(
-			$this->reflectionCallMethod($apiSearch, 'getRepository', [ \stdClass::class ])
-		);
-	}
-	
 	public function providerApiFind() {
 		return [
 			[ 25 , 25, null, null ],
@@ -123,7 +67,6 @@ class ApiSearchTest extends TestCase {
 	 */
 	public function testApiFind($limit, $limitResult, $direction, $directionResult) {
 
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -174,7 +117,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn($list)
 		;
 
-		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $configuration);
 		$apiSearch->repository = $repository;
 		$apiSearch->request = $request;
 
@@ -185,7 +128,6 @@ class ApiSearchTest extends TestCase {
 
 	public function testApiFindNoInstanceOfApiFindRepository() {
 
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -227,7 +169,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn(Direction::ASC)
 		;
 
-		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $configuration);
 		$apiSearch->repository = $repository;
 		$apiSearch->request = $request;
 
@@ -238,7 +180,6 @@ class ApiSearchTest extends TestCase {
 
 	public function testApiFindNoInstanceNoRepository() {
 
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -279,7 +220,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn(Direction::ASC)
 		;
 
-		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $configuration);
 		$apiSearch->request = $request;
 
 		$this->expectException(\LogicException::class);
@@ -288,7 +229,6 @@ class ApiSearchTest extends TestCase {
 	}
 
 	public function testStaticArrayList() {
-		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -303,7 +243,7 @@ class ApiSearchTest extends TestCase {
 			->method('getDefaultLimitItem')
 			->willReturn(42)
 		;
-		$apiSearch = new ApiSearchTestApiFind($managerRegistry, $requestStack, $configuration);
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $configuration);
 		$apiSearch->request = $request;
 
 		$arrayList = $apiSearch->staticArrayList([

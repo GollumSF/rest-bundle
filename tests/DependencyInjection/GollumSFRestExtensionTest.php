@@ -4,7 +4,6 @@ namespace Test\GollumSF\RestBundle\DependencyInjection;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\DependencyInjection\GollumSFRestExtension;
 use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
-use GollumSF\RestBundle\Reflection\ControllerActionExtractorInterface;
 use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
