@@ -1,14 +1,14 @@
 <?php
 namespace GollumSF\RestBundle\EventSubscriber;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\Proxy;
+use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
+use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,14 +23,16 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class SerializerSubscriber implements EventSubscriberInterface {
 	
+	use ManagerRegistryToManager;
+	
 	/**
 	 * @var SerializerInterface
 	 */
 	private $serializer;
 	/**
-	 * @var EntityManagerInterface
+	 * @var ManagerRegistry
 	 */
-	private $em;
+	private $managerRegistry;
 	/**
 	 * @var ValidatorInterface
 	 */
@@ -51,13 +53,19 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 	
 	public function __construct(
-		SerializerInterface $serializer,
-		EntityManagerInterface $em,
-		ValidatorInterface $validator
+		SerializerInterface $serializer
 	) {
 		$this->serializer = $serializer;
-		$this->em = $em;
+	}
+
+	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+		$this->managerRegistry = $managerRegistry;
+		return $this;
+	}
+
+	public function setValidator(ValidatorInterface $validator): self {
 		$this->validator = $validator;
+		return $this;
 	}
 	
 	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
@@ -81,13 +89,14 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			$this->validate($request, $entity);
 
 			if ($annotation->isSave() && $this->isEntity($entity)) {
-				$this->em->persist($entity);
-				$this->em->flush();
+				$em = $this->getEntityManagerForClass($entity);
+				$em->persist($entity);
+				$em->flush();
 			}
 			
 		}
 	}
-
+	
 	public function onKernelView(ViewEvent $event) {
 
 		$request  = $event->getRequest();
@@ -174,18 +183,15 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				$annotationValidate->getGroups()
 			);
 			
+			if (!$this->validator) {
+				throw new \LogicException(sprintf('%s service not declared.', ValidatorInterface::class));
+			}
+			
 			$errors = $this->validator->validate($entity, null, $groups);
 			if ($errors->count()) {
 				throw new UnserializeValidateException($errors);
 			}
 		}
-	}
-
-	protected  function isEntity($class) {
-		if (is_object($class)) {
-			$class = ($class instanceof Proxy) ? get_parent_class($class) : get_class($class);
-		}
-		return !$this->em->getMetadataFactory()->isTransient($class);
 	}
 	
 	protected function serialize($data, string $format, array $groups) {

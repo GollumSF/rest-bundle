@@ -1,32 +1,32 @@
 <?php
 namespace GollumSF\RestBundle\Serializer\Normalizer;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class DoctrineIdDenormalizer implements DenormalizerInterface {
+
+	use ManagerRegistryToManager;
 	
-	/**
-	 * @var EntityManagerInterface
-	 */
-	private $em;
+	/** @var ManagerRegistry */
+	private $managerRegistry;
 	
-	/**
-	 * @var array
-	 */
+	/** @var array */
 	private $cache = [];
 	
-	public function __construct(EntityManagerInterface $em) {
-		$this->em = $em;
+	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+		$this->managerRegistry = $managerRegistry;
+		return $this;
 	}
 
 	public function denormalize($data, $class, $format = null, array $context = []) {
-		return $this->em->getRepository($class)->find($data);
+		return $this->getEntityRepositoryForClass($class)->find($data);
 	}
 	
 	public function supportsDenormalization($data, $type, $format = null) {
 		if (!array_key_exists($type, $this->cache)) {
-			$this->cache[$type] = class_exists($type) && (is_int($data) || is_string($data));
+			$this->cache[$type] = class_exists($type) && $this->isEntity($type) && (is_int($data) || is_string($data));
 		}
 		return $this->cache[$type];
 	}

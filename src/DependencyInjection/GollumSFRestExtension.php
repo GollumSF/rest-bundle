@@ -1,12 +1,16 @@
 <?php
 namespace GollumSF\RestBundle\DependencyInjection;
 
+use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\RestBundle\Configuration\ApiConfiguration;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
+use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class GollumSFRestExtension extends Extension
 {
@@ -21,7 +25,5 @@ class GollumSFRestExtension extends Extension
 			->addArgument($config['max_limit_item'])
 			->addArgument($config['default_limit_item'])
 		;
-		
-		
 	}
 }

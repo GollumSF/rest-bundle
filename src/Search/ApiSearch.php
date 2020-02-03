@@ -8,13 +8,16 @@ use GollumSF\RestBundle\Model\ApiList;
 use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
+use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class ApiSearch implements ApiSearchInterface {
 	
+	use ManagerRegistryToManager;
+	
 	/** @var ManagerRegistry  */
-	private $doctrine;
+	private $managerRegistry;
 
 	/** @var RequestStack */
 	private $requestStack;
@@ -23,27 +26,22 @@ class ApiSearch implements ApiSearchInterface {
 	private $apiConfiguration;
 	
 	public function __construct(
-		ManagerRegistry $doctrine,
 		RequestStack $requestStack,
 		ApiConfigurationInterface $apiConfiguration
 	) {
-		$this->doctrine = $doctrine;
 		$this->requestStack = $requestStack;
 		$this->apiConfiguration = $apiConfiguration;
+	}
+
+	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+		$this->managerRegistry = $managerRegistry;
+		return $this;
 	}
 
 	protected function getMasterRequest(): Request {
 		return $this->requestStack->getMasterRequest();
 	}
 
-	/**
-	 * @return ObjectRepository
-	 */
-	protected function getRepository(string $entityClass) {
-		$manager = $this->doctrine->getManagerForClass($entityClass);
-		return $manager ? $manager->getRepository($entityClass) : null;
-	}
-	
 	public function apiFindBy(string $entityClass, \Closure $queryCallback = null): ApiList {
 
 		$request   = $this->getMasterRequest();
@@ -62,7 +60,7 @@ class ApiSearch implements ApiSearchInterface {
 		}
 
 		/** @var ApiFinderRepositoryInterface $repository */
-		$repository = $this->getRepository($entityClass);
+		$repository = $this->getEntityRepositoryForClass($entityClass);
 		if (!$repository) {
 			throw new \LogicException(sprintf('Repository not found for class %s', $entityClass));
 		}
