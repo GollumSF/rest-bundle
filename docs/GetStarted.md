@@ -87,6 +87,7 @@ use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -114,7 +115,7 @@ class BookController {
 	 * @Route("", methods={"POST"})
 	 * @Unserialize("book", groups="book_post")
 	 * @Validate({ "book_post" })
-	 * @Serialize(groups="book_get")
+	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
 	 *
 	 */
 	public function post(Book $book) {
