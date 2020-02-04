@@ -82,7 +82,8 @@ class Book {
 namespace App\Controller\Api;
 
 use App\Entity\Book;
-use Doctrine\ORM\EntityManagerInterface;use GollumSF\RestBundle\Annotation\Serialize;
+use Doctrine\ORM\EntityManagerInterface;
+use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
