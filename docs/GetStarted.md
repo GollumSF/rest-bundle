@@ -1,6 +1,6 @@
-# Get Started
+# Get started
 
-## Create your model or entity, with serialize groups and validator
+Create your model or entity, with serialize groups and validator
 
 ```php
 <?php
@@ -75,7 +75,7 @@ class Book {
 }
 ```
 
-## Create your Api Controller
+Create your Api Controller
 
 ```php
 <?php

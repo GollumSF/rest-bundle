@@ -30,9 +30,9 @@ gollum_sf_rest:
     default_limit_item: 25   # optional, default : 25
 ```
 
-## Others
+## Usages:
 
  - [Get started](docs/GetStarted.md)
  - [Serialize](docs/GetStarted.md)
  - [Unserialize](docs/GetStarted.md)
- - [Validation](docs/Validate)
+ - [Validation](docs/Validation.md)
