@@ -253,7 +253,7 @@ class BookController {
 }
 ```
 
-### `patchTitle` action:
+### `delete` action:
 
  - url: `DELETE http://127.0.0.1/api/books/5`
  - request: *none*
