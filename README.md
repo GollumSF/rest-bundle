@@ -26,9 +26,9 @@ config.yml
 
 ```yaml
 gollum_sf_rest:
-    max_limit_item:              100  # (optional, default : 100) Max limit item API support when call ApiSearch, if 0 no limit.
-    default_limit_item:          25   # (optional, default : 25) Default limit item API support if no limit on request when call ApiSearch
-    always_serialized_exception: 25   # (optional, default : false) All symfony exception return json response. If false only route with Serialize annotation
+    max_limit_item:              100   # (optional, default : 100) Max limit item API support when call ApiSearch, if 0 no limit.
+    default_limit_item:          25    # (optional, default : 25) Default limit item API support if no limit on request when call ApiSearch
+    always_serialized_exception: false # (optional, default : false) All symfony exception return json response. If false only route with Serialize annotation
 ```
 
 ## Usages:
