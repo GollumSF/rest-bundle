@@ -16,6 +16,7 @@ class BookControllerTest extends AbstractControllerTest {
 
 		$client->request('GET', '/api/books');
 		$response = $client->getResponse();
+		
 		$this->assertEquals($response->getStatusCode(), 200);
 		$this->assertEquals($response->getContent(), \json_encode([
 			'data' => [
@@ -88,30 +89,64 @@ class BookControllerTest extends AbstractControllerTest {
 		]));
 	}
 	
-	public function testFind()
+	public function provideFind() {
+		return [
+			[ 1, [
+				'id' => 1,
+				'title' => 'TITLE_1',
+				'description' => 'DESCRIPTION_1',
+				'author' => [
+					'id' => 1,
+					'name' => 'AUTHOR_1'
+				],
+				'category' => [
+					'id' => 1
+				]
+			] ],
+
+			[ 2, [
+				'id' => 2,
+				'title' => 'TITLE_2',
+				'description' => 'DESCRIPTION_2',
+				'author' => [
+					'id' => 2,
+					'name' => 'AUTHOR_2'
+				],
+				'category' => [
+					'id' => 1
+				]
+			] ],
+
+			[ 3, [
+				'id' => 3,
+				'title' => 'TITLE_3',
+				'description' => 'DESCRIPTION_3',
+				'author' => [
+					'id' => 2,
+					'name' => 'AUTHOR_2'
+				],
+				'category' => [
+					'id' => 1
+				]
+			] ],
+		];
+	}
+
+	/**
+	 * @dataProvider provideFind
+	 */
+	public function testFind($id, $result)
 	{
 
 		$this->loadFixture();
 
 		$client = $this->getClient();
 
-		$client->request('GET', '/api/books/1');
+		$client->request('GET', '/api/books/'.$id);
 		$response = $client->getResponse();
+		
 		$this->assertEquals($response->getStatusCode(), 200);
-		$this->assertEquals($response->getContent(), \json_encode([
-			'id' => 1,
-			'title' => 'TITLE_1',
-			'description' => 'DESCRIPTION_1',
-		]));
-
-		$client->request('GET', '/api/books/2');
-		$response = $client->getResponse();
-		$this->assertEquals($response->getStatusCode(), 200);
-		$this->assertEquals($response->getContent(), \json_encode([
-			'id' => 2,
-			'title' => 'TITLE_2',
-			'description' => 'DESCRIPTION_2',
-		]));
+		$this->assertEquals($response->getContent(), \json_encode($result));
 	}
 
 	public function testFind404() {
@@ -130,24 +165,99 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertArrayHasKey('code', $json);
 	}
 
-	public function testPostSuccess()
-	{
+	public function providePostSuccess() {
+		return [
+			[
+				[
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => 1,
+					'category' => 1,
+				],
+				[
+					'id' => 51,
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [
+						'id' => 1,
+						'name' => 'AUTHOR_1'
+					],
+					'category' => [ 'id' => 1 ]
+				], 1, 1, 'AUTHOR_1'
+			],
+			
+			[
+				[
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [ 'id' => 2 ],
+					'category' => [ 'id' => 3 ],
+				],
+				[
+					'id' => 51,
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [
+						'id' => 2,
+						'name' => 'AUTHOR_2'
+					],
+					'category' => [ 'id' => 3 ]
+				], 3, 2, 'AUTHOR_2'
+			],
+
+			[
+				[
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [ 'name' => 'AUTHOR_NEW' ],
+					'category' => 5,
+				],
+				[
+					'id' => 51,
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [
+						'id' => 41,
+						'name' => 'AUTHOR_NEW'
+					],
+					'category' => [ 'id' => 5 ]
+				], 5, 41, 'AUTHOR_NEW'
+			],
+
+			[
+				[
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [ 'id' => 1, 'name' => 'AUTHOR_NEW' ],
+					'category' => 5,
+				],
+				[
+					'id' => 51,
+					'title' => 'TITLE_51',
+					'description' => 'DESCRIPTION_51',
+					'author' => [
+						'id' => 1,
+						'name' => 'AUTHOR_NEW'
+					],
+					'category' => [ 'id' => 5 ]
+				], 5, 1, 'AUTHOR_NEW'
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider providePostSuccess
+	 */
+	public function testPostSuccess($content, $result, $categoryId, $authorId, $authorName) {
 
 		$this->loadFixture();
 
 		$client = $this->getClient();
 
-		$client->request('POST', '/api/books', [], [], [], \json_encode([
-			'title' => 'TITLE_51',
-			'description' => 'DESCRIPTION_51',
-		]));
+		$client->request('POST', '/api/books', [], [], [], \json_encode($content));
 		$response = $client->getResponse();
 		$this->assertEquals($response->getStatusCode(), 201);
-		$this->assertEquals($response->getContent(), \json_encode([
-			'id' => 51,
-			'title' => 'TITLE_51',
-			'description' => 'DESCRIPTION_51',
-		]));
+		$this->assertEquals($response->getContent(), \json_encode($result));
 
 		/** @var ManagerRegistry $doctrine */
 		$doctrine = $this->getContainer()->get('doctrine');
@@ -158,6 +268,9 @@ class BookControllerTest extends AbstractControllerTest {
 		$book = $em->getRepository(Book::class)->find(51);
 		$this->assertEquals($book->getTitle(), 'TITLE_51');
 		$this->assertEquals($book->getDescription(), 'DESCRIPTION_51');
+		$this->assertEquals($book->getCategory()->getId(), $categoryId);
+		$this->assertEquals($book->getAuthor()->getId(), $authorId);
+		$this->assertEquals($book->getAuthor()->getName(), $authorName);
 	}
 
 	public function providerPostValidatorError() {
@@ -165,20 +278,40 @@ class BookControllerTest extends AbstractControllerTest {
 			[ [
 				'title' => 'TITLE_ERROR',
 				'description' => '',
+				'author' => 1,
+				'category' => 1,
 			], 'description' ],
 
 			[ [
 				'title' => 'TITLE_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'description' ],
 
 			[ [
 				'title' => '',
 				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'title' ],
 
 			[ [
 				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'title' ],
+
+			[ [
+				'title' => 'TITLE_ERROR',
+				'description' => 'DESCRIPTION_ERROR',
+				'category' => 1,
+			], 'author' ],
+
+			[ [
+				'title' => 'TITLE_ERROR',
+				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+			], 'category' ],
 		];
 	}
 
@@ -207,30 +340,42 @@ class BookControllerTest extends AbstractControllerTest {
 			[ [
 				'title' => 'TITLE_ERROR',
 				'description' => null,
+				'author' => 1,
+				'category' => 1,
 			], 'description' ],
 
 			[ [
 				'title' => 'TITLE_ERROR',
 				'description' => 0,
+				'author' => 1,
+				'category' => 1,
 			], 'description' ],
 
 			[ [
 				'title' => 'TITLE_ERROR',
 				'description' => [],
+				'author' => 1,
+				'category' => 1,
 			], 'description' ],
 			[ [
 				'title' => null,
 				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'title' ],
 
 			[ [
 				'title' => 0,
 				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'title' ],
 
 			[ [
 				'title' => [],
 				'description' => 'DESCRIPTION_ERROR',
+				'author' => 1,
+				'category' => 1,
 			], 'title' ],
 		];
 	}
@@ -259,18 +404,24 @@ class BookControllerTest extends AbstractControllerTest {
 			[ [
 				'title' => 'TITLE_NEW_1',
 				'description' => 'DESCRIPTION_NEW_1',
+				'author' => 2,
+				'category' => 2,
 			] ],
 
 			[ [
 				'id' => 1,
 				'title' => 'TITLE_NEW_1',
 				'description' => 'DESCRIPTION_NEW_1',
+				'author' => 2,
+				'category' => 2,
 			] ],
 
 			[ [
 				'id' => 2,
 				'title' => 'TITLE_NEW_1',
 				'description' => 'DESCRIPTION_NEW_1',
+				'author' => 2,
+				'category' => 2,
 			] ]
 		];
 	}
@@ -291,6 +442,11 @@ class BookControllerTest extends AbstractControllerTest {
 			'id' => 1,
 			'title' => 'TITLE_NEW_1',
 			'description' => 'DESCRIPTION_NEW_1',
+			'author' => [
+				'id' => 2,
+				'name' => 'AUTHOR_2'
+			],
+			'category' => [ 'id' => 2 ]
 		]));
 
 		/** @var ManagerRegistry $doctrine */
@@ -325,7 +481,17 @@ class BookControllerTest extends AbstractControllerTest {
 				'id' => 2,
 				'title' => 'TITLE_NEW_1',
 				'description' => 'DESCRIPTION_NEW_1',
-			] ]
+			] ],
+
+			[ [
+				'title' => 'TITLE_NEW_1',
+				'author' => 2,
+			] ],
+
+			[ [
+				'title' => 'TITLE_NEW_1',
+				'category' => 2,
+			] ],
 		];
 	}
 
@@ -345,6 +511,11 @@ class BookControllerTest extends AbstractControllerTest {
 			'id' => 1,
 			'title' => 'TITLE_NEW_1',
 			'description' => 'DESCRIPTION_1',
+			'author' => [
+				'id' => 1,
+				'name' => 'AUTHOR_1'
+			],
+			'category' => [ 'id' => 1 ]
 		]));
 
 		/** @var ManagerRegistry $doctrine */
@@ -356,6 +527,8 @@ class BookControllerTest extends AbstractControllerTest {
 		$book = $em->getRepository(Book::class)->find(1);
 		$this->assertEquals($book->getTitle(), 'TITLE_NEW_1');
 		$this->assertEquals($book->getDescription(), 'DESCRIPTION_1');
+		$this->assertEquals($book->getAuthor()->getId(), 1);
+		$this->assertEquals($book->getCategory()->getId(), 1);
 	}
 	
 	public function testDelete() {

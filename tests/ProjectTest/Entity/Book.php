@@ -2,6 +2,7 @@
 namespace Test\GollumSF\RestBundle\ProjectTest\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use GollumSF\EntityRelationSetter\ManyToOneSetter;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\BookRepository;
@@ -10,6 +11,8 @@ use Test\GollumSF\RestBundle\ProjectTest\Repository\BookRepository;
  * @ORM\Entity(repositoryClass=BookRepository::class)
  */
 class Book {
+	
+	use ManyToOneSetter;
 
 	/**
 	 * @ORM\Column(type="integer")
@@ -17,7 +20,8 @@ class Book {
 	 * @ORM\GeneratedValue()
 	 * 
 	 * @Groups({
-	 * 	"book_get", "book_getc"
+	 * 	"book_get", "book_getc",
+	 *  "author_get"
 	 * })
 	 *
 	 * @var int
@@ -51,6 +55,30 @@ class Book {
 	 */
 	private $description;
 
+	/**
+	 * @ORM\ManyToOne(targetEntity=Author::class, inversedBy="books", fetch="EAGER", cascade={"persist"})
+	 *
+	 * @Groups({
+	 * 	"book_get", "book_post", "book_put",
+	 * })
+	 * @Assert\NotNull(groups={"book_post", "book_put"})
+	 * 
+	 * @var Author
+	 */
+	private $author;
+
+	/**
+	 * @ORM\ManyToOne(targetEntity=Category::class, inversedBy="books")
+	 *
+	 * @Groups({
+	 * 	"book_get", "book_post", "book_put",
+	 * })
+	 * @Assert\NotNull(groups={"book_post", "book_put"})
+	 * 
+	 * @var Category
+	 */
+	private $category;
+	
 	/////////////
 	// Getters //
 	/////////////
@@ -67,6 +95,14 @@ class Book {
 		return $this->description;
 	}
 
+	public function getAuthor(): Author {
+		return $this->author;
+	}
+
+	public function getCategory(): Category {
+		return $this->category;
+	}
+	
 	/////////////
 	// Setters //
 	/////////////
@@ -80,4 +116,13 @@ class Book {
 		$this->description = $description;
 		return $this;
 	}
+
+	public function setAuthor(?Author $author): self {
+		return $this->manyToOneSet($author);
+	}
+
+	public function setCategory(?Category $category): self {
+		return $this->manyToOneSet($category);
+	}
+	
 }
