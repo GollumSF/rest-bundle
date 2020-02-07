@@ -2,6 +2,7 @@ framework:
     serializer:
         enable_annotations: true
     validation:
+        enabled: true
         enable_annotations: true
     router:
         utf8: true
