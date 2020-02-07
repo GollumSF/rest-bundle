@@ -7,6 +7,7 @@
 [![Latest Unstable Version](https://poser.pugx.org/gollumsf/rest-bundle/v/unstable)](https://packagist.org/packages/gollumsf/rest-bundle)
 [![Discord](https://img.shields.io/discord/671741944149573687?color=purple&label=discord)](https://discord.gg/xMBc5SQ)
 
+Very simple REST Api implementation
 
 ## Installation:
 
