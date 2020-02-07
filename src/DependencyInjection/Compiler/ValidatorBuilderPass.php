@@ -8,10 +8,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class ValidatorBuilderPass implements CompilerPassInterface
-{
-	public function process(ContainerBuilder $container)
-	{
+class ValidatorBuilderPass implements CompilerPassInterface {
+	
+	public function process(ContainerBuilder $container) {
 		if (!$container->hasDefinition(ValidatorInterface::class) && !$container->hasAlias(ValidatorInterface::class)) {
 			return;
 		}

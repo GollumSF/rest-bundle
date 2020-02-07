@@ -15,6 +15,7 @@ class Configuration implements ConfigurationInterface {
 		$treeBuilder->getRootNode()->children()
 			->integerNode('max_limit_item')->defaultValue(ApiConfigurationInterface::DEFAULT_MAX_LIMIT_ITEM)->end()
 			->integerNode('default_limit_item')->defaultValue(ApiConfigurationInterface::DEFAULT_DEFAULT_LIMIT_ITEM)->end()
+			->booleanNode('always_serialized_exception')->defaultValue(ApiConfigurationInterface::DEFAULT_ALWAYS_SERIALIZED_EXCEPTION)->end()
 		->end();
 
 		return $treeBuilder;

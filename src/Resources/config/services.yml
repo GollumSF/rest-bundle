@@ -10,10 +10,16 @@ services:
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    GollumSF\RestBundle\EventSubscriber\:
-        resource: '../../EventSubscriber/*'
+    GollumSF\RestBundle\EventSubscriber\SerializerSubscriber:
         tags:
             - { name: kernel.event_subscriber }
+    
+    GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber:
+        arguments:
+            $debug: '%kernel.debug%'
+        tags:
+            - { name: kernel.event_subscriber }
+        
 
     GollumSF\RestBundle\Serializer\Normalizer\:
         resource: '../../Serializer/Normalizer/*'

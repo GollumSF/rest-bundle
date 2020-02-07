@@ -24,6 +24,7 @@ class GollumSFRestExtension extends Extension
 			->register(ApiConfigurationInterface::class, ApiConfiguration::class)
 			->addArgument($config['max_limit_item'])
 			->addArgument($config['default_limit_item'])
+			->addArgument($config['always_serialized_exception'])
 		;
 	}
 }

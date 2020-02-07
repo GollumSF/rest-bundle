@@ -12,10 +12,9 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class DoctrineBuilderPass implements CompilerPassInterface
-{
-	public function process(ContainerBuilder $container)
-	{
+class DoctrineBuilderPass implements CompilerPassInterface {
+	
+	public function process(ContainerBuilder $container) {
 		if (!$container->hasDefinition(ManagerRegistry::class) && !$container->hasAlias(ManagerRegistry::class)) {
 			return;
 		}

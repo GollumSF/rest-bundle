@@ -6,12 +6,17 @@ Create your model or entity, with serialize groups and validator
 <?php
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class Book {
 
 	/**
+	 * @ORM\Column(type="integer")
+	 * @ORM\Id()
+	 * @ORM\GeneratedValue()
+	 *
 	 * @Groups({
 	 * 	"book_get", "book_getc"
 	 * })
@@ -21,19 +26,23 @@ class Book {
 	private $id;
 	
 	/**
+	 * @ORM\Column(type="string")
+	 * 
 	 * @Groups({
-	 * 	"book_get_get", "book_get_getc", "book_post", "book_put", "book_patch_title",
+	 * 	"book_get", "book_getc", "book_post", "book_put", "book_patch_title",
 	 * })
-
+	 * 
 	 * @Assert\NotBlank(groups={"book_post", "book_put", "book_patch_title"})
-
+	 * 
 	 * @var string
 	 */
 	private $title;
 
 	/**
+	 * @ORM\Column(type="string")
+	 * 
 	 * @Groups({
-	 * 	"book_get", "book_post", "book_patch",
+	 * 	"book_get", "book_post", "book_put",
 	 * })
 	 *
 	 * @Assert\Length(max=512, groups={"book_post", "book_put"})
@@ -51,25 +60,25 @@ class Book {
 		return $this->id;
 	}
 
-	public function getName(): string {
-		return $this->name;
-	}
-
 	public function getTitle(): string {
 		return $this->title;
+	}
+
+	public function getDescription(): string {
+		return $this->description;
 	}
 	
 	/////////////
 	// Setters //
 	/////////////
 
-	public function setName(string $name): self {
-		$this->name = $name;
+	public function setTitle(string $title): self {
+		$this->title = $title;
 		return $this;
 	}
 
-	public function setTitle(string $title): self {
-		$this->title = $title;
+	public function setDescription(string $description): self {
+		$this->description = $description;
 		return $this;
 	}
 }
@@ -133,8 +142,8 @@ class BookController {
 	}
 
 	/**
-	 * @Route("/{id}/patch-title", methods={"GET"})
-	 * Unserialize(groups="book_patch_title")
+	 * @Route("/{id}/title", methods={"PATCH"})
+	 * @Unserialize"book", groups="book_patch_title")
 	 * @Serialize(groups="book_get")
 	 */
 	public function patchTitle(Book $book) {

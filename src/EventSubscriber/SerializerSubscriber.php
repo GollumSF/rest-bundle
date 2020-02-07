@@ -47,7 +47,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				['onKernelView', -1],
 			],
 			KernelEvents::EXCEPTION => [
-				['onKernelException', 256],
+				['onKernelValidateException', 257],
 			],
 		];
 	}
@@ -118,10 +118,9 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 	}
 
-	public function onKernelException(ExceptionEvent $event) {
+	public function onKernelValidateException(ExceptionEvent $event) {
 		
 		$e = $event->getThrowable();
-
 		if ($e instanceof UnserializeValidateException) {
 			$rtn = [];
 
@@ -186,7 +185,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 			if (!$this->validator) {
 				throw new \LogicException(sprintf('%s service not declared.', ValidatorInterface::class));
 			}
-			
+
 			$errors = $this->validator->validate($entity, null, $groups);
 			if ($errors->count()) {
 				throw new UnserializeValidateException($errors);

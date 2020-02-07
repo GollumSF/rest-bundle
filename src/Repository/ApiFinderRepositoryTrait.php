@@ -39,7 +39,7 @@ trait ApiFinderRepositoryTrait {
 
 		$order = $order !== null ? preg_replace("/[^(a-zA-Z0-9\-_)]/", '', $order): null;
 		if ($order) {
-			$queryBuilder->orderBy('t.`'.$order.'`', $direction);
+			$queryBuilder->orderBy('t.'.$order.'', $direction);
 		}
 		
 		$data  = $queryBuilder->getQuery()->getResult();
