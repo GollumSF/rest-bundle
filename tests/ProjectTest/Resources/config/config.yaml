@@ -1,4 +1,5 @@
 framework:
+    test: ~
     serializer:
         enable_annotations: true
     validation:
