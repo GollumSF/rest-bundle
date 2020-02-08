@@ -84,8 +84,10 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				$annotation->getGroups()
 			);
 
-			$this->unserialize($content, $entity, $groups);
-
+			if ($content) {
+				$this->unserialize($content, $entity, $groups);
+			}
+			
 			$this->validate($request, $entity);
 
 			if ($annotation->isSave() && $this->isEntity($entity)) {
