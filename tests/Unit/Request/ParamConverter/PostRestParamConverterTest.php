@@ -5,6 +5,7 @@ use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
 use PHPUnit\Framework\TestCase;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use GollumSF\RestBundle\Annotation\Unserialize;
+use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -12,17 +13,16 @@ class PostRestParamConverterTest extends TestCase {
 	
 	public function providerApply() {
 		return [
-			[  new Unserialize(['name' => 'NAME']), 'NAME', null, null, true ],
-			[  new Unserialize(['name' => 'NAME']), 'BAD_NAME', null, null, false ],
-			[  new Unserialize(['name' => 'NAME']), 'NAME', 'value', null, false ],
-			[  new Unserialize(['name' => 'NAME']), 'NAME', null, 'value', false ],
+			[  new Unserialize(['name' => 'NAME']), 'NAME', null, true ],
+			[  new Unserialize(['name' => 'NAME']), 'BAD_NAME', null, false ],
+			[  new Unserialize(['name' => 'NAME']), 'NAME', 'value', false ],
 		];
 	}
 	
 	/**
 	 * @dataProvider providerApply
 	 */
-	public function testApply($annotation, $configurationName, $requestId, $requestName, $result) {
+	public function testApply($annotation, $configurationName, $requestValue, $result) {
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)
 			->disableOriginalConstructor()
@@ -39,20 +39,8 @@ class PostRestParamConverterTest extends TestCase {
 			->getMock()
 		;
 
-		$request
-			->method('get')
-			->willReturnCallback(function($name) use ($configurationName, $requestId, $requestName) {
-				if ($name === 'id') {
-					return $requestId;
-				}
-				if ($name === $configurationName) {
-					return $requestName;
-				}
-				$this->assertTrue(false);
-			})
-		;
-
 		$configuration
+			->expects($this->at(0))
 			->method('getName')
 			->willReturn($configurationName)
 		;
@@ -61,25 +49,124 @@ class PostRestParamConverterTest extends TestCase {
 			->willReturn(\stdClass::class)
 		;
 
-
 		$attributes
-			->expects($this->once())
+			->expects($this->at(0))
 			->method('get')
 			->with('_'.Unserialize::ALIAS_NAME)
 			->willReturn($annotation)
 		;
-		$attributes
-			->method('set')
-			->willReturnCallback(function ($name, $value) use ($configurationName) {
-				$this->assertEquals($name, $configurationName);
-				$this->assertInstanceOf(\stdClass::class, $value);
-			})
-		;
+		
+		if ($annotation->getName() === $configurationName) {
+			$attributes
+				->expects($this->at(1))
+				->method('get')
+				->with($configurationName)
+				->willReturn($requestValue)
+			;
+			if (!$requestValue) {
+				$attributes
+					->expects($this->at(2))
+					->method('set')
+					->with('_'.Unserialize::ALIAS_NAME.'_class')
+					->willReturn(\stdClass::class)
+				;
+			}
+		}
 		
 		$postRestParamConverter = new PostRestParamConverter();
 		
 		$this->assertEquals(
 			$postRestParamConverter->apply($request, $configuration), $result
+		);
+	}
+
+
+	
+	public function testApplyDoctrineParamConverter() {
+
+		$annotation = new Unserialize(['name' => 'NAME']);
+		$configurationName = 'NAME';
+		
+		$attributes = $this->getMockBuilder(ParameterBag::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+		$request->attributes = $attributes;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->expects($this->at(0))
+			->method('getName')
+			->willReturn($configurationName)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('isOptional')
+			->willReturn(false)
+		;
+		$configuration
+			->expects($this->at(2))
+			->method('setIsOptional')
+			->with(true)
+		;
+		$configuration
+			->expects($this->at(3))
+			->method('setIsOptional')
+			->with(false)
+		;
+		$configuration
+			->expects($this->at(2))
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('set')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->willReturn(\stdClass::class)
+		;
+
+		$doctrineParamConverter = $this->getMockBuilder(DoctrineParamConverter::class)->disableOriginalConstructor()->getMock();
+
+		$doctrineParamConverter
+			->expects($this->at(0))
+			->method('supports')
+			->with($configuration)
+			->willReturn(true)
+		;
+		$doctrineParamConverter
+			->expects($this->at(1))
+			->method('apply')
+			->with($request, $configuration)
+		;
+		
+		$postRestParamConverter = new PostRestParamConverter();
+		$postRestParamConverter->setDoctrineParamConverter($doctrineParamConverter);
+		
+		$this->assertTrue(
+			$postRestParamConverter->apply($request, $configuration)
 		);
 	}
 	

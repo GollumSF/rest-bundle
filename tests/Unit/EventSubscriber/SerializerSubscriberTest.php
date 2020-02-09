@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -23,6 +24,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
 use Symfony\Component\Serializer\Encoder\EncoderInterface;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -44,8 +46,9 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 		return false;
 	}
 
-	protected function unserialize(string $content, $entity, array $groups): void {
+	protected function unserialize(string $content, $entity, string $class, array $groups) {
 		$this->groups = $groups;
+		return $entity;
 	}
 }
 
@@ -115,8 +118,8 @@ class SerializerSubscriberTest extends TestCase {
 	
 	public function testGetSubscribedEvents() {
 		$this->assertEquals(SerializerSubscriber::getSubscribedEvents(), [
-			KernelEvents::CONTROLLER_ARGUMENTS => [
-				['onKernelControllerArguments', -1],
+			KernelEvents::CONTROLLER => [
+				['onKernelController', -1],
 			],
 			KernelEvents::VIEW => [
 				['onKernelView', -1],
@@ -127,20 +130,25 @@ class SerializerSubscriberTest extends TestCase {
 		]);
 	}
 
-	public function providerOnKernelControllerArguments() {
+	public function provideOnKernelControllerSuccess() {
 		return [
-			[ 'POST', [], [ 'post' ] ],
-			[ 'post', [], [ 'post' ] ],
-			[ 'patch', [], [ 'patch' ] ],
-			[ 'POST', 'group1', [ 'post', 'group1' ] ],
-			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ] ],
+			[ 'POST', [], [ 'post' ], \stdClass::class ],
+			[ 'post', [], [ 'post' ], \stdClass::class ],
+			[ 'patch', [], [ 'patch' ], \stdClass::class ],
+			[ 'POST', 'group1', [ 'post', 'group1' ], \stdClass::class ],
+			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ], \stdClass::class ],
+			[ 'POST', [], [ 'post' ], null ],
+			[ 'post', [], [ 'post' ], null ],
+			[ 'patch', [], [ 'patch' ], null ],
+			[ 'POST', 'group1', [ 'post', 'group1' ], null ],
+			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ], null ],
 		];
 	}
 	
 	/**
-	 * @dataProvider providerOnKernelControllerArguments
+	 * @dataProvider provideOnKernelControllerSuccess
 	 */
-	public function testOnKernelControllerArguments($method, $groups, $groupResults) {
+	public function testOnKernelControllerSuccess($method, $groups, $groupResults, $class) {
 
 		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
@@ -157,7 +165,7 @@ class SerializerSubscriberTest extends TestCase {
 			'groups' => $groups
 		]);
 			
-		$event = new ControllerArgumentsEvent($kernel, $controller, [ 'ARGUMENTS' ], $request, HttpKernelInterface::MASTER_REQUEST);
+		$event = new ControllerEvent($kernel, $controller, $request, HttpKernelInterface::MASTER_REQUEST);
 
 		$request
 			->expects($this->once())
@@ -182,16 +190,143 @@ class SerializerSubscriberTest extends TestCase {
 			->with('ENTITY_NAME')
 			->willReturn($entity)
 		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->willReturn($class)
+		;
+		$attributes
+			->expects($this->at(3))
+			->method('set')
+			->with('ENTITY_NAME', $entity)
+		;
 		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer
 		);
 		
-		$serializerSubscriber->onKernelControllerArguments($event);
+		$serializerSubscriber->onKernelController($event);
 		$this->assertEquals($serializerSubscriber->groups, $groupResults);
 	}
+
+
+	public function testOnKernelControllerNoClassNoEntity() {
+
+		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+
+		$controller = function () {};
+
+		$annotation = new Unserialize([
+			'name' => 'ENTITY_NAME',
+			'groups' => []
+		]);
+
+		$event = new ControllerEvent($kernel, $controller, $request, HttpKernelInterface::MASTER_REQUEST);
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn('CONTENT')
+		;
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn('POST')
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with('ENTITY_NAME')
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->willReturn(null)
+		;
+		
+		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
+			$serializer
+		);
+		
+		$this->expectException(\LogicException::class);
+
+		$serializerSubscriber->onKernelController($event);
+	}
+
+
+	public function testOnKernelControllerNoEntity() {
+
+		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
+		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request->attributes = $attributes;
+
+		$controller = function () {};
+
+		$annotation = new Unserialize([
+			'name' => 'ENTITY_NAME',
+			'groups' => []
+		]);
+
+		$event = new ControllerEvent($kernel, $controller, $request, HttpKernelInterface::MASTER_REQUEST);
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn(null)
+		;
+		$request
+			->expects($this->once())
+			->method('getMethod')
+			->willReturn('POST')
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with('ENTITY_NAME')
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->willReturn(\stdClass::class)
+		;
+
+		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
+			$serializer
+		);
+
+		$this->expectException(BadRequestHttpException::class);
+
+		$serializerSubscriber->onKernelController($event);
+	}
 	
-	public function providerOnKernelControllerArgumentsSave() {
+	public function providerOnKernelControllerSave() {
 		return [
 			[true, true, true ],
 			[true, false, false ],
@@ -201,9 +336,9 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerOnKernelControllerArgumentsSave
+	 * @dataProvider providerOnKernelControllerSave
 	 */
-	public function testOnKernelControllerArgumentsSave($isEntity, $save, $called) {
+	public function testOnKernelControllerSave($isEntity, $save, $called) {
 		
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 		$em         = $this->getMockForAbstractClass(ObjectManager::class);
@@ -220,7 +355,7 @@ class SerializerSubscriberTest extends TestCase {
 		$entity = new \stdClass();
 		$controller = function () {};
 		
-		$event = new ControllerArgumentsEvent($kernel, $controller, [ 'ARGUMENTS' ], $request, HttpKernelInterface::MASTER_REQUEST);
+		$event = new ControllerEvent($kernel, $controller, $request, HttpKernelInterface::MASTER_REQUEST);
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTestSave(
 			$serializer,
@@ -251,6 +386,17 @@ class SerializerSubscriberTest extends TestCase {
 			->with('ENTITY_NAME')
 			->willReturn($entity)
 		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->willReturn(\stdClass::class)
+		;
+		$attributes
+			->expects($this->at(3))
+			->method('set')
+			->with('ENTITY_NAME', $entity)
+		;
 		
 		if ($called) {
 			$em
@@ -273,10 +419,10 @@ class SerializerSubscriberTest extends TestCase {
 			;
 		}
 		
-		$serializerSubscriber->onKernelControllerArguments($event);
+		$serializerSubscriber->onKernelController($event);
 	}
 
-	public function providerUnserialize() {
+	public function providerUnserializeSuccess() {
 		return [
 			[ new \stdClass(), \stdClass::class, []],
 			[ new \stdClass(), \stdClass::class, [ 'group1' ]],
@@ -293,9 +439,9 @@ class SerializerSubscriberTest extends TestCase {
 	}
 	
 	/**
-	 * @dataProvider providerUnserialize
+	 * @dataProvider providerUnserializeSuccess
 	 */
-	public function testUnserialize($entity, $class, $groups) {
+	public function testUnserializeSuccess($entity, $class, $groups) {
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 
 		$context = [
@@ -323,9 +469,12 @@ class SerializerSubscriberTest extends TestCase {
 			->expects($this->once())
 			->method('denormalize')
 			->with(['Decode' => 'Data'], $class, 'json', $context)
+			->willReturn($entity)
 		;
 
-		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, $groups ]);
+		$this->assertEquals(
+			$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, $class, $groups ]), $entity
+		);
 	}
 
 	public function testUnserializeNotSupport() {
@@ -358,10 +507,10 @@ class SerializerSubscriberTest extends TestCase {
 
 		$this->expectException(BadRequestHttpException::class);
 
-		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, [] ]);
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, \stdClass::class, [] ]);
 	}
-	
-	public function testUnserializeException() {
+
+	public function testUnserializeExceptionUnexpectedValue() {
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 
 		$entity = new \stdClass();
@@ -394,8 +543,45 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$this->expectException(BadRequestHttpException::class);
-		
-		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, [] ]);
+
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, \stdClass::class, [] ]);
+	}
+
+	public function testUnserializeExceptionMissingConstructorArguments() {
+		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+
+		$entity = new \stdClass();
+		$context = [
+			'groups' => [],
+			'object_to_populate' => $entity,
+		];
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer
+		);
+
+		$serializer
+			->method('supportsDecoding')
+			->with('json', $context)
+			->willReturn(true)
+		;
+
+		$serializer
+			->expects($this->once())
+			->method('decode')
+			->with('CONTENT', 'json', $context)
+			->willReturn(['Decode' => 'Data'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('denormalize')
+			->with(['Decode' => 'Data'], \stdClass::class, 'json', $context)
+			->willThrowException(new MissingConstructorArgumentsException())
+		;
+
+		$this->expectException(BadRequestHttpException::class);
+
+		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, \stdClass::class, [] ]);
 	}
 
 	public function providerValidate() {

@@ -12,11 +12,12 @@ use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -40,8 +41,8 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	
 	public static function getSubscribedEvents() {
 		return [
-			KernelEvents::CONTROLLER_ARGUMENTS => [
-				['onKernelControllerArguments', -1],
+			KernelEvents::CONTROLLER => [
+				['onKernelController', -1],
 			],
 			KernelEvents::VIEW => [
 				['onKernelView', -1],
@@ -68,7 +69,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		return $this;
 	}
 	
-	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
+	public function onKernelController(ControllerEvent $event) {
 		
 		$request = $event->getRequest();
 		
@@ -84,9 +85,24 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				$annotation->getGroups()
 			);
 
-			if ($content) {
-				$this->unserialize($content, $entity, $groups);
+			$class = $request->attributes->get('_'.Unserialize::ALIAS_NAME.'_class');
+			if (!$class && $entity) {
+				$class = get_class($entity);
 			}
+
+			if (!$class) {
+				throw new \LogicException('Class not found on un serialize action');
+			}
+			
+			if ($content) {
+				$entity = $this->unserialize($content, $entity, $class, $groups);
+			}
+
+			if (!$entity) {
+				throw new BadRequestHttpException('Bad parameter on request content');
+			}
+	
+			$request->attributes->set($annotation->getName(), $entity);
 			
 			$this->validate($request, $entity);
 
@@ -149,26 +165,32 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		}
 	}
 	
-	protected function unserialize(string $content, $entity, array $groups): void {
+	protected function unserialize(string $content, $entity, string $class, array $groups) {
 		try {
 			$format = 'json';
 			$context = [
 				'groups' => $groups,
-				'object_to_populate' => $entity,
 			];
+			if ($entity) {
+				$context['object_to_populate'] = $entity;
+			}
 			
 			if (!$this->serializer->supportsDecoding($format, $context)) {
 				throw new NotEncodableValueException(sprintf('Deserialization for the format %s is not supported', $format));
 			}
 
 			$data = $this->serializer->decode($content, $format, $context);
-			
-			$this->serializer->denormalize($data, get_class($entity), $format, $context);
+
+			$entity = $this->serializer->denormalize($data, $class, $format, $context);
 
 			if ($entity instanceof UnserializerTransformInterface) {
 				$entity->unserializeTransform($data, $groups);
 			}
-			
+
+			return $entity;
+
+		} catch (MissingConstructorArgumentsException $e) {
+			throw new BadRequestHttpException($e->getMessage());
 		} catch (\UnexpectedValueException $e) {
 			throw new BadRequestHttpException($e->getMessage());
 		}

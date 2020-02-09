@@ -16,6 +16,7 @@ use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use Nyholm\BundleTest\BaseBundleTestCase;
 use Nyholm\BundleTest\CompilerPass\PublicServicePass;
+use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -63,6 +64,10 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 
 		$this->assertNull($this->reflectionGetValue($container->get(SerializerSubscriber::class), 'validator'));
 		$this->assertNull($this->reflectionGetValue($container->get(SerializerSubscriber::class), 'managerRegistry'));
+		$this->assertNull($this->reflectionGetValue($container->get(ApiSearchInterface::class), 'managerRegistry'));
+		$this->assertNull($this->reflectionGetValue($container->get(DoctrineIdDenormalizer::class), 'managerRegistry'));
+		$this->assertNull($this->reflectionGetValue($container->get(DoctrineObjectDenormalizer::class), 'managerRegistry'));
+		$this->assertNull($this->reflectionGetValue($container->get(PostRestParamConverter::class), 'doctrineParamConverter'));
 		$this->assertNull($this->reflectionGetValue($container->get(ExceptionSubscriber::class), 'tokenStorage'));
 	}
 
@@ -72,6 +77,7 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 		$kernel = $this->createKernel();
 
 		// Add some other bundles we depend on
+		$kernel->addBundle(\Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle::class);
 		$kernel->addBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
 
 		// Add some configuration
@@ -87,6 +93,7 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 		$this->assertInstanceOf(ManagerRegistry::class, $this->reflectionGetValue($container->get(ApiSearchInterface::class), 'managerRegistry'));
 		$this->assertInstanceOf(ManagerRegistry::class, $this->reflectionGetValue($container->get(DoctrineIdDenormalizer::class), 'managerRegistry'));
 		$this->assertInstanceOf(ManagerRegistry::class, $this->reflectionGetValue($container->get(DoctrineObjectDenormalizer::class), 'managerRegistry'));
+		$this->assertInstanceOf(DoctrineParamConverter::class, $this->reflectionGetValue($container->get(PostRestParamConverter::class), 'doctrineParamConverter'));
 	}
 
 	public function testInitBundleWithValidator() {
