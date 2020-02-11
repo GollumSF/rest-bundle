@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class TokenStorageBuilderPass implements CompilerPassInterface {
+class TokenStoragePass implements CompilerPassInterface {
 	
 	public function process(ContainerBuilder $container) {
 		if (!$container->hasDefinition(TokenStorageInterface::class) && !$container->hasAlias(TokenStorageInterface::class)) {

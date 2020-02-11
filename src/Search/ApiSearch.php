@@ -1,16 +1,18 @@
 <?php
 namespace GollumSF\RestBundle\Search;
 
+use Doctrine\ORM\Query\QueryException;
 use Doctrine\Persistence\ManagerRegistry;
-use Doctrine\Persistence\ObjectRepository;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\Model\ApiList;
 use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ApiSearch implements ApiSearchInterface {
 	
@@ -25,14 +27,19 @@ class ApiSearch implements ApiSearchInterface {
 	/** @var ApiConfigurationInterface */
 	private $apiConfiguration;
 	
+	/** @var LoggerInterface */
+	private $logger;
+	
 	public function __construct(
 		RequestStack $requestStack,
+		LoggerInterface $logger,
 		ApiConfigurationInterface $apiConfiguration
 	) {
 		$this->requestStack = $requestStack;
+		$this->logger = $logger;
 		$this->apiConfiguration = $apiConfiguration;
 	}
-
+	
 	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
 		$this->managerRegistry = $managerRegistry;
 		return $this;
@@ -67,7 +74,15 @@ class ApiSearch implements ApiSearchInterface {
 		if (!($repository instanceof ApiFinderRepositoryInterface)) {
 			throw new \LogicException(sprintf('Repository of class %s must implement ApiFinderRepositoryInterface or extends ApiFinderRepository', $entityClass));
 		}
-		return $repository->apiFindBy($limit, $page, $order, $direction, $queryCallback);
+		
+		try {
+			return $repository->apiFindBy($limit, $page, $order, $direction, $queryCallback);
+		} catch (QueryException $e) {
+			if ($this->logger) {
+				$this->logger->warning(sprintf('Error on execute ApiSearch: %s', $e->getMessage()));
+			}
+			throw new BadRequestHttpException('Bad parameter');
+		}
 	}
 	
 	public function staticArrayList(array $data, \Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {

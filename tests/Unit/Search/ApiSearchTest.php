@@ -2,6 +2,7 @@
 namespace Test\GollumSF\RestBundle\Unit\Search;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\QueryException;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
@@ -13,8 +14,10 @@ use GollumSF\RestBundle\Repository\ApiFinderRepository;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use GollumSF\RestBundle\Search\ApiSearch;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ApiSearchTestApiFind extends ApiSearch {
 
@@ -124,6 +127,73 @@ class ApiSearchTest extends TestCase {
 		$this->assertEquals(
 			$apiSearch->apiFindBy(\stdClass::class, $closure), $list
 		);
+	}
+
+	public function testApiFindQueryException() {
+
+		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
+		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
+		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
+		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
+
+		$configuration
+			->expects($this->at(0))
+			->method('getDefaultLimitItem')
+			->willReturn(25)
+		;
+		$configuration
+			->expects($this->at(1))
+			->method('getMaxLimitItem')
+			->willReturn(100)
+		;
+
+		$request
+			->expects($this->at(0))
+			->method('get')
+			->with('limit')
+			->willReturn(20)
+		;
+		$request
+			->expects($this->at(1))
+			->method('get')
+			->with('page')
+			->willReturn(0)
+		;
+		$request
+			->expects($this->at(2))
+			->method('get')
+			->with('order')
+			->willReturn('prop1')
+		;
+		$request
+			->expects($this->at(3))
+			->method('get')
+			->with('direction')
+			->willReturn(Direction::ASC)
+		;
+
+		$repository
+			->expects($this->once())
+			->method('apiFindBy')
+			->willThrowException(new QueryException('MESSAGE'))
+		;
+
+		$logger
+			->expects($this->once())
+			->method('warning')
+			->with('Error on execute ApiSearch: MESSAGE')
+		;
+		
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $configuration);
+		$apiSearch->setLogger($logger);
+		$apiSearch->repository = $repository;
+		$apiSearch->request = $request;
+		
+		$this->expectException(BadRequestHttpException::class);
+		
+		$apiSearch->apiFindBy(\stdClass::class);
 	}
 
 	public function testApiFindNoInstanceOfApiFindRepository() {
