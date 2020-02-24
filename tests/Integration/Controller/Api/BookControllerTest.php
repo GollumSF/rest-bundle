@@ -4,9 +4,13 @@ namespace Test\GollumSF\RestBundle\Integration\Controller\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
 
 class BookControllerTest extends AbstractControllerTest {
+	
+	use ReflectionPropertyTrait;
 	
 	public function testList() {
 
@@ -152,6 +156,10 @@ class BookControllerTest extends AbstractControllerTest {
 	public function testFind404() {
 
 		$this->loadFixture();
+		
+		/** @var ExceptionSubscriber $exceptionSubscriber */
+		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
 
@@ -386,6 +394,10 @@ class BookControllerTest extends AbstractControllerTest {
 	public function testPostBadRequest($content, $key) {
 
 		$this->loadFixture();
+
+		/** @var ExceptionSubscriber $exceptionSubscriber */
+		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
 
