@@ -471,6 +471,25 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($book->getTitle(), 'TITLE_NEW_1');
 		$this->assertEquals($book->getDescription(), 'DESCRIPTION_NEW_1');
 	}
+	
+	public function testPostIsGranted() {
+		$this->loadFixture();
+
+		/** @var ExceptionSubscriber $exceptionSubscriber */
+		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
+
+		$client = $this->getClient();
+
+		$client->request('POST', '/api/books/is-granted', [], [], [], \json_encode([
+			'title' => 'TITLE_NEW_1',
+			'description' => 'DESCRIPTION_NEW_1',
+			'author' => 2,
+			'category' => 2,
+		]));
+		$response = $client->getResponse();
+		$this->assertEquals($response->getStatusCode(), 403);
+	}
 
 	public function providerPatchTitle() {
 		return [

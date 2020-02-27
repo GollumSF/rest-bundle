@@ -8,6 +8,8 @@ use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
@@ -36,11 +38,35 @@ class BookController {
 	/**
 	 * @Route("", methods={"POST"})
 	 * @Unserialize("book", groups="book_post")
-	 * @Validate({ "book_post" })
+	 * @Validate("book_post")
 	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
 	 *
 	 */
 	public function post(Book $book) {
+		return $book;
+	}
+
+	/**
+	 * @Route("/is-granted", methods={"POST"})
+	 * @IsGranted("IS_AUTHENTICATED_FULLY")
+	 * @Unserialize("book", groups="book_post")
+	 * @Validate("book_post")
+	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
+	 *
+	 */
+	public function postDenyIsGranted(Book $book) {
+		return $book;
+	}
+
+	/**
+	 * @Route("/security", methods={"POST"})
+	 * @Security("is_granted('AUTHENTICATED_FULLY')")
+	 * @Unserialize("book", groups="book_post")
+	 * @Validate("book_post")
+	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
+	 *
+	 */
+	public function postDenySecurity(Book $book) {
 		return $book;
 	}
 

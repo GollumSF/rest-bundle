@@ -8,12 +8,14 @@ use GollumSF\RestBundle\Annotation\Unserialize;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class PostRestParamConverterTest extends TestCase {
 	
 	public function providerApply() {
 		return [
-			[  new Unserialize(['name' => 'NAME']), 'NAME', null, true ],
 			[  new Unserialize(['name' => 'NAME']), 'BAD_NAME', null, false ],
 			[  new Unserialize(['name' => 'NAME']), 'NAME', 'value', false ],
 		];
@@ -24,6 +26,7 @@ class PostRestParamConverterTest extends TestCase {
 	 */
 	public function testApply($annotation, $configurationName, $requestValue, $result) {
 
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$attributes = $this->getMockBuilder(ParameterBag::class)
 			->disableOriginalConstructor()
 			->getMock()
@@ -63,27 +66,240 @@ class PostRestParamConverterTest extends TestCase {
 				->with($configurationName)
 				->willReturn($requestValue)
 			;
-			if (!$requestValue) {
-				$attributes
-					->expects($this->at(2))
-					->method('set')
-					->with('_'.Unserialize::ALIAS_NAME.'_class')
-					->willReturn(\stdClass::class)
-				;
-			}
 		}
 		
-		$postRestParamConverter = new PostRestParamConverter();
+		$postRestParamConverter = new PostRestParamConverter($serializer);
 		
 		$this->assertEquals(
 			$postRestParamConverter->apply($request, $configuration), $result
 		);
 	}
 
+	public function testApplyDeserialize() {
 
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$annotation = new Unserialize(['name' => 'NAME']);
+		$configurationName = 'NAME';
+		$entity = new \stdClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+		$request->attributes = $attributes;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->expects($this->at(0))
+			->method('getName')
+			->willReturn($configurationName)
+		;
+		$configuration
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(3))
+			->method('set')
+			->with($configurationName, $entity)
+		;
+		$attributes
+			->expects($this->at(4))
+			->method('set')
+			->with('_'.Unserialize::ALIAS_NAME.'_class')
+		;
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn(['CONTENT'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('deserialize')
+			->with(['CONTENT'], \stdClass::class, 'json',[
+				'groups' => [],
+			])
+			->willReturn($entity)
+		;
+
+		$postRestParamConverter = new PostRestParamConverter($serializer);
+
+		$this->assertEquals(
+			$postRestParamConverter->apply($request, $configuration), true
+		);
+	}
+
+	public function testApplyDeserializeMissingConstructorArgumentsException() {
+
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$annotation = new Unserialize(['name' => 'NAME']);
+		$configurationName = 'NAME';
+		$entity = new \stdClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+		$request->attributes = $attributes;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->expects($this->at(0))
+			->method('getName')
+			->willReturn($configurationName)
+		;
+		$configuration
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn(['CONTENT'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('deserialize')
+			->with(['CONTENT'], \stdClass::class, 'json',[
+				'groups' => [],
+			])
+			->willThrowException(new MissingConstructorArgumentsException())
+		;
+
+		$this->expectException(BadRequestHttpException::class);
+		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter->apply($request, $configuration);
+	}
+
+	public function testApplyDeserializeUnexpectedValueException() {
+
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$annotation = new Unserialize(['name' => 'NAME']);
+		$configurationName = 'NAME';
+		$entity = new \stdClass();
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+		$request->attributes = $attributes;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->expects($this->at(0))
+			->method('getName')
+			->willReturn($configurationName)
+		;
+		$configuration
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+
+		$attributes
+			->expects($this->at(0))
+			->method('get')
+			->with('_'.Unserialize::ALIAS_NAME)
+			->willReturn($annotation)
+		;
+		$attributes
+			->expects($this->at(1))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+		$attributes
+			->expects($this->at(2))
+			->method('get')
+			->with($configurationName)
+			->willReturn(null)
+		;
+
+		$request
+			->expects($this->once())
+			->method('getContent')
+			->willReturn(['CONTENT'])
+		;
+		$serializer
+			->expects($this->once())
+			->method('deserialize')
+			->with(['CONTENT'], \stdClass::class, 'json',[
+				'groups' => [],
+			])
+			->willThrowException(new \UnexpectedValueException())
+		;
+
+		$this->expectException(BadRequestHttpException::class);
+		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter->apply($request, $configuration);
+	}
 	
 	public function testApplyDoctrineParamConverter() {
 
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$annotation = new Unserialize(['name' => 'NAME']);
 		$configurationName = 'NAME';
 		
@@ -109,23 +325,23 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$configuration
 			->expects($this->at(1))
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+		$configuration
+			->expects($this->at(2))
 			->method('isOptional')
 			->willReturn(false)
 		;
 		$configuration
-			->expects($this->at(2))
+			->expects($this->at(3))
 			->method('setIsOptional')
 			->with(true)
 		;
 		$configuration
-			->expects($this->at(3))
+			->expects($this->at(4))
 			->method('setIsOptional')
 			->with(false)
-		;
-		$configuration
-			->expects($this->at(2))
-			->method('getClass')
-			->willReturn(\stdClass::class)
 		;
 
 		$attributes
@@ -143,6 +359,12 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$attributes
 			->expects($this->at(2))
+			->method('get')
+			->with($configurationName)
+			->willReturn(new \stdClass())
+		;
+		$attributes
+			->expects($this->at(3))
 			->method('set')
 			->with('_'.Unserialize::ALIAS_NAME.'_class')
 			->willReturn(\stdClass::class)
@@ -162,7 +384,7 @@ class PostRestParamConverterTest extends TestCase {
 			->with($request, $configuration)
 		;
 		
-		$postRestParamConverter = new PostRestParamConverter();
+		$postRestParamConverter = new PostRestParamConverter($serializer);
 		$postRestParamConverter->setDoctrineParamConverter($doctrineParamConverter);
 		
 		$this->assertTrue(
@@ -172,7 +394,8 @@ class PostRestParamConverterTest extends TestCase {
 	
 	public function testSupports() {
 
-		$postRestParamConverter = new PostRestParamConverter();
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$postRestParamConverter = new PostRestParamConverter($serializer);
 		
 		$this->assertTrue(
 			$postRestParamConverter->supports(

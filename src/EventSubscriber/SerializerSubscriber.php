@@ -12,7 +12,7 @@ use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -41,11 +41,11 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	
 	public static function getSubscribedEvents() {
 		return [
-			KernelEvents::CONTROLLER => [
-				['onKernelController', 10],
+			KernelEvents::CONTROLLER_ARGUMENTS => [
+				['onKernelControllerArguments', -10],
 			],
 			KernelEvents::VIEW => [
-				['onKernelView', -1],
+				['onKernelView', -10],
 			],
 			KernelEvents::EXCEPTION => [
 				['onKernelValidateException', 257],
@@ -69,7 +69,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 		return $this;
 	}
 	
-	public function onKernelController(ControllerEvent $event) {
+	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
 		
 		$request = $event->getRequest();
 		

@@ -44,6 +44,7 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 			$this->kernel->addBundle(\Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle::class);
 			$this->kernel->addBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
 			$this->kernel->addBundle(\Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class);
+			$this->kernel->addBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 	
 			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
 			

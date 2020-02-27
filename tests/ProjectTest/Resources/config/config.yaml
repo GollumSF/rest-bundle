@@ -40,3 +40,16 @@ services:
 
     Test\GollumSF\RestBundle\ProjectTest\DataFixtures\:
         resource: '%kernel.project_dir%/tests/ProjectTest/DataFixtures'
+
+security:
+    providers:
+        in_memory:
+            memory:
+                users:
+                    test_user: { password: test }
+    firewalls:
+        main:
+            anonymous: true
+            http_basic:
+                realm: 'Secured Demo Area'
+                provider: in_memory
