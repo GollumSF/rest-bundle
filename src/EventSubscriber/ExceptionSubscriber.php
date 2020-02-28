@@ -80,7 +80,10 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 				'code' => $e->getCode(),
 				'file' => $e->getFile(),
 				'line' => $e->getLine(),
-				'stack' => $e->getTrace(),
+				'stack' => array_map(function ($trace) {
+					unset($trace['args']);
+					return $trace;
+				}, $e->getTrace()),
 				'class' => get_class($e)
 			] : [
 				'message' => $e->getMessage(),

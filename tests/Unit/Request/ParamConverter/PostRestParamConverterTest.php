@@ -1,6 +1,7 @@
 <?php
 namespace Test\GollumSF\RestBundle\Unit\Request\ParamConverter;
 
+use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
 use PHPUnit\Framework\TestCase;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -12,7 +13,17 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\SerializerInterface;
 
+class PostRestParamConverterTestIdentifier extends PostRestParamConverter {
+	public $hasIdentifier = false;
+	
+	protected function hasIdentifier(Request $request, ParamConverter $configuration): bool {
+		return $this->hasIdentifier;
+	}
+}
+
 class PostRestParamConverterTest extends TestCase {
+	
+	use ReflectionPropertyTrait;
 	
 	public function providerApply() {
 		return [
@@ -121,17 +132,11 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$attributes
 			->expects($this->at(2))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
-		$attributes
-			->expects($this->at(3))
 			->method('set')
 			->with($configurationName, $entity)
 		;
 		$attributes
-			->expects($this->at(4))
+			->expects($this->at(3))
 			->method('set')
 			->with('_'.Unserialize::ALIAS_NAME.'_class')
 		;
@@ -150,7 +155,7 @@ class PostRestParamConverterTest extends TestCase {
 			->willReturn($entity)
 		;
 
-		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter = new PostRestParamConverterTestIdentifier($serializer);
 
 		$this->assertEquals(
 			$postRestParamConverter->apply($request, $configuration), true
@@ -201,12 +206,6 @@ class PostRestParamConverterTest extends TestCase {
 			->with($configurationName)
 			->willReturn(null)
 		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
 
 		$request
 			->expects($this->once())
@@ -223,7 +222,7 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$this->expectException(BadRequestHttpException::class);
-		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter = new PostRestParamConverterTestIdentifier($serializer);
 		$postRestParamConverter->apply($request, $configuration);
 	}
 
@@ -271,12 +270,6 @@ class PostRestParamConverterTest extends TestCase {
 			->with($configurationName)
 			->willReturn(null)
 		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
 
 		$request
 			->expects($this->once())
@@ -293,7 +286,7 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$this->expectException(BadRequestHttpException::class);
-		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter = new PostRestParamConverterTestIdentifier($serializer);
 		$postRestParamConverter->apply($request, $configuration);
 	}
 	
@@ -328,21 +321,6 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-		$configuration
-			->expects($this->at(2))
-			->method('isOptional')
-			->willReturn(false)
-		;
-		$configuration
-			->expects($this->at(3))
-			->method('setIsOptional')
-			->with(true)
-		;
-		$configuration
-			->expects($this->at(4))
-			->method('setIsOptional')
-			->with(false)
-		;
 
 		$attributes
 			->expects($this->at(0))
@@ -359,12 +337,6 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$attributes
 			->expects($this->at(2))
-			->method('get')
-			->with($configurationName)
-			->willReturn(new \stdClass())
-		;
-		$attributes
-			->expects($this->at(3))
 			->method('set')
 			->with('_'.Unserialize::ALIAS_NAME.'_class')
 			->willReturn(\stdClass::class)
@@ -384,11 +356,102 @@ class PostRestParamConverterTest extends TestCase {
 			->with($request, $configuration)
 		;
 		
-		$postRestParamConverter = new PostRestParamConverter($serializer);
+		$postRestParamConverter = new PostRestParamConverterTestIdentifier($serializer);
 		$postRestParamConverter->setDoctrineParamConverter($doctrineParamConverter);
+		$postRestParamConverter->hasIdentifier = true;
 		
 		$this->assertTrue(
 			$postRestParamConverter->apply($request, $configuration)
+		);
+	}
+
+	public function providerHasIdentifier() {
+		return [
+			[ [ 'id' => [ 'ID' ] ], false, null, false, true  ],
+			[ [ 'id' => 'ID' ]    , true , null, false, false ],
+			[ [ 'id' => 'ID' ]    , true , 42  , false, true  ],
+			[ [ 'id' => 'ID' ]    , false, null, false, false ],
+			[ []                  , false, null, true , true  ],
+			[ []                  , false, null, false, false ],
+		];
+	}
+	
+	/**
+	 * @dataProvider providerHasIdentifier
+	 */
+	public function testHasIdentifier($options, $haseName, $nameAtt, $hasId, $result) {
+		
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$postRestParamConverter = new PostRestParamConverter($serializer);
+
+		$attributes = $this->getMockBuilder(ParameterBag::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+		$request->attributes = $attributes;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->method('getName')
+			->willReturn('NAME')
+		;
+
+		$configuration
+			->method('getOptions')
+			->willReturn($options)
+		;
+		
+		$i = -1;
+		if (isset($options['id']) && !is_array($options['id'])) {
+			$attributes
+				->expects($this->at(++$i))
+				->method('has')
+				->with('ID')
+				->willReturn($haseName)
+			;
+			if ($haseName) {
+				$attributes
+					->expects($this->at(++$i))
+					->method('get')
+					->with('ID')
+					->willReturn($nameAtt)
+				;
+			}
+		}
+		if (!isset($options['id']) ) {
+			$attributes
+				->expects($this->at(++$i))
+				->method('has')
+				->with('NAME')
+				->willReturn(false)
+			;
+			$attributes
+				->expects($this->at(++$i))
+				->method('has')
+				->with('id')
+				->willReturn($hasId)
+			;
+			if ($hasId) {
+				$attributes
+					->expects($this->at(++$i))
+					->method('get')
+					->with('id')
+					->willReturn(42)
+				;
+			}
+		}
+
+
+		$this->assertEquals(
+			$this->reflectionCallMethod($postRestParamConverter, 'hasIdentifier', [$request, $configuration]), $result
 		);
 	}
 	

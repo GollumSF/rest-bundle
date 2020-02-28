@@ -38,13 +38,11 @@ class PostRestParamConverter implements ParamConverterInterface {
 			$unserializeAnnotation->getName() === $configurationName &&
 			!$request->attributes->get($configurationName)
 		) {
-			if ($this->doctrineParamConverter && $this->doctrineParamConverter->supports($configuration)) {
-				$isOptional = $configuration->isOptional();
-				$configuration->setIsOptional(true);
-				$this->doctrineParamConverter->apply($request, $configuration);
-				$configuration->setIsOptional($isOptional);
-			}
-			if (!$request->attributes->get($configurationName)) {
+			if ($this->hasIdentifier($request, $configuration)) {
+				if ($this->doctrineParamConverter && $this->doctrineParamConverter->supports($configuration)) {
+					$this->doctrineParamConverter->apply($request, $configuration);
+				}
+			} else {
 				$content = $request->getContent();
 				if ($content) {
 					try {
@@ -61,6 +59,29 @@ class PostRestParamConverter implements ParamConverterInterface {
 			}
 			$request->attributes->set('_'.Unserialize::ALIAS_NAME.'_class', $class);
 			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Copy of getIdentifier doctrine
+	 */
+	protected function hasIdentifier(Request $request, ParamConverter $configuration): bool 
+	{
+		$idName = isset($configuration->getOptions()['id']) ? $configuration->getOptions()['id'] : null;
+		$name = $configuration->getName();
+		if (null !== $idName) {
+			if (!\is_array($idName)) {
+				$name = $idName;
+			} elseif (\is_array($idName)) {
+				return true;
+			}
+		}
+		if ($request->attributes->has($name)) {
+			return $request->attributes->get($name) !== null;
+		}
+		if ($request->attributes->has('id') && !$idName) {
+			return $request->attributes->get('id') !== null;
 		}
 		return false;
 	}

@@ -471,7 +471,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($book->getTitle(), 'TITLE_NEW_1');
 		$this->assertEquals($book->getDescription(), 'DESCRIPTION_NEW_1');
 	}
-	
+
 	public function testPostIsGranted() {
 		$this->loadFixture();
 
@@ -489,6 +489,25 @@ class BookControllerTest extends AbstractControllerTest {
 		]));
 		$response = $client->getResponse();
 		$this->assertEquals($response->getStatusCode(), 403);
+	}
+
+	public function testPut404() {
+		$this->loadFixture();
+
+		/** @var ExceptionSubscriber $exceptionSubscriber */
+		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
+
+		$client = $this->getClient();
+
+		$client->request('PUT', '/api/books/4242', [], [], [], \json_encode([
+			'title' => 'TITLE_NEW_1',
+			'description' => 'DESCRIPTION_NEW_1',
+			'author' => 2,
+			'category' => 2,
+		]));
+		$response = $client->getResponse();
+		$this->assertEquals($response->getStatusCode(), 404);
 	}
 
 	public function providerPatchTitle() {
