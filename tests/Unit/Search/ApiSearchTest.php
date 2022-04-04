@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Kernel;
 
 class ApiSearchTestApiFind extends ApiSearch {
 
@@ -43,9 +44,11 @@ class ApiSearchTest extends TestCase {
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
+		$methodMasterRequest = version_compare(Kernel::VERSION, '6.0.0', '<') ? 'getMasterRequest' : 'getMainRequest';
+		
 		$requestStack
 			->expects($this->once())
-			->method('getMasterRequest')
+			->method($methodMasterRequest)
 			->willReturn($request)
 		;
 

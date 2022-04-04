@@ -106,6 +106,6 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 	}
 
 	protected function isAuthenticated(): bool {
-		return $this->tokenStorage && $this->tokenStorage->getToken() && $this->tokenStorage->getToken()->isAuthenticated();
+		return $this->tokenStorage && $this->tokenStorage->getToken() && !!$this->tokenStorage->getToken()->getUser();
 	}
 }

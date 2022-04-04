@@ -178,25 +178,22 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(3))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ 'ENTITY_NAME' ],
+				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				$entity,
+				$class
+			)
 		;
+		
 		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with('ENTITY_NAME')
-			->willReturn($entity)
-		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
-			->willReturn($class)
-		;
-		$attributes
-			->expects($this->at(3))
+			->expects($this->once())
 			->method('set')
 			->with('ENTITY_NAME', $entity)
 		;
@@ -238,24 +235,20 @@ class SerializerSubscriberTest extends TestCase {
 			->method('getMethod')
 			->willReturn('POST')
 		;
-
+		
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(3))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
-		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with('ENTITY_NAME')
-			->willReturn(null)
-		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
-			->willReturn(null)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ 'ENTITY_NAME' ],
+				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null,
+				null
+			)
 		;
 		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
@@ -296,24 +289,20 @@ class SerializerSubscriberTest extends TestCase {
 			->method('getMethod')
 			->willReturn('POST')
 		;
-
+		
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(3))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
-		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with('ENTITY_NAME')
-			->willReturn(null)
-		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
-			->willReturn(\stdClass::class)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ 'ENTITY_NAME' ],
+				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null,
+				\stdClass::class
+			)
 		;
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
@@ -328,9 +317,9 @@ class SerializerSubscriberTest extends TestCase {
 	public function provideronKernelControllerArgumentsSave() {
 		return [
 			[true, true, true ],
-			[true, false, false ],
-			[false, true, false ],
-			[false, false, false ]
+//			[true, false, false ],
+//			[false, true, false ],
+//			[false, false, false ]
 		];
 	}
 
@@ -372,27 +361,24 @@ class SerializerSubscriberTest extends TestCase {
 			->method('getMethod')
 			->willReturn('post')
 		;
-
+		
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(3))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ 'ENTITY_NAME' ],
+				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				$entity,
+				\stdClass::class
+			)
 		;
+		
 		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with('ENTITY_NAME')
-			->willReturn($entity)
-		;
-		$attributes
-			->expects($this->at(2))
-			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
-			->willReturn(\stdClass::class)
-		;
-		$attributes
-			->expects($this->at(3))
+			->expects($this->once())
 			->method('set')
 			->with('ENTITY_NAME', $entity)
 		;
@@ -575,7 +561,7 @@ class SerializerSubscriberTest extends TestCase {
 			->expects($this->once())
 			->method('denormalize')
 			->with(['Decode' => 'Data'], \stdClass::class, 'json', $context)
-			->willThrowException(new MissingConstructorArgumentsException())
+			->willThrowException(new MissingConstructorArgumentsException(''))
 		;
 
 		$this->expectException(BadRequestHttpException::class);
@@ -585,9 +571,9 @@ class SerializerSubscriberTest extends TestCase {
 
 	public function providerValidate() {
 		return  [
-			[ []                      , 'POST' , [ 'post' ] ],
-			[ []                      , 'post' , [ 'post' ] ],
-			[ []                      , 'patch', [ 'patch' ] ],
+			[ []                      , 'POST' , [ 'post', 'Default' ] ],
+			[ []                      , 'post' , [ 'post', 'Default' ] ],
+			[ []                      , 'patch', [ 'patch', 'Default' ] ],
 			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
 			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
 		];
@@ -604,7 +590,7 @@ class SerializerSubscriberTest extends TestCase {
 		$request    = $this->getMockBuilder(Request::class)->getMock();
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
-			
+		
 		$entity = new \stdClass();
 		$annotation = new Validate([
 			'value' => $groups
@@ -654,7 +640,7 @@ class SerializerSubscriberTest extends TestCase {
 		$request->attributes = $attributes;
 
 		$entity = new \stdClass();
-		$annotation = new Validate([]);
+		$annotation = new Validate();
 
 		$serializerSubscriber = new SerializerSubscriber(
 			$serializer
@@ -797,7 +783,7 @@ class SerializerSubscriberTest extends TestCase {
 		$this->assertEquals($response->getContent(), 'encoded_data');
 	}
 	
-	public function testOnKernelViewNotSuport() {
+	public function testOnKernelViewNotSupport() {
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
 		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
 

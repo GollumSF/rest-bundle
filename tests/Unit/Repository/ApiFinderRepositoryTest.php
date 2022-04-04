@@ -49,49 +49,49 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 
-		$i = 0;
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('select')
-			->with('COUNT(t)')
-			->willReturn($queryBuilder)
+			->withConsecutive(
+				[ 'COUNT(t)' ],
+				[ 't' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$queryBuilder,
+				$queryBuilder
+			)
 		;
+
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('getQuery')
 			->willReturn($queryCount)
+			->willReturnOnConsecutiveCalls(
+				$queryCount,
+				$query
+			)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
-			->method('select')
-			->with('t')
-			->willReturn($queryBuilder)
-		;
-		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setMaxResults')
 			->with($limitResult)
 			->willReturn($queryBuilder)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setFirstResult')
 			->with($firstResult)
 			->willReturn($queryBuilder)
 		;
 		if ($orderResult) {
 			$queryBuilder
-				->expects($this->at($i++))
+				->expects($this->once())
 				->method('orderBy')
 				->with($orderResult, $directionResult)
 				->willReturn($queryBuilder)
 			;
 		}
-		$queryBuilder
-			->expects($this->at($i++))
-			->method('getQuery')
-			->willReturn($query)
-		;
+		
 		$queryCount
 			->expects($this->once())
 			->method('getSingleScalarResult')
@@ -118,42 +118,49 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$metadata = $this->getMockBuilder(ClassMetadata::class)->disableOriginalConstructor()->getMock();
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
+		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-
-		$i = 0;
+		
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('select')
-			->with('COUNT(t)')
-			->willReturn($queryBuilder)
+			->withConsecutive(
+				[ 'COUNT(t)' ],
+				[ 't' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$queryBuilder,
+				$queryBuilder
+			)
 		;
+		
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('getQuery')
-			->willThrowException(new NonUniqueResultException())
+			->willReturn($queryCount)
+			->willReturnOnConsecutiveCalls(
+				$queryCount,
+				$query
+			)
 		;
+		
 		$queryBuilder
-			->expects($this->at($i++))
-			->method('select')
-			->with('t')
-			->willReturn($queryBuilder)
-		;
-		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setMaxResults')
 			->with(10)
 			->willReturn($queryBuilder)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setFirstResult')
 			->with(0)
 			->willReturn($queryBuilder)
 		;
-		$queryBuilder
-			->expects($this->at($i++))
-			->method('getQuery')
-			->willReturn($query)
+		
+		$queryCount
+			->expects($this->once())
+			->method('getSingleScalarResult')
+			->willThrowException(new NonUniqueResultException())
 		;
 		$query
 			->expects($this->once())
@@ -179,42 +186,42 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
 		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-
-		$i = 0;
+		
+		
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('select')
-			->with('COUNT(t)')
-			->willReturn($queryBuilder)
+			->withConsecutive(
+				[ 'COUNT(t)' ],
+				[ 't' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$queryBuilder,
+				$queryBuilder
+			)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->exactly(2))
 			->method('getQuery')
 			->willReturn($queryCount)
+			->willReturnOnConsecutiveCalls(
+				$queryCount,
+				$query
+			)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
-			->method('select')
-			->with('t')
-			->willReturn($queryBuilder)
-		;
-		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setMaxResults')
 			->with(10)
 			->willReturn($queryBuilder)
 		;
 		$queryBuilder
-			->expects($this->at($i++))
+			->expects($this->once())
 			->method('setFirstResult')
 			->with(0)
 			->willReturn($queryBuilder)
 		;
-		$queryBuilder
-			->expects($this->at($i++))
-			->method('getQuery')
-			->willReturn($query)
-		;
+		
 		$queryCount
 			->expects($this->once())
 			->method('getSingleScalarResult')

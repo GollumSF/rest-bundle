@@ -54,30 +54,28 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getName')
 			->willReturn($configurationName)
 		;
 		$configuration
+			->expects($this->once())
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-
-		$attributes
-			->expects($this->at(0))
-			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
 		
-		if ($annotation->getName() === $configurationName) {
-			$attributes
-				->expects($this->at(1))
-				->method('get')
-				->with($configurationName)
-				->willReturn($requestValue)
-			;
-		}
+		$attributes
+			->expects($this->exactly($annotation->getName() === $configurationName ? 2 : 1))
+			->method('get')
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ $configurationName ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				$requestValue
+			)
+		;
 		
 		$postRestParamConverter = new PostRestParamConverter($serializer);
 		
@@ -86,7 +84,7 @@ class PostRestParamConverterTest extends TestCase {
 		);
 	}
 
-	public function testApplyDeserialize() {
+	public function testApplyDeserializeS() {
 
 		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$annotation = new Unserialize(['name' => 'NAME']);
@@ -109,36 +107,36 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getName')
 			->willReturn($configurationName)
 		;
 		$configuration
+			->expects($this->once())
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
 
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(2))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ $configurationName ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null
+			)
 		;
+		
 		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
-		$attributes
-			->expects($this->at(2))
+			->expects($this->exactly(2))
 			->method('set')
-			->with($configurationName, $entity)
-		;
-		$attributes
-			->expects($this->at(3))
-			->method('set')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
+			->withConsecutive(
+				[ $configurationName, $entity ],
+				[ '_'.Unserialize::ALIAS_NAME.'_class', \stdClass::class ]
+			)
 		;
 
 		$request
@@ -185,28 +183,29 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getName')
 			->willReturn($configurationName)
 		;
 		$configuration
+			->expects($this->once())
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
 
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(2))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ $configurationName  ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null
+			)
 		;
-		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
-
+		
 		$request
 			->expects($this->once())
 			->method('getContent')
@@ -218,7 +217,7 @@ class PostRestParamConverterTest extends TestCase {
 			->with(['CONTENT'], \stdClass::class, 'json',[
 				'groups' => [],
 			])
-			->willThrowException(new MissingConstructorArgumentsException())
+			->willThrowException(new MissingConstructorArgumentsException(''))
 		;
 
 		$this->expectException(BadRequestHttpException::class);
@@ -249,26 +248,27 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getName')
 			->willReturn($configurationName)
 		;
 		$configuration
+			->expects($this->once())
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-
+		
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(2))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
-		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ $configurationName  ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null
+			)
 		;
 
 		$request
@@ -312,46 +312,46 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getName')
 			->willReturn($configurationName)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-
+		
+		
 		$attributes
-			->expects($this->at(0))
+			->expects($this->exactly(2))
 			->method('get')
-			->with('_'.Unserialize::ALIAS_NAME)
-			->willReturn($annotation)
+			->withConsecutive(
+				[ '_'.Unserialize::ALIAS_NAME ],
+				[ $configurationName  ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$annotation,
+				null
+			)
 		;
-
+		
 		$attributes
-			->expects($this->at(1))
-			->method('get')
-			->with($configurationName)
-			->willReturn(null)
-		;
-		$attributes
-			->expects($this->at(2))
+			->expects($this->once())
 			->method('set')
-			->with('_'.Unserialize::ALIAS_NAME.'_class')
-			->willReturn(\stdClass::class)
+			->with('_'.Unserialize::ALIAS_NAME.'_class', \stdClass::class)
 		;
 
 		$doctrineParamConverter = $this->getMockBuilder(DoctrineParamConverter::class)->disableOriginalConstructor()->getMock();
 
 		$doctrineParamConverter
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('supports')
 			->with($configuration)
 			->willReturn(true)
 		;
 		$doctrineParamConverter
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('apply')
 			->with($request, $configuration)
 		;
@@ -409,47 +409,54 @@ class PostRestParamConverterTest extends TestCase {
 			->willReturn($options)
 		;
 		
+		
+		$at = -1;
+		$hasAssert = [];
+		$getAssert = [];
+		
 		$i = -1;
-		if (isset($options['id']) && !is_array($options['id'])) {
-			$attributes
-				->expects($this->at(++$i))
-				->method('has')
-				->with('ID')
-				->willReturn($haseName)
-			;
-			if ($haseName) {
-				$attributes
-					->expects($this->at(++$i))
-					->method('get')
-					->with('ID')
-					->willReturn($nameAtt)
-				;
+		if (isset($options['id']) && $options['id']) {
+			if (!\is_array($options['id'])) {
+				$hasAssert[++$i] = [ [ 'ID' ], $haseName ];
+				if ($haseName) {
+					$getAssert[++$i] = [ [ 'ID' ], $nameAtt ];
+				} else {
+					$hasAssert[++$i] = [ [ 'id' ], $hasId ];
+					if ($hasId) {
+						$getAssert[++$i] = [ [ 'id' ], $nameAtt ];
+					}
+				}
 			}
 		}
-		if (!isset($options['id']) ) {
-			$attributes
-				->expects($this->at(++$i))
-				->method('has')
-				->with('NAME')
-				->willReturn(false)
-			;
-			$attributes
-				->expects($this->at(++$i))
-				->method('has')
-				->with('id')
-				->willReturn($hasId)
-			;
+		if (!isset($options['id'])) {
+			$hasAssert[++$i] = [ [ 'NAME' ], false ];
+			$hasAssert[++$i] = [ [ 'id' ], $hasId ];
 			if ($hasId) {
-				$attributes
-					->expects($this->at(++$i))
-					->method('get')
-					->with('id')
-					->willReturn(42)
-				;
+				$getAssert[++$i] = [ [ 'id' ], 42 ];
 			}
 		}
-
-
+		
+		$attributes
+			->expects($this->exactly(count($hasAssert)))
+			->method('has')
+			->willReturnCallback(function($name) use (&$at, &$hasAssert) {
+				$at++;
+				$this->assertTrue(isset($hasAssert[$at]));
+				$this->assertEquals($hasAssert[$at][0], [ $name ]);
+				return $hasAssert[$at][1];
+			})
+		;
+		$attributes
+			->expects($this->exactly(count($getAssert)))
+			->method('get')
+			->willReturnCallback(function($name) use (&$at, &$getAssert) {
+				$at++;
+				$this->assertTrue(isset($getAssert[$at]));
+				$this->assertEquals($getAssert[$at][0], [ $name ]);
+				return $getAssert[$at][1];
+			})
+		;
+		
 		$this->assertEquals(
 			$this->reflectionCallMethod($postRestParamConverter, 'hasIdentifier', [$request, $configuration]), $result
 		);

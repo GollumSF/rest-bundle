@@ -1,31 +1,67 @@
 <?php
 
 namespace GollumSF\RestBundle\Annotation;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationAnnotation;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @Annotation
  * @Target({"CLASS", "METHOD"})
  */
-class Serialize extends ConfigurationAnnotation {
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
+class Serialize implements ConfigurationInterface {
 
 	const ALIAS_NAME = 'gsf_serialize';
 
 	/**
 	 * @var int
 	 */
-	private $code = Response::HTTP_OK;
+	private $code;
 
 	/**
 	 * @var string[]
 	 */
-	private $groups = [];
+	private $groups;
 
 	/**
 	 * @var string[]
 	 */
-	private $headers = [];
+	private $headers;
+	
+	/**
+	 * @param int $code
+	 * @param string|string[] $fullUrl
+	 * @param string[] $key
+	 */
+	public function __construct(
+		$code = Response::HTTP_OK,
+		$groups = [],
+		$headers = []
+	)
+	{
+		if (is_array($code)) {
+			if (function_exists('trigger_deprecation')) {
+				// @codeCoverageIgnoreStart
+				trigger_deprecation('gollumsf/rest_bundle', '2.8', 'Use native php attributes for %s', __CLASS__);
+				// @codeCoverageIgnoreEnd
+			}
+			$this->code = isset($code['code']) ? $code['code'] : Response::HTTP_OK;
+			$this->headers = isset($code['headers']) ? $code['headers'] : [];
+			
+			$this->groups = [];
+			if (isset($code['groups'])) {
+				$this->groups = $code['groups'] ? (is_array($code['groups']) ? $code['groups'] : [$code['groups']]) : $this->groups;
+			}
+			if (isset($code['value'])) {
+				$this->groups = $code['value'] ? (is_array($code['value']) ? $code['value'] : [$code['value']]) : $this->groups;
+			}
+			
+			return;
+		}
+		$this->code = $code;
+		$this->groups = is_array($groups) ? $groups : [ $groups ];
+		$this->headers = $headers;
+	}
 
 	/////////////
 	// Getters //
@@ -49,30 +85,5 @@ class Serialize extends ConfigurationAnnotation {
 
 	public function allowArray() {
 		return false;
-	}
-
-	/////////////
-	// Setters //
-	/////////////
-
-	public function setCode(int $code): self {
-		$this->code = $code;
-		return $this;
-	}
-
-	/**
-	 * @param string|string[] $groups
-	 */
-	public function setGroups($groups): self {
-		if (!is_array($groups)) {
-			$groups = [$groups];
-		}
-		$this->groups = $groups;
-		return $this;
-	}
-
-	public function setHeaders(array $headers): self {
-		$this->headers = $headers;
-		return $this;
 	}
 }

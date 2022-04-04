@@ -2,5 +2,4 @@ framework:
     serializer:
 security:
     firewalls:
-        main:
-            anonymous: true
+        main: ~

@@ -1,6 +1,9 @@
 # GollumSFRestBundle
 
-[![Build Status](https://travis-ci.org/GollumSF/rest-bundle.svg?branch=master)](https://travis-ci.org/GollumSF/rest-bundle)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_4.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_5.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.0.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+
 [![Coverage](https://coveralls.io/repos/github/GollumSF/rest-bundle/badge.svg?branch=master)](https://coveralls.io/github/GollumSF/rest-bundle)
 [![License](https://poser.pugx.org/gollumsf/rest-bundle/license)](https://packagist.org/packages/gollumsf/rest-bundle)
 [![Latest Stable Version](https://poser.pugx.org/gollumsf/rest-bundle/v/stable)](https://packagist.org/packages/gollumsf/rest-bundle)

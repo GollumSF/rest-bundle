@@ -21,6 +21,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class ExceptionSubscriberTestOnKernelException extends ExceptionSubscriber {
@@ -290,8 +291,8 @@ class ExceptionSubscriberTest extends TestCase {
 
 		$token
 			->expects($this->once())
-			->method('isAuthenticated')
-			->willReturn(false)
+			->method('getUser')
+			->willReturn(null)
 		;
 
 		$exceptionSubscriber = new ExceptionSubscriber(
@@ -311,6 +312,7 @@ class ExceptionSubscriberTest extends TestCase {
 		$configuration = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$tokenStorage = $this->getMockForAbstractClass(TokenStorageInterface::class);
 		$token = $this->getMockForAbstractClass(TokenInterface::class);
+		$user = $this->getMockForAbstractClass(UserInterface::class);
 
 		$tokenStorage
 			->expects($this->exactly(2))
@@ -320,8 +322,8 @@ class ExceptionSubscriberTest extends TestCase {
 
 		$token
 			->expects($this->once())
-			->method('isAuthenticated')
-			->willReturn(true)
+			->method('getUser')
+			->willReturn($user)
 		;
 
 		$exceptionSubscriber = new ExceptionSubscriber(

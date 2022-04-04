@@ -6,7 +6,7 @@ framework:
         enable_annotations: true
     router:
         utf8: true
-        resource: '%kernel.project_dir%/tests/ProjectTest/Resources/config/routing.yaml'
+        resource: '%kernel.project_dir%/tests/ProjectTestPhp8/Resources/config/routing.yaml'
         type: 'yaml'
     session:
         handler_id: ~
@@ -35,8 +35,8 @@ services:
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
-    Test\GollumSF\RestBundle\ProjectTest\Controller\:
-        resource: '%kernel.project_dir%/tests/ProjectTest/Controller'
+    Test\GollumSF\RestBundle\ProjectTestPhp8\Controller\:
+        resource: '%kernel.project_dir%/tests/ProjectTestPhp8/Controller'
         tags: ['controller.service_arguments']
 
     Test\GollumSF\RestBundle\ProjectTest\DataFixtures\:

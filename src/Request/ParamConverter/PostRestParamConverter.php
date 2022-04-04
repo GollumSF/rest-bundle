@@ -77,6 +77,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 				return true;
 			}
 		}
+		
 		if ($request->attributes->has($name)) {
 			return $request->attributes->get($name) !== null;
 		}

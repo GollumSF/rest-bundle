@@ -488,7 +488,7 @@ class BookControllerTest extends AbstractControllerTest {
 			'category' => 2,
 		]));
 		$response = $client->getResponse();
-		$this->assertEquals($response->getStatusCode(), 403);
+		$this->assertEquals($response->getStatusCode(), 401);
 	}
 
 	public function testPut404() {

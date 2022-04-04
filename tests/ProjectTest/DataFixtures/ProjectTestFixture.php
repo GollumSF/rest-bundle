@@ -37,7 +37,6 @@ class ProjectTestFixture extends Fixture {
 		$repeatCategory = 0;
 		$maxRepeatCategory = 3;
 		
-		$books = [];
 		for ($i = 1; $i <= 50; $i++) {
 			$book = (new Book())
 				->setTitle('TITLE_'.$i)
@@ -46,7 +45,6 @@ class ProjectTestFixture extends Fixture {
 				->setCategory($categories[$iCategory])
 			;
 			$manager->persist($book);
-			$books[] = $book;
 			
 			$repeatAuthor++;
 			if ($repeatAuthor === $maxRepeatAuthor) {

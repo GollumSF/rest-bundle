@@ -7,8 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class ValidateTest extends TestCase
 {
-	
-	public function provideConstruct() {
+	public function provideConstructLegacy() {
 		return [
 			[ [],  [ 'Default' ] ],
 			[ [
@@ -17,15 +16,39 @@ class ValidateTest extends TestCase
 			[ [
 				'value' => [ 'group1' ]
 			], ['group1']],
+			[ [
+				'groups' => 'group1'
+			],  ['group1'] ],
+			[ [
+				'groups' => [ 'group1' ]
+			], ['group1']],
 		];
 	}
-
+	
+	/**
+	 * @dataProvider provideConstructLegacy
+	 */
+	public function testConstructLegacy($param, $groups) {
+		$annotation = new Validate($param);
+		$this->assertEquals($annotation->getGroups(), $groups);
+		$this->assertEquals($annotation->getAliasName(), Validate::ALIAS_NAME);
+		$this->assertFalse($annotation->allowArray());
+	}
+	
+	public function provideConstruct() {
+		return [
+			[ [],  [ 'Default' ] ],
+			[ [ 'group1' ], [ 'group1' ] ],
+			[ 'group1', [ 'group1' ] ],
+		];
+	}
+	
 	/**
 	 * @dataProvider provideConstruct
 	 */
-	public function testConstruct($param, $groups) {
-		$annotation = new Validate($param);
-		$this->assertEquals($annotation->getGroups(), $groups);
+	public function testConstruct($groups, $groupsResult) {
+		$annotation = new Validate($groups);
+		$this->assertEquals($annotation->getGroups(), $groupsResult);
 		$this->assertEquals($annotation->getAliasName(), Validate::ALIAS_NAME);
 		$this->assertFalse($annotation->allowArray());
 	}

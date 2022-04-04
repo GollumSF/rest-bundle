@@ -14,7 +14,9 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 abstract class AbstractControllerTest extends BaseBundleTestCase {
 	
-	protected $projectPath = __DIR__ . '/../../../ProjectTest';
+	protected function getProjectPath(): string {
+		return __DIR__ . '/../../../ProjectTest';
+	}
 	
 	/** @var KernelInterface */
 	private $kernel;
@@ -49,7 +51,7 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
 			
 			// Add some configuration
-			$this->kernel->addConfigFile($this->projectPath.'/Resources/config/config.yaml');
+			$this->kernel->addConfigFile($this->getProjectPath().'/Resources/config/config.yaml');
 	
 			// Boot the kernel.
 			$this->kernel->boot();

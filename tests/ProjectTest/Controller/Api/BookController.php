@@ -40,7 +40,6 @@ class BookController {
 	 * @Unserialize("book", groups="book_post")
 	 * @Validate("book_post")
 	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
-	 *
 	 */
 	public function post(Book $book) {
 		return $book;
@@ -52,7 +51,6 @@ class BookController {
 	 * @Unserialize("book", groups="book_post")
 	 * @Validate("book_post")
 	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
-	 *
 	 */
 	public function postDenyIsGranted(Book $book) {
 		return $book;
@@ -64,7 +62,6 @@ class BookController {
 	 * @Unserialize("book", groups="book_post")
 	 * @Validate("book_post")
 	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
-	 *
 	 */
 	public function postDenySecurity(Book $book) {
 		return $book;

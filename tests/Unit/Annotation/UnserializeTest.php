@@ -9,15 +9,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UnserializeTest extends TestCase
 {
-	
-	public function provideConstruct() {
+	public function provideConstructLegacy() {
 		return [
 			[ [],  '', [], true ],
 			[ [
-				'value' => 'anno_name'
+				'name' => 'anno_name'
 			],  'anno_name', [], Response::HTTP_OK ],
 			[ [
-				'name' => 'anno_name'
+				'value' => 'anno_name'
 			],  'anno_name', [], Response::HTTP_OK ],
 			[ [
 				'groups' => 'group1'
@@ -30,14 +29,36 @@ class UnserializeTest extends TestCase
 			],  '', [], false],
 		];
 	}
-
+	
 	/**
-	 * @dataProvider provideConstruct
+	 * @dataProvider provideConstructLegacy
 	 */
-	public function testConstruct($param, $name, $groups, $save) {
+	public function testConstructLegacy($param, $name, $groups, $save) {
 		$annotation = new Unserialize($param);
 		$this->assertEquals($annotation->getName(), $name);
 		$this->assertEquals($annotation->getGroups(), $groups);
+		$this->assertEquals($annotation->isSave(), $save);
+		$this->assertEquals($annotation->getAliasName(), Unserialize::ALIAS_NAME);
+		$this->assertFalse($annotation->allowArray());
+	}
+	
+	public function provideConstruct() {
+		return [
+			[ '', [], true, [] ],
+			[ 'anno_name', [], Response::HTTP_OK, [] ],
+			[ '', 'group1', true, ['group1'] ],
+			[ '', [ 'group1' ], true, [ 'group1' ] ],
+			[ '', [], false, []],
+		];
+	}
+	
+	/**
+	 * @dataProvider provideConstruct
+	 */
+	public function testConstruct($name, $groups, $save, $groupsResult) {
+		$annotation = new Unserialize($name, $groups, $save);
+		$this->assertEquals($annotation->getName(), $name);
+		$this->assertEquals($annotation->getGroups(), $groupsResult);
 		$this->assertEquals($annotation->isSave(), $save);
 		$this->assertEquals($annotation->getAliasName(), Unserialize::ALIAS_NAME);
 		$this->assertFalse($annotation->allowArray());
