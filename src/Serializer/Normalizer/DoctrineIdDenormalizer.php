@@ -3,31 +3,73 @@ namespace GollumSF\RestBundle\Serializer\Normalizer;
 
 use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
-class DoctrineIdDenormalizer implements DenormalizerInterface {
-
-	use ManagerRegistryToManager;
-	
-	/** @var ManagerRegistry */
-	private $managerRegistry;
-	
-	/** @var array */
-	private $cache = [];
-	
-	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
-		$this->managerRegistry = $managerRegistry;
-		return $this;
-	}
-
-	public function denormalize($data, $class, $format = null, array $context = []) {
-		return $this->getEntityRepositoryForClass($class)->find($data);
-	}
-	
-	public function supportsDenormalization($data, $type, $format = null) {
-		if (!array_key_exists($type, $this->cache)) {
-			$this->cache[$type] = class_exists($type) && $this->isEntity($type) && (is_int($data) || is_string($data));
+// @codeCoverageIgnoreStart
+if (version_compare(Kernel::VERSION, '5.0.0', '<')) {
+	class DoctrineIdDenormalizer implements DenormalizerInterface {
+		
+		use DoctrineIdDenormalizerTrait;
+		use ManagerRegistryToManager;
+		
+		/** @var ManagerRegistry */
+		private $managerRegistry;
+		
+		public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+			$this->managerRegistry = $managerRegistry;
+			return $this;
 		}
-		return $this->cache[$type];
+		
+		public function denormalize($data, $class, $format = null, array $context = []) {
+			return $this->denormalizeImplement($data, $class, $format, $context);
+		}
+		public function supportsDenormalization($data, $type, $format = null): bool {
+			return $this->supportsDenormalizationImplement($data, $type, $format);
+		}
+	}
+} else
+if (version_compare(Kernel::VERSION, '6.0.0', '<')) {
+	class DoctrineIdDenormalizer implements DenormalizerInterface {
+		
+		use DoctrineIdDenormalizerTrait;
+		use ManagerRegistryToManager;
+		
+		/** @var ManagerRegistry */
+		private $managerRegistry;
+		
+		public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+			$this->managerRegistry = $managerRegistry;
+			return $this;
+		}
+		
+		public function denormalize($data, string $class, string $format = null, array $context = []) {
+			return $this->denormalizeImplement($data, $class, $format, $context);
+		}
+		public function supportsDenormalization($data, string $type, string $format = null): bool {
+			return $this->supportsDenormalizationImplement($data, $type, $format);
+		}
+	}
+} else {
+	class DoctrineIdDenormalizer implements DenormalizerInterface {
+		
+		use DoctrineIdDenormalizerTrait;
+		use ManagerRegistryToManager;
+		
+		/** @var ManagerRegistry */
+		private $managerRegistry;
+		
+		public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
+			$this->managerRegistry = $managerRegistry;
+			return $this;
+		}
+		
+		public function denormalize(mixed $data, string $class, string $format = null, array $context = []): mixed {
+			return $this->denormalizeImplement($data, $class, $format, $context);
+		}
+		public function supportsDenormalization(mixed $data, string $type, string $format = null): bool {
+			return $this->supportsDenormalizationImplement($data, $type, $format);
+		}
 	}
 }
+// @codeCoverageIgnoreEnd

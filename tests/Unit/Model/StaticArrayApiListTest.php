@@ -305,28 +305,20 @@ class StaticArrayApiListTest extends TestCase {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn($limit)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn($page)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn($order)
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn($direction)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$limit,
+				$page,
+				$order,
+				$direction
+			)
 		;
 
 		$apiList = new StaticArrayApiList($list, $request);
@@ -413,28 +405,20 @@ class StaticArrayApiListTest extends TestCase {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(100)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn($direction)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				100,
+				0,
+				'prop1',
+				$direction
+			)
 		;
 		
 		$apiList = new StaticArrayApiList($list, $request);
@@ -474,28 +458,20 @@ class StaticArrayApiListTest extends TestCase {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(100)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('ORDER')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn(Direction::DESC)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				100,
+				0,
+				'ORDER',
+				Direction::DESC
+			)
 		;
 
 		$apiList = new StaticArrayApiList([
@@ -533,28 +509,20 @@ class StaticArrayApiListTest extends TestCase {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(25)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn(Direction::ASC)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				100,
+				0,
+				'prop1',
+				Direction::ASC
+			)
 		;
 
 		$apiList = new StaticArrayApiList([

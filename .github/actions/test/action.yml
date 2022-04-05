@@ -49,7 +49,7 @@ runs:
       shell: bash
       run: |
         mkdir -p build/logs
-        vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml --whitelist src tests/
+        php  -d memory_limit=-1 vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml --whitelist src tests/
 
     - name: Upload coverage results to Coveralls
       if: success()

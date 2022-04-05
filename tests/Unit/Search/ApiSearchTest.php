@@ -82,39 +82,31 @@ class ApiSearchTest extends TestCase {
 		$closure         = function () {};
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getDefaultLimitItem')
 			->willReturn(25)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
 		
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn($limit)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn($direction)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				$limit,
+				0,
+				'prop1',
+				$direction
+			)
 		;
 
 		$repository
@@ -136,47 +128,37 @@ class ApiSearchTest extends TestCase {
 	public function testApiFindQueryException() {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
-		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getDefaultLimitItem')
 			->willReturn(25)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-
+		
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(20)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn(Direction::ASC)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				20,
+				0,
+				'prop1',
+				Direction::ASC
+			)
 		;
 
 		$repository
@@ -209,39 +191,31 @@ class ApiSearchTest extends TestCase {
 		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getDefaultLimitItem')
 			->willReturn(25)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
 		
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(25)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn(Direction::ASC)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				25,
+				0,
+				'prop1',
+				Direction::ASC
+			)
 		;
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
@@ -261,39 +235,31 @@ class ApiSearchTest extends TestCase {
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->once())
 			->method('getDefaultLimitItem')
 			->willReturn(25)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->once())
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-
+		
 		$request
-			->expects($this->at(0))
+			->expects($this->exactly(4))
 			->method('get')
-			->with('limit')
-			->willReturn(25)
-		;
-		$request
-			->expects($this->at(1))
-			->method('get')
-			->with('page')
-			->willReturn(0)
-		;
-		$request
-			->expects($this->at(2))
-			->method('get')
-			->with('order')
-			->willReturn('prop1')
-		;
-		$request
-			->expects($this->at(3))
-			->method('get')
-			->with('direction')
-			->willReturn(Direction::ASC)
+			->withConsecutive(
+				[ 'limit' ],
+				[ 'page' ],
+				[ 'order' ],
+				[ 'direction' ]
+			)
+			->willReturnOnConsecutiveCalls(
+				25,
+				0,
+				'prop1',
+				Direction::ASC
+			)
 		;
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
@@ -311,12 +277,12 @@ class ApiSearchTest extends TestCase {
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
-			->expects($this->at(0))
+			->expects($this->any())
 			->method('getMaxLimitItem')
 			->willReturn(4242)
 		;
 		$configuration
-			->expects($this->at(1))
+			->expects($this->any())
 			->method('getDefaultLimitItem')
 			->willReturn(42)
 		;
