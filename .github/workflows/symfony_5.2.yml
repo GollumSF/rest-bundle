@@ -18,5 +18,6 @@ jobs:
     - uses: ./.github/actions/test
       with:
         symfony_version: '5.2'
+        php_version: '7.2'
         github_token: ${{ secrets.GITHUB_TOKEN }}
         discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}

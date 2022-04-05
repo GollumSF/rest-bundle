@@ -125,7 +125,7 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 
 		// Add some configuration
 		
-		if (version_compare(Kernel::VERSION, '5.0.0', '<')) {
+		if (version_compare(Kernel::VERSION, '5.2.0', '<')) {
 			$kernel->addConfigFile(__DIR__ . '/Resources/config_token_storage_sf4.4.yaml');
 		} else {
 			$kernel->addConfigFile(__DIR__ . '/Resources/config_token_storage.yaml');

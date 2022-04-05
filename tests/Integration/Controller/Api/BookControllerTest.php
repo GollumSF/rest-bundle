@@ -489,7 +489,7 @@ class BookControllerTest extends AbstractControllerTest {
 			'category' => 2,
 		]));
 		$response = $client->getResponse();
-		$this->assertEquals($response->getStatusCode(), version_compare(Kernel::VERSION, '5.0.0', '<') ? 403 : 401);
+		$this->assertEquals($response->getStatusCode(), version_compare(Kernel::VERSION, '5.2.0', '<') ? 403 : 401);
 	}
 
 	public function testPut404() {

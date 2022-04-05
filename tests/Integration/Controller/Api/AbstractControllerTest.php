@@ -52,7 +52,7 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
 			
 			// Add some configuration
-			if (version_compare(Kernel::VERSION, '5.0.0', '<')) {
+			if (version_compare(Kernel::VERSION, '5.2.0', '<')) {
 				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config_sf4.4.yaml');
 			} else {
 				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config.yaml');
