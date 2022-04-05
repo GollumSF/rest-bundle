@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\BrowserKit\AbstractBrowser;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 abstract class AbstractControllerTest extends BaseBundleTestCase {
@@ -51,7 +52,11 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
 			
 			// Add some configuration
-			$this->kernel->addConfigFile($this->getProjectPath().'/Resources/config/config.yaml');
+			if (version_compare(Kernel::VERSION, '5.0.0', '<')) {
+				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config_sf4.4.yaml');
+			} else {
+				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config.yaml');
+			}
 	
 			// Boot the kernel.
 			$this->kernel->boot();

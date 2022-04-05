@@ -1,0 +1,56 @@
+framework:
+    serializer:
+        enable_annotations: true
+    validation:
+        enabled: true
+        enable_annotations: true
+    router:
+        utf8: true
+        resource: '%kernel.project_dir%/tests/ProjectTest/Resources/config/routing.yaml'
+        type: 'yaml'
+    session:
+        handler_id: ~
+
+doctrine:
+    dbal:
+        url: "sqlite:///%kernel.cache_dir%/test.db"
+    orm:
+        auto_generate_proxy_classes: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: true
+        mappings:
+            Test\GollumSF\RestBundle\ProjectTest\Entity\:
+                is_bundle: false
+                type: annotation
+                dir: '%kernel.project_dir%/tests/ProjectTest/Entity'
+                prefix: 'Test\GollumSF\RestBundle\ProjectTest\Entity'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: true        # Allows optimizing the container by removing unused services; this also means
+
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    Test\GollumSF\RestBundle\ProjectTest\Controller\:
+        resource: '%kernel.project_dir%/tests/ProjectTest/Controller'
+        tags: ['controller.service_arguments']
+
+    Test\GollumSF\RestBundle\ProjectTest\DataFixtures\:
+        resource: '%kernel.project_dir%/tests/ProjectTest/DataFixtures'
+
+security:
+    providers:
+        in_memory:
+            memory:
+                users:
+                    test_user: { password: test }
+    firewalls:
+        main:
+            anonymous: true
+            http_basic:
+                realm: 'Secured Demo Area'
+                provider: in_memory

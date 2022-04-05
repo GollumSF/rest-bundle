@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
+use Symfony\Component\HttpKernel\Kernel;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
 
 class BookControllerTest extends AbstractControllerTest {
@@ -488,7 +489,7 @@ class BookControllerTest extends AbstractControllerTest {
 			'category' => 2,
 		]));
 		$response = $client->getResponse();
-		$this->assertEquals($response->getStatusCode(), 401);
+		$this->assertEquals($response->getStatusCode(), version_compare(Kernel::VERSION, '5.0.0', '<') ? 403 : 401);
 	}
 
 	public function testPut404() {

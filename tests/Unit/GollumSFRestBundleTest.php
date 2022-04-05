@@ -18,6 +18,7 @@ use Nyholm\BundleTest\BaseBundleTestCase;
 use Nyholm\BundleTest\CompilerPass\PublicServicePass;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -123,7 +124,12 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 		$kernel->addBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 
 		// Add some configuration
-		$kernel->addConfigFile(__DIR__.'/Resources/config_token_storage.yaml');
+		
+		if (version_compare(Kernel::VERSION, '5.0.0', '<')) {
+			$kernel->addConfigFile(__DIR__ . '/Resources/config_token_storage_sf4.4.yaml');
+		} else {
+			$kernel->addConfigFile(__DIR__ . '/Resources/config_token_storage.yaml');
+		}
 
 		// Boot the kernel.
 		$this->bootKernel();
