@@ -2,16 +2,14 @@
 
 namespace GollumSF\RestBundle\Annotation;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationInterface;
-
 /**
  * @Annotation
  * @Target({"CLASS", "METHOD"})
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
-class Unserialize implements ConfigurationInterface {
-
-	const ALIAS_NAME = 'gsf_unserialize';
+class Unserialize {
+	
+	const REQUEST_ATTRIBUTE_CLASS = '_gsf_unserialize_class';
 	
 	/** @var string */
 	private $name = '';
@@ -72,12 +70,4 @@ class Unserialize implements ConfigurationInterface {
 		return $this->save;
 	}
 
-	public function getAliasName() {
-		return self::ALIAS_NAME;
-	}
-
-	public function allowArray() {
-		return false;
-	}
-	
 }

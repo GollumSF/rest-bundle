@@ -1,0 +1,24 @@
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        public: false       # Allows optimizing the container by removing unused services; this also means
+                            # fetching services directly from the container via $container->get() won't work.
+                            # The best practice is to be explicit about your dependencies anyway.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    
+    GollumSF\RestBundle\Metadata\Serialize\Handler\AttributeHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface::HANDLER_TAG' }
+    
+    GollumSF\RestBundle\Metadata\Unserialize\Handler\AttributeHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface::HANDLER_TAG' }
+    
+    GollumSF\RestBundle\Metadata\Validate\Handler\AttributeHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface::HANDLER_TAG' }

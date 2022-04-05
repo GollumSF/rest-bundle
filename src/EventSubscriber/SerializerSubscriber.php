@@ -2,10 +2,15 @@
 namespace GollumSF\RestBundle\EventSubscriber;
 
 use Doctrine\Persistence\ManagerRegistry;
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerAction;
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
 use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
@@ -26,17 +31,25 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	
 	use ManagerRegistryToManager;
 	
-	/**
-	 * @var SerializerInterface
-	 */
+	/** @var SerializerInterface */
 	private $serializer;
-	/**
-	 * @var ManagerRegistry
-	 */
+	
+	/** @var ControllerActionExtractorInterface */
+	private $controllerActionExtractor;
+	
+	/** @var MetadataSerializeManagerInterface */
+	private $metadataSerializeManager;
+	
+	/** @var MetadataUnserializeManagerInterface */
+	private $metadataUnserializeManager;
+	
+	/** @var MetadataValidateManagerInterface */
+	private $metadataValidateManager;
+	
+	/** @var ManagerRegistry */
 	private $managerRegistry;
-	/**
-	 * @var ValidatorInterface
-	 */
+	
+	/** @var ValidatorInterface */
 	private $validator;
 	
 	public static function getSubscribedEvents() {
@@ -54,9 +67,17 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 	
 	public function __construct(
-		SerializerInterface $serializer
+		SerializerInterface $serializer,
+		ControllerActionExtractorInterface $controllerActionExtractor,
+		MetadataSerializeManagerInterface $metadataSerializeManager,
+		MetadataUnserializeManagerInterface $metadataUnserializeManager,
+		MetadataValidateManagerInterface $metadataValidateManager
 	) {
 		$this->serializer = $serializer;
+		$this->controllerActionExtractor = $controllerActionExtractor;
+		$this->metadataSerializeManager = $metadataSerializeManager;
+		$this->metadataUnserializeManager = $metadataUnserializeManager;
+		$this->metadataValidateManager = $metadataValidateManager;
 	}
 
 	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
@@ -71,21 +92,22 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	
 	public function onKernelControllerArguments(ControllerArgumentsEvent $event) {
 		
-		$request = $event->getRequest();
+		$request  = $event->getRequest();
 		
-		/** @var Unserialize $annotation */
-		$annotation = $request->attributes->get('_'.Unserialize::ALIAS_NAME);
-		if ($annotation) {
+		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
+		$metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		
+		if ($metadata) {
 			
 			$content = $request->getContent();
-			$entity = $request->attributes->get($annotation->getName());
+			$entity = $request->attributes->get($metadata->getName());
 			
 			$groups = array_merge(
-				[ strtolower($request->getMethod()) ], 
-				$annotation->getGroups()
+				[ strtolower($request->getMethod()) ],
+				$metadata->getGroups()
 			);
 
-			$class = $request->attributes->get('_'.Unserialize::ALIAS_NAME.'_class');
+			$class = $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS);
 			if (!$class && $entity) {
 				$class = get_class($entity);
 			}
@@ -102,11 +124,11 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				throw new BadRequestHttpException('Bad parameter on request content');
 			}
 	
-			$request->attributes->set($annotation->getName(), $entity);
+			$request->attributes->set($metadata->getName(), $entity);
 			
 			$this->validate($request, $entity);
 
-			if ($annotation->isSave() && $this->isEntity($entity)) {
+			if ($metadata->isSave() && $this->isEntity($entity)) {
 				$em = $this->getEntityManagerForClass($entity);
 				$em->persist($entity);
 				$em->flush();
@@ -116,23 +138,25 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 	
 	public function onKernelView(ViewEvent $event) {
-
+		
 		$request  = $event->getRequest();
-
+		
+		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
+		$metadata = $this->metadataSerializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		
 		/** @var Serialize $annotation */
-		$annotation = $request->attributes->get('_'.Serialize::ALIAS_NAME);
-		if ($annotation) {
+		if ($metadata) {
 
 			$data = $event->getControllerResult();
-			$groups = array_merge([ 'get' ], $annotation->getGroups());
+			$groups = array_merge([ 'get' ], $metadata->getGroups());
 
 			$content = $this->serialize($data,'json', $groups);
 
-			$headers = $annotation->getHeaders();
+			$headers = $metadata->getHeaders();
 			$headers['Content-Type']   = 'application/json';
 			$headers['Content-Length'] = mb_strlen($content, 'UTF-8');
 
-			$event->setResponse(new Response($content, $annotation->getCode(), $headers));
+			$event->setResponse(new Response($content, $metadata->getCode(), $headers));
 		}
 	}
 
@@ -197,13 +221,15 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	}
 
 	protected function validate(Request $request, $entity): void {
-		/** @var Validate $annotationValidate */
-		$annotationValidate = $request->attributes->get('_'.Validate::ALIAS_NAME);
-		if ($annotationValidate) {
+		
+		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
+		$metadata = $this->metadataValidateManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		
+		if ($metadata) {
 
 			$groups = array_merge([
 				strtolower($request->getMethod()) ],
-				$annotationValidate->getGroups()
+				$metadata->getGroups()
 			);
 			
 			if (!$this->validator) {

@@ -1,8 +1,10 @@
 <?php
 namespace GollumSF\RestBundle\EventSubscriber;
 
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -21,6 +23,12 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 
 	/** @var ApiConfigurationInterface */
 	private $apiConfiguration;
+	
+	/** @var ControllerActionExtractorInterface */
+	private $controllerActionExtractor;
+	
+	/** @var MetadataSerializeManagerInterface */
+	private $metadataSerializeManager;
 
 	/** @var bool */
 	private $debug;
@@ -39,10 +47,14 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 	public function __construct(
 		SerializerInterface $serializer,
 		ApiConfigurationInterface $apiConfiguration,
+		ControllerActionExtractorInterface $controllerActionExtractor,
+		MetadataSerializeManagerInterface $metadataSerializeManager, 
 		bool $debug
 	) {
 		$this->serializer = $serializer;
 		$this->apiConfiguration = $apiConfiguration;
+		$this->controllerActionExtractor = $controllerActionExtractor;
+		$this->metadataSerializeManager = $metadataSerializeManager;
 		$this->debug = $debug;
 	}
 
@@ -51,12 +63,14 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 	}
 
 	public function onKernelException(ExceptionEvent $event) {
-
+		
+		$controllerAction = $this->controllerActionExtractor->extractFromRequest($event->getRequest());
+		$serialize = $this->metadataSerializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		
 		if (
 			$this->apiConfiguration->isAlwaysSerializedException() ||
-			$event->getRequest()->attributes->has('_'.Serialize::ALIAS_NAME)
+			$serialize
 		) {
-
 			$code = Response::HTTP_INTERNAL_SERVER_ERROR;
 			$e = $event->getThrowable();
 			if (
@@ -97,7 +111,6 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 			];
 			$event->setResponse(new Response($content, $code, $headers));
 		}
-
 	}
 
 

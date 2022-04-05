@@ -31,8 +31,6 @@ class ValidateTest extends TestCase
 	public function testConstructLegacy($param, $groups) {
 		$annotation = new Validate($param);
 		$this->assertEquals($annotation->getGroups(), $groups);
-		$this->assertEquals($annotation->getAliasName(), Validate::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 	public function provideConstruct() {
@@ -49,8 +47,6 @@ class ValidateTest extends TestCase
 	public function testConstruct($groups, $groupsResult) {
 		$annotation = new Validate($groups);
 		$this->assertEquals($annotation->getGroups(), $groupsResult);
-		$this->assertEquals($annotation->getAliasName(), Validate::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 }

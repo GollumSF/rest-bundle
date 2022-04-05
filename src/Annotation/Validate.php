@@ -2,17 +2,13 @@
 
 namespace GollumSF\RestBundle\Annotation;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationInterface;
-
 /**
  * @Annotation
  * @Target({"CLASS", "METHOD"})
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
-class Validate implements ConfigurationInterface {
+class Validate {
 
-	const ALIAS_NAME = 'gsf_validate';
-	
 	/** @var string[] */
 	private $groups;
 	
@@ -53,14 +49,6 @@ class Validate implements ConfigurationInterface {
 	
 	public function getGroups(): array {
 		return $this->groups;
-	}
-
-	public function getAliasName() {
-		return self::ALIAS_NAME;
-	}
-
-	public function allowArray() {
-		return false;
 	}
 	
 }

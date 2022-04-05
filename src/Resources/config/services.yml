@@ -37,3 +37,23 @@ services:
     GollumSF\RestBundle\Search\ApiSearchInterface:
         class: GollumSF\RestBundle\Search\ApiSearch
     
+    GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface:
+        class: GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManager
+    
+    GollumSF\RestBundle\Metadata\Serialize\Handler\AnnotationHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface::HANDLER_TAG' }
+    
+    GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface:
+        class: GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManager
+    
+    GollumSF\RestBundle\Metadata\Unserialize\Handler\AnnotationHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface::HANDLER_TAG' }
+    
+    GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface:
+        class: GollumSF\RestBundle\Metadata\Validate\MetadataValidateManager
+    
+    GollumSF\RestBundle\Metadata\Validate\Handler\AnnotationHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface::HANDLER_TAG' }

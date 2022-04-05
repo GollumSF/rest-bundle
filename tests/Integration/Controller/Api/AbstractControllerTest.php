@@ -3,6 +3,7 @@
 namespace Test\GollumSF\RestBundle\Integration\Controller\Api;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle;
 use GollumSF\RestBundle\GollumSFRestBundle;
 use Nyholm\BundleTest\BaseBundleTestCase;
 use Nyholm\BundleTest\CompilerPass\PublicServicePass;
@@ -48,7 +49,8 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 			$this->kernel->addBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
 			$this->kernel->addBundle(\Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class);
 			$this->kernel->addBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
-	
+			$this->kernel->addBundle(GollumSFControllerActionExtractorBundle::class);
+			
 			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
 			
 			// Add some configuration

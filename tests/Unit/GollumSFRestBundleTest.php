@@ -8,6 +8,12 @@ use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
 use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use GollumSF\RestBundle\GollumSFRestBundle;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManager;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManager;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Validate\MetadataValidateManager;
+use GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface;
 use GollumSF\RestBundle\Request\ParamConverter\PostRestParamConverter;
 use GollumSF\RestBundle\Search\ApiSearch;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
@@ -16,7 +22,6 @@ use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use Nyholm\BundleTest\BaseBundleTestCase;
 use Nyholm\BundleTest\CompilerPass\PublicServicePass;
-use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -41,6 +46,9 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 
 		// Create a new Kernel
 		$kernel = $this->createKernel();
+		
+		// Add some other bundles we depend on
+		$kernel->addBundle(\GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle::class);
 
 		// Add some configuration
 		$kernel->addConfigFile(__DIR__.'/Resources/config.yaml');
@@ -63,6 +71,40 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 		$this->assertInstanceOf(PostRestParamConverter::class    , $container->get(PostRestParamConverter::class));
 		$this->assertInstanceOf(SerializerSubscriber::class      , $container->get(SerializerSubscriber::class));
 		$this->assertInstanceOf(ExceptionSubscriber::class       , $container->get(ExceptionSubscriber::class));
+		
+		$this->assertInstanceOf(MetadataSerializeManager::class  , $container->get(MetadataSerializeManagerInterface::class));
+		$this->assertInstanceOf(MetadataUnserializeManager::class, $container->get(MetadataUnserializeManagerInterface::class));
+		$this->assertInstanceOf(MetadataValidateManager::class   , $container->get(MetadataValidateManagerInterface::class));
+		
+		$handlersSerialize = $this->reflectionGetValue($container->get(MetadataSerializeManagerInterface::class), 'handlers');
+		if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+			$this->assertCount(1, $handlersSerialize);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Serialize\Handler\AnnotationHandler::class, $handlersSerialize[0]);
+		} else {
+			$this->assertCount(2, $handlersSerialize);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Serialize\Handler\AnnotationHandler::class, $handlersSerialize[0]);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Serialize\Handler\AttributeHandler::class, $handlersSerialize[1]);
+		}
+		
+		$handlersUnserialize = $this->reflectionGetValue($container->get(MetadataUnserializeManagerInterface::class), 'handlers');
+		if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+			$this->assertCount(1, $handlersUnserialize);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Unserialize\Handler\AnnotationHandler::class, $handlersUnserialize[0]);
+		} else {
+			$this->assertCount(2, $handlersSerialize);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Unserialize\Handler\AnnotationHandler::class, $handlersUnserialize[0]);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Unserialize\Handler\AttributeHandler::class, $handlersUnserialize[1]);
+		}
+		
+		$handlersValidate = $this->reflectionGetValue($container->get(MetadataValidateManagerInterface::class), 'handlers');
+		if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+			$this->assertCount(1, $handlersValidate);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Validate\Handler\AnnotationHandler::class, $handlersValidate[0]);
+		} else {
+			$this->assertCount(2, $handlersValidate);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Validate\Handler\AnnotationHandler::class, $handlersValidate[0]);
+			$this->assertInstanceOf(\GollumSF\RestBundle\Metadata\Validate\Handler\AttributeHandler::class, $handlersValidate[1]);
+		}
 
 		$this->assertNull($this->reflectionGetValue($container->get(SerializerSubscriber::class), 'validator'));
 		$this->assertNull($this->reflectionGetValue($container->get(SerializerSubscriber::class), 'managerRegistry'));
@@ -81,6 +123,7 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 		// Add some other bundles we depend on
 		$kernel->addBundle(\Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle::class);
 		$kernel->addBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
+		$kernel->addBundle(\GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle::class);
 
 		// Add some configuration
 		$kernel->addConfigFile(__DIR__ . '/Resources/config_doctrine.yaml');
@@ -102,6 +145,9 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 
 		// Create a new Kernel
 		$kernel = $this->createKernel();
+		
+		// Add some other bundles we depend on
+		$kernel->addBundle(\GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle::class);
 
 		// Add some configuration
 		$kernel->addConfigFile(__DIR__ . '/Resources/config_validator.yaml');
@@ -119,6 +165,9 @@ class GollumSFRestBundleTest extends BaseBundleTestCase {
 
 		// Create a new Kernel
 		$kernel = $this->createKernel();
+		
+		// Add some other bundles we depend on
+		$kernel->addBundle(\GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle::class);
 
 		// Add some other bundles we depend on
 		$kernel->addBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);

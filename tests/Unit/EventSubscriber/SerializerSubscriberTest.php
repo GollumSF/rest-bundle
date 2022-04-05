@@ -3,12 +3,20 @@ namespace Test\GollumSF\RestBundle\Unit\EventSubscriber;
 
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\Proxy;
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerAction;
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Annotation\Unserialize;
 use GollumSF\RestBundle\Annotation\Validate;
 use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerialize;
+use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserialize;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;
+use GollumSF\RestBundle\Metadata\Validate\MetadataValidate;
+use GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
 use PHPUnit\Framework\TestCase;
@@ -58,10 +66,20 @@ class SerializerSubscriberOnKernelControllerArgumentsTestSave extends Serializer
 
 	public function __construct(
 		SerializerInterface $serializer,
+		ControllerActionExtractorInterface $controllerActionExtractor,
+		MetadataSerializeManagerInterface $metadataSerializeManager,
+		MetadataUnserializeManagerInterface $metadataUnserializeManager,
+		MetadataValidateManagerInterface $metadataValidateManager,
 		ObjectManager $em,
 		bool $isEntity
 	) {
-		parent::__construct($serializer);
+		parent::__construct(
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
+		);
 		$this->em = $em;
 		$this->isEntity = $isEntity;
 	}
@@ -134,12 +152,12 @@ class SerializerSubscriberTest extends TestCase {
 			[ 'POST', [], [ 'post' ], \stdClass::class ],
 			[ 'post', [], [ 'post' ], \stdClass::class ],
 			[ 'patch', [], [ 'patch' ], \stdClass::class ],
-			[ 'POST', 'group1', [ 'post', 'group1' ], \stdClass::class ],
+			[ 'POST', [ 'group1' ], [ 'post', 'group1' ], \stdClass::class ],
 			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ], \stdClass::class ],
 			[ 'POST', [], [ 'post' ], null ],
 			[ 'post', [], [ 'post' ], null ],
 			[ 'patch', [], [ 'patch' ], null ],
-			[ 'POST', 'group1', [ 'post', 'group1' ], null ],
+			[ 'POST', [ 'group1' ], [ 'post', 'group1' ], null ],
 			[ 'POST', [ 'group1', 'group2' ], [ 'post', 'group1', 'group2' ], null ],
 		];
 	}
@@ -149,8 +167,12 @@ class SerializerSubscriberTest extends TestCase {
 	 */
 	public function testonKernelControllerArgumentsSuccess($method, $groups, $groupResults, $class) {
 
-		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -159,11 +181,23 @@ class SerializerSubscriberTest extends TestCase {
 		$entity = new \stdClass();
 		$controller = function () {};
 		
-		$annotation = new Unserialize([
-			'name' => 'ENTITY_NAME',
-			'groups' => $groups
-		]);
-			
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataUnserialize('ENTITY_NAME', $groups, false);
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataUnserializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
+		
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MASTER_REQUEST);
 
 		$request
@@ -178,15 +212,13 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->exactly(3))
+			->expects($this->exactly(2))
 			->method('get')
 			->withConsecutive(
-				[ '_'.Unserialize::ALIAS_NAME ],
 				[ 'ENTITY_NAME' ],
-				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+				[ Unserialize::REQUEST_ATTRIBUTE_CLASS ]
 			)
 			->willReturnOnConsecutiveCalls(
-				$annotation,
 				$entity,
 				$class
 			)
@@ -199,7 +231,11 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		
 		$serializerSubscriber->onKernelControllerArguments($event);
@@ -209,19 +245,35 @@ class SerializerSubscriberTest extends TestCase {
 
 	public function testonKernelControllerArgumentsNoClassNoEntity() {
 
-		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
 
 		$controller = function () {};
-
-		$annotation = new Unserialize([
-			'name' => 'ENTITY_NAME',
-			'groups' => []
-		]);
+		
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataUnserialize('ENTITY_NAME', [], false );
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataUnserializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MASTER_REQUEST);
 
@@ -237,22 +289,24 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$attributes
-			->expects($this->exactly(3))
+			->expects($this->exactly(2))
 			->method('get')
 			->withConsecutive(
-				[ '_'.Unserialize::ALIAS_NAME ],
 				[ 'ENTITY_NAME' ],
-				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+				[ Unserialize::REQUEST_ATTRIBUTE_CLASS ]
 			)
 			->willReturnOnConsecutiveCalls(
-				$annotation,
 				null,
 				null
 			)
 		;
 		
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		
 		$this->expectException(\LogicException::class);
@@ -263,19 +317,35 @@ class SerializerSubscriberTest extends TestCase {
 
 	public function testonKernelControllerArgumentsNoEntity() {
 
-		$serializer      = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel          = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
 
 		$controller = function () {};
-
-		$annotation = new Unserialize([
-			'name' => 'ENTITY_NAME',
-			'groups' => []
-		]);
+		
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataUnserialize('ENTITY_NAME', [], false );
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataUnserializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MASTER_REQUEST);
 
@@ -291,22 +361,24 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$attributes
-			->expects($this->exactly(3))
+			->expects($this->exactly(2))
 			->method('get')
 			->withConsecutive(
-				[ '_'.Unserialize::ALIAS_NAME ],
 				[ 'ENTITY_NAME' ],
-				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+				[ Unserialize::REQUEST_ATTRIBUTE_CLASS ]
 			)
 			->willReturnOnConsecutiveCalls(
-				$annotation,
 				null,
 				\stdClass::class
 			)
 		;
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$this->expectException(BadRequestHttpException::class);
@@ -317,9 +389,9 @@ class SerializerSubscriberTest extends TestCase {
 	public function provideronKernelControllerArgumentsSave() {
 		return [
 			[true, true, true ],
-//			[true, false, false ],
-//			[false, true, false ],
-//			[false, false, false ]
+			[true, false, false ],
+			[false, true, false ],
+			[false, false, false ]
 		];
 	}
 
@@ -328,17 +400,34 @@ class SerializerSubscriberTest extends TestCase {
 	 */
 	public function testonKernelControllerArgumentsSave($isEntity, $save, $called) {
 		
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$em         = $this->getMockForAbstractClass(ObjectManager::class);
-		$kernel     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$em                         = $this->getMockForAbstractClass(ObjectManager::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
 		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
 		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
-		$annotation = new Unserialize([
-			'name' => 'ENTITY_NAME',
-			'save' => $save
-		]);
+		
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataUnserialize('ENTITY_NAME', [], $save );
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataUnserializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 
 		$entity = new \stdClass();
 		$controller = function () {};
@@ -347,6 +436,10 @@ class SerializerSubscriberTest extends TestCase {
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTestSave(
 			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager,
 			$em,
 			$isEntity
 		);
@@ -363,15 +456,13 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$attributes
-			->expects($this->exactly(3))
+			->expects($this->exactly(2))
 			->method('get')
 			->withConsecutive(
-				[ '_'.Unserialize::ALIAS_NAME ],
 				[ 'ENTITY_NAME' ],
-				[ '_'.Unserialize::ALIAS_NAME.'_class' ]
+				[ Unserialize::REQUEST_ATTRIBUTE_CLASS ]
 			)
 			->willReturnOnConsecutiveCalls(
-				$annotation,
 				$entity,
 				\stdClass::class
 			)
@@ -427,7 +518,11 @@ class SerializerSubscriberTest extends TestCase {
 	 * @dataProvider providerUnserializeSuccess
 	 */
 	public function testUnserializeSuccess($entity, $class, $groups) {
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
 
 		$context = [
 			'groups' => $groups,
@@ -435,7 +530,11 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$serializer
@@ -463,7 +562,11 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testUnserializeNotSupport() {
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
 
 		$entity = new \stdClass();
 		$context = [
@@ -472,7 +575,11 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$serializer
@@ -496,7 +603,11 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testUnserializeExceptionUnexpectedValue() {
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
 
 		$entity = new \stdClass();
 		$context = [
@@ -505,7 +616,11 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$serializer
@@ -533,7 +648,11 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testUnserializeExceptionMissingConstructorArguments() {
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
 
 		$entity = new \stdClass();
 		$context = [
@@ -542,7 +661,11 @@ class SerializerSubscriberTest extends TestCase {
 		];
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$serializer
@@ -569,35 +692,53 @@ class SerializerSubscriberTest extends TestCase {
 		$this->reflectionCallMethod($serializerSubscriber, 'unserialize', [ 'CONTENT', $entity, \stdClass::class, [] ]);
 	}
 
-	public function providerValidate() {
+	public function providerValidateSuccess() {
 		return  [
-			[ []                      , 'POST' , [ 'post', 'Default' ] ],
-			[ []                      , 'post' , [ 'post', 'Default' ] ],
-			[ []                      , 'patch', [ 'patch', 'Default' ] ],
-			[ 'groups1'               , 'post' , [ 'post', 'groups1' ] ],
+			[ []                      , 'POST' , [ 'post' ] ],
+			[ []                      , 'post' , [ 'post' ] ],
+			[ []                      , 'patch', [ 'patch' ] ],
+			[ [ 'groups1' ]           , 'post' , [ 'post', 'groups1' ] ],
 			[ [ 'groups1', 'groups2' ], 'post' , [ 'post', 'groups1', 'groups2' ] ],
 		];
 	}
 
 	/**
-	 * @dataProvider providerValidate
+	 * @dataProvider providerValidateSuccess
 	 */
-	public function testValidate($groups, $method, $groupsFinal) {
-		$serializer              = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
-		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
+	public function testValidateSuccess($groups, $method, $groupsFinal) {
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$validator                  = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
+		$constraintViolationList    = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
 		
-		$request    = $this->getMockBuilder(Request::class)->getMock();
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-		
+		$request = $this->getMockBuilder(Request::class)->getMock();
 		$entity = new \stdClass();
-		$annotation = new Validate([
-			'value' => $groups
-		]);
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataValidate($groups);
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataValidateManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		$serializerSubscriber->setValidator($validator);
 
@@ -605,13 +746,6 @@ class SerializerSubscriberTest extends TestCase {
 			->expects($this->once())
 			->method('getMethod')
 			->willReturn($method)
-		;
-		
-		$attributes
-			->expects($this->once())
-			->method('get')
-			->with('_'.Validate::ALIAS_NAME)
-			->willReturn($annotation)
 		;
 		
 		$validator
@@ -631,19 +765,39 @@ class SerializerSubscriberTest extends TestCase {
 	}
 
 	public function testValidateException() {
-		$serializer              = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$validator               = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
-		$constraintViolationList = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
-
-		$request    = $this->getMockBuilder(Request::class)->getMock();
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$validator                  = $this->getMockBuilder(ValidatorInterface::class)->getMockForAbstractClass();
+		$constraintViolationList    = $this->getMockBuilder(ConstraintViolationListInterface::class)->getMockForAbstractClass();
+		
+		$request = $this->getMockBuilder(Request::class)->getMock();
 		$entity = new \stdClass();
-		$annotation = new Validate();
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataValidate([]);
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataValidateManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		$serializerSubscriber->setValidator($validator);
 
@@ -653,17 +807,10 @@ class SerializerSubscriberTest extends TestCase {
 			->willReturn('get')
 		;
 
-		$attributes
-			->expects($this->once())
-			->method('get')
-			->with('_'.Validate::ALIAS_NAME)
-			->willReturn($annotation)
-		;
-
 		$validator
 			->expects($this->once())
 			->method('validate')
-			->with($entity, null, [ 'get', 'Default' ])
+			->with($entity, null, [ 'get' ])
 			->willReturn($constraintViolationList)
 		;
 
@@ -680,27 +827,38 @@ class SerializerSubscriberTest extends TestCase {
 	
 	public function testValidateNoService() {
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
 
-		$request    = $this->getMockBuilder(Request::class)->getMock();
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
+		$request = $this->getMockBuilder(Request::class)->getMock();
 		$entity = new \stdClass();
-		$annotation = new Validate([
-			'value' => [ 'group1' ]
-		]);
-
-		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
-		);
-
-		$attributes
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataValidate([ 'group1' ]);
+		
+		$controllerActionExtractor
 			->expects($this->once())
-			->method('get')
-			->with('_'.Validate::ALIAS_NAME)
-			->willReturn($annotation)
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
 		;
 		
+		$metadataValidateManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
+
+		$serializerSubscriber = new SerializerSubscriber(
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
+		);
+
 		$this->expectException(\LogicException::class);
 
 		$this->reflectionCallMethod($serializerSubscriber, 'validate', [ $request, $entity ]);
@@ -708,10 +866,10 @@ class SerializerSubscriberTest extends TestCase {
 	
 	public function provideOnKernelView() {
 		return [
-			[ [ 'key' => 'value' ], 'group1'              , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
-			[ 1                   , 'group1'              , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
-			[ true                , 'group1'              , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
-			[ null                , 'group1'              , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
+			[ [ 'key' => 'value' ], [ 'group1' ]          , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
+			[ 1                   , [ 'group1' ]          , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
+			[ true                , [ 'group1' ]          , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
+			[ null                , [ 'group1' ]          , [ 'groups' => [ 'get', 'group1' ] ]          , 'normalize_data' ],
 			[ [ 'key' => 'value' ], [ 'group1', 'group2' ], [ 'groups' => [ 'get', 'group1', 'group2' ] ], 'normalize_data' ],
 			[ [ 'key' => 'value' ], []                    , [ 'groups' => [ 'get' ] ]                    , 'normalize_data' ],
 			[ new StubEntity(
@@ -730,20 +888,33 @@ class SerializerSubscriberTest extends TestCase {
 	/**
 	 * @dataProvider provideOnKernelView
 	 */
-	public function testOnKernelView($controllerResult, $annoGroup, $serializeGroup, $result) {
+	public function testOnKernelViewSuccess($controllerResult, $annoGroup, $serializeGroup, $result) {
 
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$event = new ViewEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $controllerResult);
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataSerialize(200, $annoGroup, []);
 		
-		$annotation = new Serialize([
-			'groups' => $annoGroup
-		]);
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataSerializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 		
 		$serializer
 			->method('supportsEncoding')
@@ -762,16 +933,13 @@ class SerializerSubscriberTest extends TestCase {
 			->with($result, 'json', $serializeGroup)
 			->willReturn('encoded_data')
 		;
-
-		$attributes
-			->expects($this->once())
-			->method('get')
-			->with('_'.Serialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 
 		$serializerSubscriber->onKernelView($event);
@@ -785,18 +953,37 @@ class SerializerSubscriberTest extends TestCase {
 	
 	public function testOnKernelViewNotSupport() {
 		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
-
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
+		
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$event = new ViewEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, 'data');
-
-		$annotation = new Serialize([]);
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataSerialize(200, [], []);
+		
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+		
+		$metadataSerializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
 
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		
 		$serializer
@@ -805,21 +992,18 @@ class SerializerSubscriberTest extends TestCase {
 			->willReturn(false)
 		;
 
-		$attributes
-			->expects($this->once())
-			->method('get')
-			->with('_'.Serialize::ALIAS_NAME)
-			->willReturn($annotation)
-		;
-
 		$this->expectException(NotEncodableValueException::class);
 		$serializerSubscriber->onKernelView($event);
 	}
 	
 	public function testOnKernelException() {
 
-		$serializer = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
-		$kernel     = $this->getMockBuilder(KernelInterface::class       )->getMockForAbstractClass();
+		$serializer                 = $this->getMockBuilder(StubSerializer::class)->getMockForAbstractClass();
+		$controllerActionExtractor  = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->getMockForAbstractClass(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->getMockBuilder(KernelInterface::class)->getMockForAbstractClass();
 		
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		
@@ -854,7 +1038,11 @@ class SerializerSubscriberTest extends TestCase {
 		;
 		
 		$serializerSubscriber = new SerializerSubscriber(
-			$serializer
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
 		);
 		
 		$serializerSubscriber->onKernelValidateException($event);

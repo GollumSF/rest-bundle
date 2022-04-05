@@ -1,7 +1,6 @@
 <?php
 
 namespace GollumSF\RestBundle\Annotation;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ConfigurationInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -9,9 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
  * @Target({"CLASS", "METHOD"})
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
-class Serialize implements ConfigurationInterface {
-
-	const ALIAS_NAME = 'gsf_serialize';
+class Serialize {
 
 	/**
 	 * @var int
@@ -77,13 +74,5 @@ class Serialize implements ConfigurationInterface {
 
 	public function getHeaders(): array {
 		return $this->headers;
-	}
-
-	public function getAliasName() {
-		return self::ALIAS_NAME;
-	}
-
-	public function allowArray() {
-		return false;
 	}
 }

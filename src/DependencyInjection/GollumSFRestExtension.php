@@ -18,6 +18,11 @@ class GollumSFRestExtension extends Extension
 	{
 		$loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 		$loader->load('services.yml');
+		if (version_compare(PHP_VERSION, '8.0.0', '>=')) {
+			// @codeCoverageIgnoreStart
+			$loader->load('services_php8.yml');
+			// @codeCoverageIgnoreEnd
+		}
 		$config = $this->processConfiguration(new Configuration(), $configs);
 
 		$container

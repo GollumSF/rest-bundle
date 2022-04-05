@@ -41,8 +41,6 @@ class SerializeTest extends TestCase
 		$this->assertEquals($annotation->getHeaders(), $headers);
 		$this->assertEquals($annotation->getGroups(), $groups);
 		$this->assertEquals($annotation->getCode(), $code);
-		$this->assertEquals($annotation->getAliasName(), Serialize::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 	public function provideConstruct() {
@@ -63,8 +61,6 @@ class SerializeTest extends TestCase
 		$this->assertEquals($annotation->getHeaders(), $headers);
 		$this->assertEquals($annotation->getGroups(), $groupsResult);
 		$this->assertEquals($annotation->getCode(), $code);
-		$this->assertEquals($annotation->getAliasName(), Serialize::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 }

@@ -1,6 +1,8 @@
 <?php
 namespace GollumSF\RestBundle\Request\ParamConverter;
 
+use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
+use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\DoctrineParamConverter;
 use Sensio\Bundle\FrameworkExtraBundle\Request\ParamConverter\ParamConverterInterface;
@@ -18,24 +20,37 @@ class PostRestParamConverter implements ParamConverterInterface {
 	/** @var SerializerInterface */
 	private $serializer;
 	
-	public function __construct(SerializerInterface $serializer) {
+	/** @var ControllerActionExtractorInterface */
+	private $controllerActionExtractor;
+	
+	/** @var MetadataUnserializeManagerInterface */
+	private $metadataUnserializeManager;
+	
+	public function __construct(
+		SerializerInterface $serializer,
+		ControllerActionExtractorInterface $controllerActionExtractor,
+		MetadataUnserializeManagerInterface $metadataUnserializeManager
+	) {
 		$this->serializer = $serializer;
+		$this->controllerActionExtractor = $controllerActionExtractor;
+		$this->metadataUnserializeManager = $metadataUnserializeManager;
 	}
 
-	public function setDoctrineParamConverter(DoctrineParamConverter $doctrineParamConverter): void
-	{
+	public function setDoctrineParamConverter(DoctrineParamConverter $doctrineParamConverter): void {
 		$this->doctrineParamConverter = $doctrineParamConverter;
 	}
 
 	public function apply(Request $request, ParamConverter $configuration) {
-		/** @var Unserialize $unserializeAnnotation */
-		$unserializeAnnotation = $request->attributes->get('_'.Unserialize::ALIAS_NAME);
+		
+		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
+		$metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		
 		$configurationName = $configuration->getName();
 		$class = $configuration->getClass();
 		
 		if (
-			$unserializeAnnotation &&
-			$unserializeAnnotation->getName() === $configurationName &&
+			$metadata &&
+			$metadata->getName() === $configurationName &&
 			!$request->attributes->get($configurationName)
 		) {
 			if ($this->hasIdentifier($request, $configuration)) {
@@ -47,7 +62,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 				if ($content) {
 					try {
 						$entity = $this->serializer->deserialize($content, $class, 'json', $context = [
-							'groups' => $unserializeAnnotation->getGroups(),
+							'groups' => $metadata->getGroups(),
 						]);
 						$request->attributes->set($configurationName, $entity);
 					} catch (MissingConstructorArgumentsException $e) {
@@ -57,7 +72,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 					}
 				}
 			}
-			$request->attributes->set('_'.Unserialize::ALIAS_NAME.'_class', $class);
+			$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, $class);
 			return true;
 		}
 		return false;

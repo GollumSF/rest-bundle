@@ -38,8 +38,6 @@ class UnserializeTest extends TestCase
 		$this->assertEquals($annotation->getName(), $name);
 		$this->assertEquals($annotation->getGroups(), $groups);
 		$this->assertEquals($annotation->isSave(), $save);
-		$this->assertEquals($annotation->getAliasName(), Unserialize::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 	public function provideConstruct() {
@@ -60,8 +58,6 @@ class UnserializeTest extends TestCase
 		$this->assertEquals($annotation->getName(), $name);
 		$this->assertEquals($annotation->getGroups(), $groupsResult);
 		$this->assertEquals($annotation->isSave(), $save);
-		$this->assertEquals($annotation->getAliasName(), Unserialize::ALIAS_NAME);
-		$this->assertFalse($annotation->allowArray());
 	}
 	
 }
