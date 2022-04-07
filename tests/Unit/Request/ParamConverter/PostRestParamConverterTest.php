@@ -19,23 +19,23 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class PostRestParamConverterTestIdentifier extends PostRestParamConverter {
 	public $hasIdentifier = false;
-	
+
 	protected function hasIdentifier(Request $request, ParamConverter $configuration): bool {
 		return $this->hasIdentifier;
 	}
 }
 
 class PostRestParamConverterTest extends TestCase {
-	
+
 	use ReflectionPropertyTrait;
-	
+
 	public function providerApplySuccess() {
 		return [
 			[  new MetadataUnserialize('NAME', [], false), 'BAD_NAME', null, false ],
 			[  new MetadataUnserialize('NAME', [], false), 'NAME', 'value', false ],
 		];
 	}
-	
+
 	/**
 	 * @dataProvider providerApplySuccess
 	 */
@@ -49,23 +49,23 @@ class PostRestParamConverterTest extends TestCase {
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$request->attributes = $attributes;
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$configuration = $this->getMockBuilder(ParamConverter::class)->disableOriginalConstructor()->getMock();
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataUnserializeManager
 			->expects($this->once())
 			->method('getMetadata')
 			->with('CONTROLLER', 'ACTION')
 			->willReturn($metadata)
 		;
-		
+
 		$configuration
 			->expects($this->once())
 			->method('getName')
@@ -76,20 +76,20 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-		
+
 		$attributes
 			->expects($this->exactly($metadata->getName() === $configurationName ? 1 : 0))
 			->method('get')
 			->with($configurationName)
 			->willReturn($requestValue)
 		;
-		
+
 		$postRestParamConverter = new PostRestParamConverter(
 			$serializer,
 			$controllerActionExtractor,
 			$metadataUnserializeManager
 		);
-		
+
 		$this->assertEquals(
 			$postRestParamConverter->apply($request, $configuration), $result
 		);
@@ -100,7 +100,7 @@ class PostRestParamConverterTest extends TestCase {
 		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
 		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
-		
+
 		$metadata = new MetadataUnserialize('NAME', [], false);
 		$configurationName = 'NAME';
 		$entity = new \stdClass();
@@ -115,14 +115,14 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$request->attributes = $attributes;
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataUnserializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -152,7 +152,7 @@ class PostRestParamConverterTest extends TestCase {
 			->with($configurationName)
 			->willReturn(null)
 		;
-		
+
 		$attributes
 			->expects($this->exactly(2))
 			->method('set')
@@ -205,14 +205,14 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$request->attributes = $attributes;
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataUnserializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -242,7 +242,7 @@ class PostRestParamConverterTest extends TestCase {
 			->with($configurationName)
 			->willReturn(null)
 		;
-		
+
 		$request
 			->expects($this->once())
 			->method('getContent')
@@ -284,14 +284,14 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$request->attributes = $attributes;
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataUnserializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -314,7 +314,7 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-		
+
 		$attributes
 			->expects($this->once())
 			->method('get')
@@ -344,16 +344,16 @@ class PostRestParamConverterTest extends TestCase {
 		);
 		$postRestParamConverter->apply($request, $configuration);
 	}
-	
+
 	public function testApplyDoctrineParamConverter() {
 
 		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
 		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
-		
+
 		$metadata = new MetadataUnserialize('NAME', [], false);
 		$configurationName = 'NAME';
-		
+
 		$attributes = $this->getMockBuilder(ParameterBag::class)
 			->disableOriginalConstructor()
 			->getMock()
@@ -364,14 +364,14 @@ class PostRestParamConverterTest extends TestCase {
 		;
 		$request->attributes = $attributes;
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataUnserializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -394,14 +394,14 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getClass')
 			->willReturn(\stdClass::class)
 		;
-		
+
 		$attributes
 			->expects($this->once())
 			->method('get')
 			->with($configurationName)
 			->willReturn(null)
 		;
-		
+
 		$attributes
 			->expects($this->once())
 			->method('set')
@@ -421,7 +421,7 @@ class PostRestParamConverterTest extends TestCase {
 			->method('apply')
 			->with($request, $configuration)
 		;
-		
+
 		$postRestParamConverter = new PostRestParamConverterTestIdentifier(
 			$serializer,
 			$controllerActionExtractor,
@@ -429,8 +429,56 @@ class PostRestParamConverterTest extends TestCase {
 		);
 		$postRestParamConverter->setDoctrineParamConverter($doctrineParamConverter);
 		$postRestParamConverter->hasIdentifier = true;
-		
+
 		$this->assertTrue(
+			$postRestParamConverter->apply($request, $configuration)
+		);
+	}
+
+	public function testApplyNoController() {
+		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
+		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+
+		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn(null)
+		;
+
+		$configuration = $this->getMockBuilder(ParamConverter::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$configuration
+			->expects($this->once())
+			->method('getName')
+			->willReturn('NAME')
+		;
+		$configuration
+			->expects($this->once())
+			->method('getClass')
+			->willReturn(\stdClass::class)
+		;
+
+		$metadataUnserializeManager
+			->expects($this->never())
+			->method('getMetadata')
+		;
+
+		$postRestParamConverter = new PostRestParamConverterTestIdentifier(
+			$serializer,
+			$controllerActionExtractor,
+			$metadataUnserializeManager
+		);
+
+		$this->assertFalse(
 			$postRestParamConverter->apply($request, $configuration)
 		);
 	}
@@ -445,12 +493,12 @@ class PostRestParamConverterTest extends TestCase {
 			[ []                  , false, null, false, false ],
 		];
 	}
-	
+
 	/**
 	 * @dataProvider providerHasIdentifier
 	 */
 	public function testHasIdentifier($options, $haseName, $nameAtt, $hasId, $result) {
-		
+
 		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
 		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
 		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
@@ -484,12 +532,12 @@ class PostRestParamConverterTest extends TestCase {
 			->method('getOptions')
 			->willReturn($options)
 		;
-		
-		
+
+
 		$at = -1;
 		$hasAssert = [];
 		$getAssert = [];
-		
+
 		$i = -1;
 		if (isset($options['id']) && $options['id']) {
 			if (!\is_array($options['id'])) {
@@ -511,7 +559,7 @@ class PostRestParamConverterTest extends TestCase {
 				$getAssert[++$i] = [ [ 'id' ], 42 ];
 			}
 		}
-		
+
 		$attributes
 			->expects($this->exactly(count($hasAssert)))
 			->method('has')
@@ -532,12 +580,12 @@ class PostRestParamConverterTest extends TestCase {
 				return $getAssert[$at][1];
 			})
 		;
-		
+
 		$this->assertEquals(
 			$this->reflectionCallMethod($postRestParamConverter, 'hasIdentifier', [$request, $configuration]), $result
 		);
 	}
-	
+
 	public function testSupports() {
 
 		$serializer = $this->getMockForAbstractClass(SerializerInterface::class);
@@ -548,7 +596,7 @@ class PostRestParamConverterTest extends TestCase {
 			$controllerActionExtractor,
 			$metadataUnserializeManager
 		);
-		
+
 		$this->assertTrue(
 			$postRestParamConverter->supports(
 				$this->getMockBuilder(ParamConverter::class)
@@ -557,5 +605,5 @@ class PostRestParamConverterTest extends TestCase {
 			)
 		);
 	}
-	
+
 }

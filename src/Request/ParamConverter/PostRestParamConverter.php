@@ -16,16 +16,16 @@ class PostRestParamConverter implements ParamConverterInterface {
 
 	/** @var DoctrineParamConverter */
 	private $doctrineParamConverter;
-	
+
 	/** @var SerializerInterface */
 	private $serializer;
-	
+
 	/** @var ControllerActionExtractorInterface */
 	private $controllerActionExtractor;
-	
+
 	/** @var MetadataUnserializeManagerInterface */
 	private $metadataUnserializeManager;
-	
+
 	public function __construct(
 		SerializerInterface $serializer,
 		ControllerActionExtractorInterface $controllerActionExtractor,
@@ -41,13 +41,16 @@ class PostRestParamConverter implements ParamConverterInterface {
 	}
 
 	public function apply(Request $request, ParamConverter $configuration) {
-		
+
 		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
-		$metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
-		
+        $metadata = null;
+        if ($controllerAction) {
+            $metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		}
+
 		$configurationName = $configuration->getName();
 		$class = $configuration->getClass();
-		
+
 		if (
 			$metadata &&
 			$metadata->getName() === $configurationName &&
@@ -81,7 +84,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 	/**
 	 * Copy of getIdentifier doctrine
 	 */
-	protected function hasIdentifier(Request $request, ParamConverter $configuration): bool 
+	protected function hasIdentifier(Request $request, ParamConverter $configuration): bool
 	{
 		$idName = isset($configuration->getOptions()['id']) ? $configuration->getOptions()['id'] : null;
 		$name = $configuration->getName();
@@ -92,7 +95,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 				return true;
 			}
 		}
-		
+
 		if ($request->attributes->has($name)) {
 			return $request->attributes->get($name) !== null;
 		}
@@ -105,5 +108,5 @@ class PostRestParamConverter implements ParamConverterInterface {
 	public function supports(ParamConverter $configuration) {
 		return true;
 	}
-	
+
 }

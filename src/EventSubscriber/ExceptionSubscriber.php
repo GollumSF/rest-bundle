@@ -2,7 +2,6 @@
 namespace GollumSF\RestBundle\EventSubscriber;
 
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
-use GollumSF\RestBundle\Annotation\Serialize;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -23,10 +22,10 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 
 	/** @var ApiConfigurationInterface */
 	private $apiConfiguration;
-	
+
 	/** @var ControllerActionExtractorInterface */
 	private $controllerActionExtractor;
-	
+
 	/** @var MetadataSerializeManagerInterface */
 	private $metadataSerializeManager;
 
@@ -48,7 +47,7 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 		SerializerInterface $serializer,
 		ApiConfigurationInterface $apiConfiguration,
 		ControllerActionExtractorInterface $controllerActionExtractor,
-		MetadataSerializeManagerInterface $metadataSerializeManager, 
+		MetadataSerializeManagerInterface $metadataSerializeManager,
 		bool $debug
 	) {
 		$this->serializer = $serializer;
@@ -63,10 +62,13 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 	}
 
 	public function onKernelException(ExceptionEvent $event) {
-		
+
 		$controllerAction = $this->controllerActionExtractor->extractFromRequest($event->getRequest());
-		$serialize = $this->metadataSerializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
-		
+		$serialize = null;
+		if ($controllerAction) {
+			$serialize = $this->metadataSerializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		}
+
 		if (
 			$this->apiConfiguration->isAlwaysSerializedException() ||
 			$serialize

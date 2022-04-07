@@ -38,7 +38,7 @@ class ExceptionSubscriberTestOnKernelException extends ExceptionSubscriber {
 class ExceptionSubscriberTest extends TestCase {
 
 	use ReflectionPropertyTrait;
-	
+
 	public function testGetSubscribedEvents() {
 		$this->assertEquals(ExceptionSubscriber::getSubscribedEvents(), [
 			KernelEvents::EXCEPTION => [
@@ -70,14 +70,14 @@ class ExceptionSubscriberTest extends TestCase {
 		$request                   = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$metadata                  = $this->getMockBuilder(MetadataSerialize::class)->disableOriginalConstructor()->getMock();
 		$controllerAction          = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataSerializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -140,14 +140,14 @@ class ExceptionSubscriberTest extends TestCase {
 		$kernel                    = $this->getMockForAbstractClass(KernelInterface::class);
 		$request                   = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$controllerAction          = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataSerializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -198,7 +198,6 @@ class ExceptionSubscriberTest extends TestCase {
 		$this->assertEquals($response->getContent(), 'serialized_data');
 	}
 
-
 	/**
 	 * @dataProvider providerOnKernelException
 	 */
@@ -210,14 +209,14 @@ class ExceptionSubscriberTest extends TestCase {
 		$kernel                    = $this->getMockForAbstractClass(KernelInterface::class);
 		$request                   = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$controllerAction          = new ControllerAction('CONTROLLER', 'ACTION');
-		
+
 		$controllerActionExtractor
 			->expects($this->once())
 			->method('extractFromRequest')
 			->with($request)
 			->willReturn($controllerAction)
 		;
-		
+
 		$metadataSerializeManager
 			->expects($this->once())
 			->method('getMetadata')
@@ -267,7 +266,7 @@ class ExceptionSubscriberTest extends TestCase {
 			->with([ 'DATA' ], 'json')
 			->willReturn('serialized_data')
 		;
-		
+
 		$exceptionSubscriber = new ExceptionSubscriber(
 			$serializer,
 			$configuration,
