@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c467db53d73f797942fd21194d0e6b29",
+    "content-hash": "bb9b9a06044fbc486ed3a697850980e6",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -492,16 +492,16 @@
         },
         {
             "name": "doctrine/doctrine-bundle",
-            "version": "2.6.1",
+            "version": "2.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/DoctrineBundle.git",
-                "reference": "b7002752b555cb61cc9ca8d4c89a5b6e8200f765"
+                "reference": "53cf797feda995299629bed081ffb51776f36e9f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/DoctrineBundle/zipball/b7002752b555cb61cc9ca8d4c89a5b6e8200f765",
-                "reference": "b7002752b555cb61cc9ca8d4c89a5b6e8200f765",
+                "url": "https://api.github.com/repos/doctrine/DoctrineBundle/zipball/53cf797feda995299629bed081ffb51776f36e9f",
+                "reference": "53cf797feda995299629bed081ffb51776f36e9f",
                 "shasum": ""
             },
             "require": {
@@ -586,7 +586,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/DoctrineBundle/issues",
-                "source": "https://github.com/doctrine/DoctrineBundle/tree/2.6.1"
+                "source": "https://github.com/doctrine/DoctrineBundle/tree/2.6.2"
             },
             "funding": [
                 {
@@ -602,7 +602,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-04-02T16:17:41+00:00"
+            "time": "2022-04-07T09:18:26+00:00"
         },
         {
             "name": "doctrine/doctrine-migrations-bundle",
@@ -1507,26 +1507,28 @@
         },
         {
             "name": "gollumsf/enum",
-            "version": "v1.0.1",
-            "target-dir": "GollumSF/Enum",
+            "version": "v2.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/GollumSF/enum.git",
-                "reference": "ef8319baf4b4ddfa09c8bbd00836b0815854a300"
+                "reference": "eab8ab9e661de53f0e22019fa8c4d2ed679d268c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GollumSF/enum/zipball/ef8319baf4b4ddfa09c8bbd00836b0815854a300",
-                "reference": "ef8319baf4b4ddfa09c8bbd00836b0815854a300",
+                "url": "https://api.github.com/repos/GollumSF/enum/zipball/eab8ab9e661de53f0e22019fa8c4d2ed679d268c",
+                "reference": "eab8ab9e661de53f0e22019fa8c4d2ed679d268c",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.0"
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.3"
             },
             "type": "library",
             "autoload": {
-                "psr-0": {
-                    "GollumSF\\Enum": ""
+                "psr-4": {
+                    "GollumSF\\Enum\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1548,10 +1550,10 @@
             "support": {
                 "email": "smeagolworms4@gmail.com",
                 "issues": "https://github.com/GollumSF/enum/issues",
-                "source": "https://github.com/GollumSF/enum/tree/v1.0.1",
+                "source": "https://github.com/GollumSF/enum/tree/v2.0.3",
                 "wiki": "https://github.com/GollumSF/enum/blob/master/README.md"
             },
-            "time": "2019-11-25T04:36:02+00:00"
+            "time": "2022-04-04T00:05:02+00:00"
         },
         {
             "name": "laminas/laminas-code",
