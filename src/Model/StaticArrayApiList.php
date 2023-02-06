@@ -21,12 +21,12 @@ class StaticArrayApiList extends ApiList {
 
 	/** @var \Closure */
 	protected $sortGlobalCallback;
-	
+
 	public function __construct(array $data, Request $request) {
 		parent::__construct($data, count($data));
-		
+
 		$this->request = $request;
-		
+
 		$this->sortPropertiesCallback = function ($valueA, $valueB, $objA, $objB, $order) {
 			if ($valueA === null && $valueB) {
 				return -1;
@@ -43,13 +43,13 @@ class StaticArrayApiList extends ApiList {
 				}
 				return 0;
 			}
-			
+
 			if ($valueA === $valueB) {
 				return 0;
 			}
 			return ($valueA < $valueB) ? -1 : 1;
 		};
-		
+
 		$this->sortGlobalCallback = function ($a, $b, $order, $direction) {
 			$valueA = null;
 			$valueB = null;
@@ -91,7 +91,7 @@ class StaticArrayApiList extends ApiList {
 	/////////////
 	// Setters //
 	/////////////
-	
+
 	public function setMaxLimitItem(int $maxLimitItem): self {
 		$this->maxLimitItem = $maxLimitItem;
 		return $this;
@@ -111,11 +111,11 @@ class StaticArrayApiList extends ApiList {
 		$this->sortGlobalCallback = $sortGlobalCallback;
 		return $this;
 	}
-	
+
 	/////////////
 	// Getters //
 	/////////////
-	
+
 	/**
 	 * @return array
 	 */
@@ -124,18 +124,18 @@ class StaticArrayApiList extends ApiList {
 		$limit     = (int)$this->request->get('limit', $this->defaultLimitItem);
 		$page      = (int)$this->request->get('page' , 0);
 		$order     = $this->request->get('order');
-		$direction = strtoupper($this->request->get('direction'));
-		
+		$direction = strtoupper($this->request->get('direction', ''));
+
 		if ($this->maxLimitItem && $limit > $this->maxLimitItem) {
 			$limit = $this->maxLimitItem;
 		}
 
 		$order = $order !== null ? preg_replace("/[^(a-zA-Z0-9_)]/", '', $order): null;
-		
+
 		if (!Direction::isValid($direction)) {
 			$direction = null;
 		}
-		
+
 		$data = parent::getData();
 		if ($order || $direction) {
 			try {
@@ -146,8 +146,8 @@ class StaticArrayApiList extends ApiList {
 				throw new BadRequestHttpException('Bad parameter on sort');
 			}
 		}
-		
+
 		return array_slice($data, $page*$limit, $limit);
 	}
-	
+
 }

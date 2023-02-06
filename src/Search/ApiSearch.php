@@ -16,9 +16,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Kernel;
 
 class ApiSearch implements ApiSearchInterface {
-	
+
 	use ManagerRegistryToManager;
-	
+
 	/** @var ManagerRegistry  */
 	private $managerRegistry;
 
@@ -27,10 +27,10 @@ class ApiSearch implements ApiSearchInterface {
 
 	/** @var ApiConfigurationInterface */
 	private $apiConfiguration;
-	
+
 	/** @var LoggerInterface */
 	private $logger;
-	
+
 	public function __construct(
 		RequestStack $requestStack,
 		LoggerInterface $logger,
@@ -40,7 +40,7 @@ class ApiSearch implements ApiSearchInterface {
 		$this->logger = $logger;
 		$this->apiConfiguration = $apiConfiguration;
 	}
-	
+
 	public function setManagerRegistry(ManagerRegistry $managerRegistry): self {
 		$this->managerRegistry = $managerRegistry;
 		return $this;
@@ -56,13 +56,13 @@ class ApiSearch implements ApiSearchInterface {
 		$limit     = (int)$request->get('limit', $this->apiConfiguration->getDefaultLimitItem());
 		$page      = (int)$request->get('page' , 0);
 		$order     = $request->get('order');
-		$direction = strtoupper($request->get('direction'));
-		
+		$direction = strtoupper($request->get('direction', ''));
+
 		$maxtLimitItem = $this->apiConfiguration->getMaxLimitItem();
 		if ($maxtLimitItem && $limit >  $maxtLimitItem) {
 			$limit = $maxtLimitItem;
 		}
-		
+
 		if (!Direction::isValid($direction)) {
 			$direction = null;
 		}
@@ -75,7 +75,7 @@ class ApiSearch implements ApiSearchInterface {
 		if (!($repository instanceof ApiFinderRepositoryInterface)) {
 			throw new \LogicException(sprintf('Repository of class %s must implement ApiFinderRepositoryInterface or extends ApiFinderRepository', $entityClass));
 		}
-		
+
 		try {
 			return $repository->apiFindBy($limit, $page, $order, $direction, $queryCallback);
 		} catch (QueryException $e) {
@@ -85,7 +85,7 @@ class ApiSearch implements ApiSearchInterface {
 			throw new BadRequestHttpException('Bad parameter');
 		}
 	}
-	
+
 	public function staticArrayList(array $data, \Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {
 		$request   = $this->getMasterRequest();
 		$arrayList = new StaticArrayApiList($data, $request);
@@ -99,7 +99,7 @@ class ApiSearch implements ApiSearchInterface {
 				$arrayList->setSortPropertiesCallback($sortCallback);
 			}
 		}
-		
+
 		return $arrayList;
 	}
 }
