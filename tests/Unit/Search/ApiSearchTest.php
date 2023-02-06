@@ -24,7 +24,7 @@ class ApiSearchTestApiFind extends ApiSearch {
 
 	public $request;
 	public $repository;
-	
+
 	public function getMasterRequest(): Request {
 		return $this->request;
 	}
@@ -34,7 +34,7 @@ class ApiSearchTestApiFind extends ApiSearch {
 }
 
 class ApiSearchTest extends TestCase {
-	
+
 	use ReflectionPropertyTrait;
 
 	public function testGetMasterRequest() {
@@ -45,7 +45,7 @@ class ApiSearchTest extends TestCase {
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
 		$methodMasterRequest = version_compare(Kernel::VERSION, '6.0.0', '<') ? 'getMasterRequest' : 'getMainRequest';
-		
+
 		$requestStack
 			->expects($this->once())
 			->method($methodMasterRequest)
@@ -61,8 +61,8 @@ class ApiSearchTest extends TestCase {
 
 	public function providerApiFind() {
 		return [
-			[ 25 , 25, null, null ],
-			[ 101 , 100, null, null ],
+			[ 25 , 25, '', null ],
+			[ 101 , 100, '', null ],
 			[ 25 , 25, Direction::ASC, Direction::ASC ],
 			[ 25 , 25, 'BAD_DIRECTIOn', null ],
 		];
@@ -91,7 +91,7 @@ class ApiSearchTest extends TestCase {
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-		
+
 		$request
 			->expects($this->exactly(4))
 			->method('get')
@@ -143,7 +143,7 @@ class ApiSearchTest extends TestCase {
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-		
+
 		$request
 			->expects($this->exactly(4))
 			->method('get')
@@ -172,13 +172,13 @@ class ApiSearchTest extends TestCase {
 			->method('warning')
 			->with('Error on execute ApiSearch: MESSAGE')
 		;
-		
+
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
 		$apiSearch->repository = $repository;
 		$apiSearch->request = $request;
-		
+
 		$this->expectException(BadRequestHttpException::class);
-		
+
 		$apiSearch->apiFindBy(\stdClass::class);
 	}
 
@@ -200,7 +200,7 @@ class ApiSearchTest extends TestCase {
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-		
+
 		$request
 			->expects($this->exactly(4))
 			->method('get')
@@ -223,7 +223,7 @@ class ApiSearchTest extends TestCase {
 		$apiSearch->request = $request;
 
 		$this->expectException(\LogicException::class);
-		
+
 		$apiSearch->apiFindBy(\stdClass::class);
 	}
 
@@ -244,7 +244,7 @@ class ApiSearchTest extends TestCase {
 			->method('getMaxLimitItem')
 			->willReturn(100)
 		;
-		
+
 		$request
 			->expects($this->exactly(4))
 			->method('get')
@@ -294,7 +294,7 @@ class ApiSearchTest extends TestCase {
 			'DATA3',
 			'DATA2'
 		]);
-		
+
 		$this->assertEquals($this->reflectionGetValue($arrayList, 'data', ApiList::class), [
 			'DATA1',
 			'DATA3',

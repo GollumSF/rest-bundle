@@ -49,9 +49,9 @@ class DumyClassIs {
 }
 
 class StaticArrayApiListTest extends TestCase {
-	
+
 	use ReflectionPropertyTrait;
-	
+
 	public function testSetter() {
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$closureProperties = function ($valueA, $valueB, $roder) { return 42; };
@@ -62,7 +62,7 @@ class StaticArrayApiListTest extends TestCase {
 		$this->assertNotEquals($this->reflectionGetValue($apiList, 'maxLimitItem'), 42);
 		$this->assertNotEquals($this->reflectionGetValue($apiList, 'defaultLimitItem'), 42);
 		$this->assertNotEquals($this->reflectionGetValue($apiList, 'sortPropertiesCallback')(null, null, null, null, null), 42);
-		
+
 		$apiList->setMaxLimitItem(42);
 		$apiList->setDefaultLimitItem(42);
 		$apiList->setSortPropertiesCallback($closureProperties);
@@ -76,7 +76,7 @@ class StaticArrayApiListTest extends TestCase {
 		$apiList->setSortGlobalCallback($closureGlobal);
 		$this->assertNotEquals($this->reflectionGetValue($apiList2, 'sortGlobalCallback')(null, null, null, null), 42);
 	}
-	
+
 	public function providerGetData() {
 
 		$AAA = new DumyClass('AAA');
@@ -104,7 +104,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 				],
-				20, 0, null, null,
+				20, 0, null, '',
 				[
 					$AAA,
 					$CCC,
@@ -120,7 +120,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDD,
 					$BBB,
 				],
-				2, 1, null, null,
+				2, 1, null, '',
 				[
 					$DDD,
 					$BBB,
@@ -185,7 +185,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDDHas,
 				]
 			],
-			
+
 			[
 				[
 					$AAAIs,
@@ -297,7 +297,7 @@ class StaticArrayApiListTest extends TestCase {
 			],
 		];
 	}
-	
+
 	/**
 	 * @dataProvider providerGetData
 	 */
@@ -322,7 +322,7 @@ class StaticArrayApiListTest extends TestCase {
 		;
 
 		$apiList = new StaticArrayApiList($list, $request);
-		
+
 		$this->assertEquals($apiList->getData(), $result);
 	}
 
@@ -334,7 +334,7 @@ class StaticArrayApiListTest extends TestCase {
 		$DDD = new DumyClass('DDD');
 		$EEE = new DumyClass('EEE');
 		$NULL = new DumyClass(null);
-		
+
 		return [
 			[
 				[
@@ -397,7 +397,7 @@ class StaticArrayApiListTest extends TestCase {
 			]
 		];
 	}
-	
+
 	/**
 	 * @dataProvider providerGetDataClosure
 	 */
@@ -420,7 +420,7 @@ class StaticArrayApiListTest extends TestCase {
 				$direction
 			)
 		;
-		
+
 		$apiList = new StaticArrayApiList($list, $request);
 
 		$called = false;
@@ -448,7 +448,7 @@ class StaticArrayApiListTest extends TestCase {
 			}
 			return ($valueA < $valueB) ? 1 : -1;
 		});
-		
+
 		$this->assertEquals($apiList->getData(), $result);
 		$this->assertTrue($called);
 	}
@@ -533,10 +533,10 @@ class StaticArrayApiListTest extends TestCase {
 		$apiList->setSortGlobalCallback(function ($objA, $objB, $order, $direction) use (&$called) {
 			throw new \Exception();
 		});
-		
+
 		$this->expectException(BadRequestHttpException::class);
-		
+
 		$apiList->getData();
 	}
-	
+
 }

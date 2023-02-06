@@ -154,11 +154,12 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->exactly(2))
+			->expects($this->exactly(3))
 			->method('set')
 			->withConsecutive(
 				[ $configurationName, $entity ],
-				[ Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class ]
+				[ Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class ],
+				[ Unserialize::REQUEST_ATTRIBUTE_NAME, $configurationName ]
 			)
 		;
 
@@ -403,9 +404,12 @@ class PostRestParamConverterTest extends TestCase {
 		;
 
 		$attributes
-			->expects($this->once())
+			->expects($this->exactly(2))
 			->method('set')
-			->with(Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class)
+			->withConsecutive(
+				[Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class],
+				[Unserialize::REQUEST_ATTRIBUTE_NAME, 'NAME']
+			)
 		;
 
 		$doctrineParamConverter = $this->getMockBuilder(DoctrineParamConverter::class)->disableOriginalConstructor()->getMock();
