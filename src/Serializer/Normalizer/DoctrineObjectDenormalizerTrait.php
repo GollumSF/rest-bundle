@@ -2,6 +2,8 @@
 
 namespace GollumSF\RestBundle\Serializer\Normalizer;
 
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+
 trait DoctrineObjectDenormalizerTrait {
 	
 	/** @var RecursiveObjectNormalizer */
@@ -11,7 +13,7 @@ trait DoctrineObjectDenormalizerTrait {
 	private $cache = [];
 	
 	public function __construct(
-		RecursiveObjectNormalizer $recursiveObjectNormalizer
+		DenormalizerInterface $recursiveObjectNormalizer
 	) {
 		$this->recursiveObjectNormalizer = $recursiveObjectNormalizer;
 	}

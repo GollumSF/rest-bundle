@@ -20,11 +20,16 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
-
-    GollumSF\RestBundle\Serializer\Normalizer\:
-        resource: '../../Serializer/Normalizer/*'
-        public: false
+    GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer:
         tags: [ 'serializer.normalizer' ]
+
+    GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer:
+        tags: [ 'serializer.normalizer' ]
+
+    GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer:
+        tags: [ 'serializer.normalizer' ]
+        arguments:
+            - '@GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer'
 
     GollumSF\RestBundle\Request\ParamConverter\:
         resource: '../../Request/ParamConverter/*'
