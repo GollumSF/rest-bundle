@@ -8,18 +8,19 @@ namespace GollumSF\RestBundle\Annotation;
  */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Unserialize {
-	
+
 	const REQUEST_ATTRIBUTE_CLASS = '_gsf_unserialize_class';
-	
+	const REQUEST_ATTRIBUTE_NAME = '_gsf_unserialize_name';
+
 	/** @var string */
 	private $name = '';
-	
+
 	/** @var string[] */
 	private $groups;
-	
+
 	/** @var boolean */
 	private $save;
-	
+
 	/**
 	 * @param int $name
 	 * @param string|string[] $groups
@@ -46,14 +47,14 @@ class Unserialize {
 			}
 			$this->save = isset($name['save']) ? $name['save'] : true;
 			$this->groups =  isset($name['groups']) ? (is_array($name['groups']) ? $name['groups'] : [ $name['groups'] ]) : [];
-			
+
 			return;
 		}
 		$this->name = $name;
 		$this->groups = is_array($groups) ? $groups : [ $groups ];
 		$this->save = $save;
 	}
-	
+
 	/////////////
 	// Getters //
 	/////////////

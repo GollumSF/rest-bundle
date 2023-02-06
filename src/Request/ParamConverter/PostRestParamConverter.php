@@ -43,9 +43,9 @@ class PostRestParamConverter implements ParamConverterInterface {
 	public function apply(Request $request, ParamConverter $configuration) {
 
 		$controllerAction = $this->controllerActionExtractor->extractFromRequest($request);
-        $metadata = null;
-        if ($controllerAction) {
-            $metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
+		$metadata = null;
+		if ($controllerAction) {
+			$metadata = $this->metadataUnserializeManager->getMetadata($controllerAction->getControllerClass(), $controllerAction->getActionMethod());
 		}
 
 		$configurationName = $configuration->getName();
@@ -76,6 +76,7 @@ class PostRestParamConverter implements ParamConverterInterface {
 				}
 			}
 			$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, $class);
+			$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_NAME, $configurationName);
 			return true;
 		}
 		return false;
