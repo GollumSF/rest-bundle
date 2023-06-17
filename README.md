@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_4.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
 [![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_5.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
 [![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.0.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.3.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
 
 [![Coverage](https://coveralls.io/repos/github/GollumSF/rest-bundle/badge.svg?branch=master)](https://coveralls.io/github/GollumSF/rest-bundle)
 [![License](https://poser.pugx.org/gollumsf/rest-bundle/license)](https://packagist.org/packages/gollumsf/rest-bundle)
