@@ -8,7 +8,7 @@ use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
 
 class AuthorControllerTest extends AbstractControllerTest {
 	
-	public function provideFind() {
+	public static function provideFind() {
 		return [
 			[ 1, [
 				'id' => 1,

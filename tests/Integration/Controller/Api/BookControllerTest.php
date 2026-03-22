@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
-use Symfony\Component\HttpKernel\Kernel;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
 
 class BookControllerTest extends AbstractControllerTest {
@@ -94,7 +93,7 @@ class BookControllerTest extends AbstractControllerTest {
 		]));
 	}
 	
-	public function provideFind() {
+	public static function provideFind() {
 		return [
 			[ 1, [
 				'id' => 1,
@@ -159,7 +158,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->loadFixture();
 		
 		/** @var ExceptionSubscriber $exceptionSubscriber */
-		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$exceptionSubscriber = $this->getServiceContainer()->get(ExceptionSubscriber::class);
 		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
@@ -174,7 +173,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertArrayHasKey('code', $json);
 	}
 
-	public function providePostSuccess() {
+	public static function providePostSuccess() {
 		return [
 			[
 				[
@@ -269,7 +268,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($response->getContent(), \json_encode($result));
 
 		/** @var ManagerRegistry $doctrine */
-		$doctrine = $this->getContainer()->get('doctrine');
+		$doctrine = $this->getServiceContainer()->get('doctrine');
 		$em = $doctrine->resetManager();
 		$em->clear();
 		
@@ -282,7 +281,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($book->getAuthor()->getName(), $authorName);
 	}
 
-	public function providerPostValidatorError() {
+	public static function providerPostValidatorError() {
 		return [
 			[ [
 				'title' => 'TITLE_ERROR',
@@ -344,7 +343,7 @@ class BookControllerTest extends AbstractControllerTest {
 
 	}
 
-	public function providerPostBadRequest() {
+	public static function providerPostBadRequest() {
 		return [
 			[ [
 				'title' => 'TITLE_ERROR',
@@ -397,7 +396,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->loadFixture();
 
 		/** @var ExceptionSubscriber $exceptionSubscriber */
-		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$exceptionSubscriber = $this->getServiceContainer()->get(ExceptionSubscriber::class);
 		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
@@ -412,7 +411,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertStringContainsString($key, $json['message']);
 	}
 
-	public function providerPut() {
+	public static function providerPut() {
 		return [
 			[ [
 				'title' => 'TITLE_NEW_1',
@@ -463,7 +462,7 @@ class BookControllerTest extends AbstractControllerTest {
 		]));
 
 		/** @var ManagerRegistry $doctrine */
-		$doctrine = $this->getContainer()->get('doctrine');
+		$doctrine = $this->getServiceContainer()->get('doctrine');
 		$em = $doctrine->resetManager();
 		$em->clear();
 
@@ -477,7 +476,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->loadFixture();
 
 		/** @var ExceptionSubscriber $exceptionSubscriber */
-		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$exceptionSubscriber = $this->getServiceContainer()->get(ExceptionSubscriber::class);
 		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
@@ -489,14 +488,14 @@ class BookControllerTest extends AbstractControllerTest {
 			'category' => 2,
 		]));
 		$response = $client->getResponse();
-		$this->assertEquals($response->getStatusCode(), version_compare(Kernel::VERSION, '5.2.0', '<') ? 403 : 401);
+		$this->assertEquals($response->getStatusCode(), 401);
 	}
 
 	public function testPut404() {
 		$this->loadFixture();
 
 		/** @var ExceptionSubscriber $exceptionSubscriber */
-		$exceptionSubscriber = $this->getContainer()->get(ExceptionSubscriber::class);
+		$exceptionSubscriber = $this->getServiceContainer()->get(ExceptionSubscriber::class);
 		$this->reflectionSetValue($exceptionSubscriber, 'debug', false);
 
 		$client = $this->getClient();
@@ -511,7 +510,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($response->getStatusCode(), 404);
 	}
 
-	public function providerPatchTitle() {
+	public static function providerPatchTitle() {
 		return [
 			[ [
 				'title' => 'TITLE_NEW_1',
@@ -570,7 +569,7 @@ class BookControllerTest extends AbstractControllerTest {
 		]));
 
 		/** @var ManagerRegistry $doctrine */
-		$doctrine = $this->getContainer()->get('doctrine');
+		$doctrine = $this->getServiceContainer()->get('doctrine');
 		$em = $doctrine->resetManager();
 		$em->clear();
 
@@ -590,7 +589,7 @@ class BookControllerTest extends AbstractControllerTest {
 		
 		$client->request('DELETE', '/api/books/1');
 		/** @var ManagerRegistry $doctrine */
-		$doctrine = $this->getContainer()->get('doctrine');
+		$doctrine = $this->getServiceContainer()->get('doctrine');
 		$em = $doctrine->resetManager();
 		$em->clear();
 

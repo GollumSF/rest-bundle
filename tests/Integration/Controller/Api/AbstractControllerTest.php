@@ -2,73 +2,79 @@
 
 namespace Test\GollumSF\RestBundle\Integration\Controller\Api;
 
-use Doctrine\Common\Annotations\AnnotationReader;
 use GollumSF\ControllerActionExtractorBundle\GollumSFControllerActionExtractorBundle;
 use GollumSF\RestBundle\GollumSFRestBundle;
-use Nyholm\BundleTest\BaseBundleTestCase;
-use Nyholm\BundleTest\CompilerPass\PublicServicePass;
+use Nyholm\BundleTest\TestKernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\BrowserKit\AbstractBrowser;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-abstract class AbstractControllerTest extends BaseBundleTestCase {
-	
+abstract class AbstractControllerTest extends KernelTestCase {
+
 	protected function getProjectPath(): string {
 		return __DIR__ . '/../../../ProjectTest';
 	}
-	
-	/** @var KernelInterface */
-	private $kernel;
 
-	protected function getBundleClass() {
-		return GollumSFRestBundle::class;
+	private ?KernelInterface $testKernel = null;
+
+	protected static function getKernelClass(): string {
+		return TestKernel::class;
+	}
+
+	protected static function createKernel(array $options = []): KernelInterface {
+		$kernel = new TestKernel('test', true);
+		if (isset($options['config']) && is_callable($options['config'])) {
+			$options['config']($kernel);
+		}
+		return $kernel;
 	}
 
 	protected function setUp(): void {
 		parent::setUp();
 		$_ENV['SHELL_VERBOSITY'] = 1;
-		// Make all services public
-		$this->addCompilerPass(new PublicServicePass('|GollumSF*|'));
-
-		AnnotationReader::addGlobalIgnoredName('after');
-		AnnotationReader::addGlobalIgnoredName('test');
-		AnnotationReader::addGlobalIgnoredName('dataProvider');
-		AnnotationReader::addGlobalIgnoredName('covers');
 	}
 
-	protected function getKernel(): KernelInterface {
-		if (!$this->kernel) {
-			// Create a new Kernel
-			$this->kernel = $this->createKernel();
-	
-			// Add some other bundles we depend on
-			$this->kernel->addBundle(\Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle::class);
-			$this->kernel->addBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
-			$this->kernel->addBundle(\Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class);
-			$this->kernel->addBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
-			$this->kernel->addBundle(GollumSFControllerActionExtractorBundle::class);
-			
-			$this->kernel->addCompilerPasses([ new PublicServicePass('|GollumSF*|') ]);
-			
-			// Add some configuration
-			if (version_compare(Kernel::VERSION, '5.2.0', '<')) {
-				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config_sf4.4.yaml');
-			} else {
-				$this->kernel->addConfigFile($this->getProjectPath() . '/Resources/config/config.yaml');
-			}
-	
-			// Boot the kernel.
-			$this->kernel->boot();
+	protected function getTestKernel(): KernelInterface {
+		if (!$this->testKernel) {
+			$projectPath = realpath($this->getProjectPath() . '/../..');
+			$configPath = $this->getProjectPath();
+			$this->testKernel = self::bootKernel(['config' => function (TestKernel $kernel) use ($projectPath, $configPath) {
+				$kernel->addTestBundle(GollumSFRestBundle::class);
+				$kernel->addTestBundle(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class);
+				$kernel->addTestBundle(\Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class);
+				$kernel->addTestBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
+				$kernel->addTestBundle(GollumSFControllerActionExtractorBundle::class);
+				$kernel->addTestConfig($configPath . '/Resources/config/config.yaml');
+				$kernel->setTestProjectDir($projectPath);
+				$kernel->setClearCacheAfterShutdown(false);
+				$kernel->addTestCompilerPass(new class implements CompilerPassInterface {
+					public function process(ContainerBuilder $container): void {
+						foreach ($container->getDefinitions() as $id => $definition) {
+							if (str_starts_with($id, 'GollumSF\\') || str_starts_with($id, 'Test\\GollumSF\\')) {
+								$definition->setPublic(true);
+							}
+						}
+						foreach ($container->getAliases() as $id => $alias) {
+							if (str_starts_with($id, 'GollumSF\\') || str_starts_with($id, 'Test\\GollumSF\\') || $id === 'doctrine' || $id === 'test.client') {
+								$alias->setPublic(true);
+							}
+						}
+					}
+				}, PassConfig::TYPE_BEFORE_REMOVING);
+			}]);
 		}
-		return $this->kernel;
+		return $this->testKernel;
 	}
-	
+
 	protected function runCommand(string $name, array $params = []): CommandTester
 	{
-		$application = new Application($this->getKernel());
+		$application = new Application($this->getTestKernel());
 
 		$command = $application->find($name);
 		$commandTester = new CommandTester($command);
@@ -82,19 +88,18 @@ abstract class AbstractControllerTest extends BaseBundleTestCase {
 		);
 		return $commandTester;
 	}
-	
+
 	protected function loadFixture(): void {
-		$this->runCommand('doctrine:schema:drop',  [ '--force' ]);
-		$this->runCommand('doctrine:schema:create');
-		$this->runCommand('doctrine:schema:update',  [ '--force' ]);
-		$this->runCommand('doctrine:fixtures:load');
+		$this->runCommand('doctrine:schema:drop',  [ '--force' => true ]);
+		$this->runCommand('doctrine:schema:update',  [ '--force' => true, '--complete' => true ]);
+		$this->runCommand('doctrine:fixtures:load', [ '--no-interaction' => true ]);
 	}
 
-	protected function getContainer(): ContainerInterface {
-		return $this->getKernel()->getContainer();
+	protected function getServiceContainer(): ContainerInterface {
+		return $this->getTestKernel()->getContainer();
 	}
 
 	protected function getClient(): AbstractBrowser {
-		return $this->getContainer()->get('test.client');
+		return $this->getServiceContainer()->get('test.client');
 	}
 }

@@ -3,10 +3,6 @@
 namespace GollumSF\RestBundle\Annotation;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @Annotation
- * @Target({"CLASS", "METHOD"})
- */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Serialize {
 

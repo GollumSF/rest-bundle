@@ -8,6 +8,7 @@ use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
 
 class DumyClass {
 
@@ -51,6 +52,7 @@ class DumyClassIs {
 class StaticArrayApiListTest extends TestCase {
 
 	use ReflectionPropertyTrait;
+	use WithConsecutiveTrait;
 
 	public function testSetter() {
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
@@ -77,7 +79,7 @@ class StaticArrayApiListTest extends TestCase {
 		$this->assertNotEquals($this->reflectionGetValue($apiList2, 'sortGlobalCallback')(null, null, null, null), 42);
 	}
 
-	public function providerGetData() {
+	public static function providerGetData() {
 
 		$AAA = new DumyClass('AAA');
 		$BBB = new DumyClass('BBB');
@@ -141,7 +143,7 @@ class StaticArrayApiListTest extends TestCase {
 					$EEE,
 					$NULL,
 				],
-				25, 0, 'prop1', Direction::ASC,
+				25, 0, 'prop1', Direction::ASC->value,
 				[
 					null,
 					null,
@@ -165,7 +167,7 @@ class StaticArrayApiListTest extends TestCase {
 					$NULL,
 					$EEE,
 				],
-				2, 0, 'prop1', Direction::ASC,
+				2, 0, 'prop1', Direction::ASC->value,
 				[
 					$NULL,
 					$AAA,
@@ -179,7 +181,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDDHas,
 					$BBBHas,
 				],
-				2, 1, 'prop1', Direction::ASC,
+				2, 1, 'prop1', Direction::ASC->value,
 				[
 					$CCCHas,
 					$DDDHas,
@@ -193,7 +195,7 @@ class StaticArrayApiListTest extends TestCase {
 					$DDDIs,
 					$BBBIs,
 				],
-				2, 1, 'prop1', Direction::ASC,
+				2, 1, 'prop1', Direction::ASC->value,
 				[
 					$CCCIs,
 					$DDDIs,
@@ -232,7 +234,7 @@ class StaticArrayApiListTest extends TestCase {
 					$EEE,
 					$NULL,
 				],
-				99, 0, 'prop1', Direction::DESC,
+				99, 0, 'prop1', Direction::DESC->value,
 				[
 					$EEE,
 					$DDD,
@@ -255,7 +257,7 @@ class StaticArrayApiListTest extends TestCase {
 					$NULL,
 					$EEE,
 				],
-				999, 0, 'prop1', Direction::ASC,
+				999, 0, 'prop1', Direction::ASC->value,
 				[
 					$NULL,
 					$AAA,
@@ -280,7 +282,7 @@ class StaticArrayApiListTest extends TestCase {
 					'EEE',
 					null,
 				],
-				25, 0, null, Direction::ASC,
+				25, 0, null, Direction::ASC->value,
 				[
 					null,
 					null,
@@ -304,21 +306,14 @@ class StaticArrayApiListTest extends TestCase {
 	public function testGetData($list, $limit, $page, $order, $direction, $result) {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[$limit, $page, $order, $direction]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				$limit,
-				$page,
-				$order,
-				$direction
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiList = new StaticArrayApiList($list, $request);
@@ -326,7 +321,7 @@ class StaticArrayApiListTest extends TestCase {
 		$this->assertEquals($apiList->getData(), $result);
 	}
 
-	public function providerGetDataClosure() {
+	public static function providerGetDataClosure() {
 
 		$AAA = new DumyClass('AAA');
 		$BBB = new DumyClass('BBB');
@@ -350,7 +345,7 @@ class StaticArrayApiListTest extends TestCase {
 					$EEE,
 					$NULL,
 				],
-				Direction::ASC,
+				Direction::ASC->value,
 				[
 					null,
 					null,
@@ -380,7 +375,7 @@ class StaticArrayApiListTest extends TestCase {
 					$EEE,
 					$NULL,
 				],
-				Direction::DESC,
+				Direction::DESC->value,
 				[
 					$AAA,
 					$AAA,
@@ -404,21 +399,14 @@ class StaticArrayApiListTest extends TestCase {
 	public function testGetDataClosureProperties($list, $direction, $result) {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[100, 0, 'prop1', $direction]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				100,
-				0,
-				'prop1',
-				$direction
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiList = new StaticArrayApiList($list, $request);
@@ -457,21 +445,14 @@ class StaticArrayApiListTest extends TestCase {
 	public function testGetDataClosureGlobal() {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[100, 0, 'ORDER', Direction::DESC->value]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				100,
-				0,
-				'ORDER',
-				Direction::DESC
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiList = new StaticArrayApiList([
@@ -487,7 +468,7 @@ class StaticArrayApiListTest extends TestCase {
 		$apiList->setSortGlobalCallback(function ($objA, $objB, $order, $direction) use (&$called) {
 			$called = true;
 			$this->assertEquals($order, 'ORDER');
-			$this->assertEquals($direction, Direction::DESC);
+			$this->assertEquals($direction, Direction::DESC->value);
 			if ($objA === $objB) {
 				return 0;
 			}
@@ -508,21 +489,14 @@ class StaticArrayApiListTest extends TestCase {
 	public function testGetDataException() {
 
 		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[100, 0, 'prop1', Direction::ASC->value]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				100,
-				0,
-				'prop1',
-				Direction::ASC
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiList = new StaticArrayApiList([

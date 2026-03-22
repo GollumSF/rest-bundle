@@ -13,7 +13,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 class RecursiveObjectNormalizerTest extends TestCase {
-	
+
 	use ReflectionPropertyTrait;
 
 	public function testConstructor() {
@@ -36,11 +36,15 @@ class RecursiveObjectNormalizerTest extends TestCase {
 			$nameConverter,
 			$propertyAccessor
 		);
-		
-		$this->assertEquals($this->reflectionGetValue($recursiveObjectNormalizer, 'classMetadataFactory', AbstractNormalizer::class), $classMetadataFactory);
-		$this->assertEquals($this->reflectionGetValue($recursiveObjectNormalizer, 'nameConverter'       , AbstractNormalizer::class), $nameConverter);
-		$this->assertEquals($this->reflectionGetValue($recursiveObjectNormalizer, 'propertyAccessor'    , ObjectNormalizer::class), $propertyAccessor);
-		$this->assertInstanceOf(ReflectionExtractor::class, $this->reflectionGetValue($recursiveObjectNormalizer, 'propertyTypeExtractor', AbstractObjectNormalizer::class));
+
+		// Get the inner ObjectNormalizer
+		$inner = $this->reflectionGetValue($recursiveObjectNormalizer, 'inner');
+		$this->assertInstanceOf(ObjectNormalizer::class, $inner);
+
+		$this->assertEquals($this->reflectionGetValue($inner, 'classMetadataFactory', AbstractNormalizer::class), $classMetadataFactory);
+		$this->assertEquals($this->reflectionGetValue($inner, 'nameConverter'       , AbstractNormalizer::class), $nameConverter);
+		$this->assertEquals($this->reflectionGetValue($inner, 'propertyAccessor'    , ObjectNormalizer::class), $propertyAccessor);
+		$this->assertInstanceOf(ReflectionExtractor::class, $this->reflectionGetValue($inner, 'propertyTypeExtractor', AbstractObjectNormalizer::class));
 	}
 
 }

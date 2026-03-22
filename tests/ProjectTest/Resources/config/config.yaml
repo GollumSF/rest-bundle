@@ -1,9 +1,9 @@
 framework:
     serializer:
-        enable_annotations: true
+        enable_attributes: true
     validation:
         enabled: true
-        enable_annotations: true
+        enable_attributes: true
     router:
         utf8: true
         resource: '%kernel.project_dir%/tests/ProjectTest/Resources/config/routing.yaml'
@@ -21,7 +21,7 @@ doctrine:
         mappings:
             Test\GollumSF\RestBundle\ProjectTest\Entity\:
                 is_bundle: false
-                type: annotation
+                type: attribute
                 dir: '%kernel.project_dir%/tests/ProjectTest/Entity'
                 prefix: 'Test\GollumSF\RestBundle\ProjectTest\Entity'
 
@@ -43,7 +43,6 @@ services:
         resource: '%kernel.project_dir%/tests/ProjectTest/DataFixtures'
 
 security:
-    enable_authenticator_manager: true
     providers:
         in_memory:
             memory:

@@ -50,7 +50,7 @@ class SerializerSubscriber implements EventSubscriberInterface {
 	/** @var ValidatorInterface */
 	private $validator;
 
-	public static function getSubscribedEvents() {
+	public static function getSubscribedEvents(): array {
 		return [
 			KernelEvents::CONTROLLER_ARGUMENTS => [
 				['onKernelControllerArguments', -10],

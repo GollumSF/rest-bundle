@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MetadataUnserializeTest extends TestCase {
 	
-	public function provideConstruct() {
+	public static function provideConstruct() {
 		return [
 			[ '', [], true ],
 			[ '', [], false ],

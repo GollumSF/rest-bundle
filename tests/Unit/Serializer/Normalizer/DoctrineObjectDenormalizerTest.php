@@ -184,7 +184,7 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 		);
 	}
 	
-	public function provideSupportsDenormalization() {
+	public static function provideSupportsDenormalization() {
 		return [
 			[ 'STRING', true, \stdClass::class, false],
 			[ 1, true, \stdClass::class, false],

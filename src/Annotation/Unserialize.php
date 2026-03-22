@@ -2,10 +2,6 @@
 
 namespace GollumSF\RestBundle\Annotation;
 
-/**
- * @Annotation
- * @Target({"CLASS", "METHOD"})
- */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Unserialize {
 

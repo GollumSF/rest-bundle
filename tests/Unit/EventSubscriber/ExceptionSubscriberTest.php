@@ -47,7 +47,7 @@ class ExceptionSubscriberTest extends TestCase {
 		]);
 	}
 
-	public function providerOnKernelException() {
+	public static function providerOnKernelException() {
 		return [
 			[ false, true, new \Exception('EXCEPTION_ERROR', 42), 'EXCEPTION_ERROR', 42, 500 ],
 			[ false, false, new \Exception('EXCEPTION_ERROR', 21), 'EXCEPTION_ERROR', 21, 500 ],
@@ -107,7 +107,7 @@ class ExceptionSubscriberTest extends TestCase {
 			})
 		;
 
-		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $e);
+		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $e);
 
 		$exceptionSubscriber = new ExceptionSubscriberTestOnKernelException(
 			$serializer,
@@ -177,7 +177,7 @@ class ExceptionSubscriberTest extends TestCase {
 			})
 		;
 
-		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $e);
+		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $e);
 
 		$exceptionSubscriber = new ExceptionSubscriberTestOnKernelException(
 			$serializer,
@@ -235,7 +235,7 @@ class ExceptionSubscriberTest extends TestCase {
 			->method('serialize')
 		;
 
-		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST, $e);
+		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $e);
 
 		$exceptionSubscriber = new ExceptionSubscriberTestOnKernelException(
 			$serializer,

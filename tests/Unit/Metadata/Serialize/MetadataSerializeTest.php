@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 class MetadataSerializeTest extends TestCase {
 	
 	
-	public function provideConstruct() {
+	public static function provideConstruct() {
 		return [
 			[ [], [], Response::HTTP_OK ],
 			[ [ 'header_key' => 'header_value' ], [], Response::HTTP_OK ],

@@ -1,2 +1,4 @@
 framework:
     serializer:
+    validation:
+        enabled: true

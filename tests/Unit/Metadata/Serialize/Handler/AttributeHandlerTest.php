@@ -30,7 +30,7 @@ class AnnoDummyFull {
  */
 class AttributeHandlerTest extends TestCase {
 	
-	public function provideGetMetadata() {
+	public static function provideGetMetadata() {
 		return [
 			[ AnnoDummyNull::class, null, null, null ],
 			[ AnnoDummyClass::class, 1, [ 'group1' ], [ 'header1' ] ],

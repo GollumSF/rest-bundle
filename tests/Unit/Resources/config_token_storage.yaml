@@ -1,6 +1,7 @@
 framework:
     serializer:
+    validation:
+        enabled: true
 security:
-    enable_authenticator_manager: true
     firewalls:
         main: ~

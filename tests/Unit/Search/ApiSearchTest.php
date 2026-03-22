@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Kernel;
+use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
 
 class ApiSearchTestApiFind extends ApiSearch {
 
@@ -36,6 +36,7 @@ class ApiSearchTestApiFind extends ApiSearch {
 class ApiSearchTest extends TestCase {
 
 	use ReflectionPropertyTrait;
+	use WithConsecutiveTrait;
 
 	public function testGetMasterRequest() {
 
@@ -44,11 +45,9 @@ class ApiSearchTest extends TestCase {
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
-		$methodMasterRequest = version_compare(Kernel::VERSION, '6.0.0', '<') ? 'getMasterRequest' : 'getMainRequest';
-
 		$requestStack
 			->expects($this->once())
-			->method($methodMasterRequest)
+			->method('getMainRequest')
 			->willReturn($request)
 		;
 
@@ -59,11 +58,11 @@ class ApiSearchTest extends TestCase {
 		);
 	}
 
-	public function providerApiFind() {
+	public static function providerApiFind() {
 		return [
 			[ 25 , 25, '', null ],
 			[ 101 , 100, '', null ],
-			[ 25 , 25, Direction::ASC, Direction::ASC ],
+			[ 25 , 25, Direction::ASC->value, Direction::ASC->value ],
 			[ 25 , 25, 'BAD_DIRECTIOn', null ],
 		];
 	}
@@ -92,21 +91,14 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[$limit, 0, 'prop1', $direction]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				$limit,
-				0,
-				'prop1',
-				$direction
-			)
+			->willReturnCallback($callback)
 		;
 
 		$repository
@@ -144,21 +136,14 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[20, 0, 'prop1', Direction::ASC->value]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				20,
-				0,
-				'prop1',
-				Direction::ASC
-			)
+			->willReturnCallback($callback)
 		;
 
 		$repository
@@ -201,21 +186,14 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[25, 0, 'prop1', Direction::ASC->value]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				25,
-				0,
-				'prop1',
-				Direction::ASC
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
@@ -245,21 +223,14 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
+		[$callback, $count] = self::withConsecutiveArgs(
+			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
+			[25, 0, 'prop1', Direction::ASC->value]
+		);
 		$request
-			->expects($this->exactly(4))
+			->expects($this->exactly($count))
 			->method('get')
-			->withConsecutive(
-				[ 'limit' ],
-				[ 'page' ],
-				[ 'order' ],
-				[ 'direction' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				25,
-				0,
-				'prop1',
-				Direction::ASC
-			)
+			->willReturnCallback($callback)
 		;
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);

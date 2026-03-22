@@ -9,7 +9,7 @@ use Test\GollumSF\RestBundle\ProjectTest\Entity\Category;
 
 class ProjectTestFixture extends Fixture {
 
-	public function load(ObjectManager $manager) {
+	public function load(ObjectManager $manager): void {
 
 		$categories = [];
 		for ($i = 1; $i <= 40; $i++) {
@@ -36,7 +36,7 @@ class ProjectTestFixture extends Fixture {
 		$iCategory = 0;
 		$repeatCategory = 0;
 		$maxRepeatCategory = 3;
-		
+
 		for ($i = 1; $i <= 50; $i++) {
 			$book = (new Book())
 				->setTitle('TITLE_'.$i)
@@ -45,7 +45,7 @@ class ProjectTestFixture extends Fixture {
 				->setCategory($categories[$iCategory])
 			;
 			$manager->persist($book);
-			
+
 			$repeatAuthor++;
 			if ($repeatAuthor === $maxRepeatAuthor) {
 				$iAuthor++;
@@ -65,7 +65,7 @@ class ProjectTestFixture extends Fixture {
 					$maxRepeatCategory = 1;
 				}
 			}
-			
+
 		}
 		$manager->flush();
 	}

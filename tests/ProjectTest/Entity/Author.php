@@ -9,49 +9,27 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\AuthorRepository;
 
-/**
- * @ORM\Entity(repositoryClass=AuthorRepository::class)
- */
+#[ORM\Entity(repositoryClass: AuthorRepository::class)]
 class Author {
 
 	use OneToManySetter;
 
-	/**
-	 * @ORM\Column(type="integer")
-	 * @ORM\Id()
-	 * @ORM\GeneratedValue()
-	 *
-	 * @Groups({
-	 *  "author_get",
-	 * 	"book_get", "book_put", "book_post"
-	 * })
-	 *
-	 * @var int
-	 */
+	#[ORM\Column(type: "integer")]
+	#[ORM\Id]
+	#[ORM\GeneratedValue]
+	#[Groups(["author_get", "book_get", "book_put", "book_post"])]
+	/** @var int */
 	private $id;
 
-	/**
-	 * @ORM\Column(type="string")
-	 *
-	 * @Groups({
-	 *  "author_get",
-	 * 	"book_get", "book_put", "book_post"
-	 * })
-	 *
-	 * @Assert\NotBlank(groups={"book_put", "book_post"})
-	 *
-	 * @var string
-	 */
+	#[ORM\Column(type: "string")]
+	#[Groups(["author_get", "book_get", "book_put", "book_post"])]
+	#[Assert\NotBlank(groups: ["book_put", "book_post"])]
+	/** @var string */
 	private $name;
 
-	/**
-	 * @ORM\OneToMany(targetEntity=Book::class, mappedBy="author")
-	 * @var Book[]|ArrayCollection
-	 * 
-	 * @Groups({
-	 *  "author_get"
-	 * })
-	 */
+	#[ORM\OneToMany(targetEntity: Book::class, mappedBy: "author")]
+	#[Groups(["author_get"])]
+	/** @var Book[]|ArrayCollection */
 	private $books;
 
 	public function __construct() {

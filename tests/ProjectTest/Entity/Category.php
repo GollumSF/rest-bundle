@@ -7,30 +7,20 @@ use GollumSF\EntityRelationSetter\OneToManySetter;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\CategoryRepository;
 
-/**
- * @ORM\Entity(repositoryClass=CategoryRepository::class)
- */
+#[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category {
 
 	use OneToManySetter;
 
-	/**
-	 * @ORM\Column(type="integer")
-	 * @ORM\Id()
-	 * @ORM\GeneratedValue()
-	 *
-	 * @Groups({
-	 * 	"book_get"
-	 * })
-	 *
-	 * @var int
-	 */
+	#[ORM\Column(type: "integer")]
+	#[ORM\Id]
+	#[ORM\GeneratedValue]
+	#[Groups(["book_get"])]
+	/** @var int */
 	private $id;
 
-	/**
-	 * @ORM\OneToMany(targetEntity=Book::class, mappedBy="category")
-	 * @var Book[]|ArrayCollection
-	 */
+	#[ORM\OneToMany(targetEntity: Book::class, mappedBy: "category")]
+	/** @var Book[]|ArrayCollection */
 	private $books;
 
 	public function __construct() {

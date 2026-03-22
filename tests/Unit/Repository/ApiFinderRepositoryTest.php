@@ -11,11 +11,12 @@ use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Repository\ApiFinderRepository;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
 
 class ApiFinderRepositoryTestApiFindBy extends ApiFinderRepository {
-	
+
 	public $queryBuilder;
-	
+
 	public function createQueryBuilder($alias, $indexBy = null) {
 		return $this->queryBuilder;
 	}
@@ -23,8 +24,10 @@ class ApiFinderRepositoryTestApiFindBy extends ApiFinderRepository {
 }
 
 class ApiFinderRepositoryTest extends WebTestCase {
-	
-	public function providerApiFindBy() {
+
+	use WithConsecutiveTrait;
+
+	public static function providerApiFindBy() {
 		return [
 			[ 10, 0, null, null, 10, 0, null, null ],
 			[ 0, 0, null, null, 1, 0, null, null ],
@@ -32,8 +35,8 @@ class ApiFinderRepositoryTest extends WebTestCase {
 			[ 10, 2, null, null, 10, 20, null, null ],
 			[ 10, 0, 'prop_09-', null, 10, 0, 't.prop_09-', null ],
 			[ 10, 0, 'prop\\/.', null, 10, 0, 't.prop', null ],
-			[ 10, 0, 'prop.', Direction::ASC, 10, 0, 't.prop', 'ASC' ],
-			[ 10, 0, 'prop.', Direction::DESC, 10, 0, 't.prop', 'DESC' ],
+			[ 10, 0, 'prop.', Direction::ASC->value, 10, 0, 't.prop', 'ASC' ],
+			[ 10, 0, 'prop.', Direction::DESC->value, 10, 0, 't.prop', 'DESC' ],
 		];
 	}
 
@@ -41,7 +44,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 	 * @dataProvider providerApiFindBy
 	 */
 	public function testApiFindBy($limit, $page, $order, $direction, $limitResult, $firstResult, $orderResult, $directionResult) {
-		
+
 		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
 		$metadata = $this->getMockBuilder(ClassMetadata::class)->disableOriginalConstructor()->getMock();
 
@@ -49,27 +52,24 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 
+		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
+			[[ 'COUNT(t)' ], [ 't' ]],
+			[$queryBuilder, $queryBuilder]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($selectCount))
 			->method('select')
-			->withConsecutive(
-				[ 'COUNT(t)' ],
-				[ 't' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				$queryBuilder,
-				$queryBuilder
-			)
+			->willReturnCallback($selectCallback)
 		;
 
+		[$getQueryCallback, $getQueryCount] = self::withConsecutiveArgs(
+			[[], []],
+			[$queryCount, $query]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($getQueryCount))
 			->method('getQuery')
-			->willReturn($queryCount)
-			->willReturnOnConsecutiveCalls(
-				$queryCount,
-				$query
-			)
+			->willReturnCallback($getQueryCallback)
 		;
 		$queryBuilder
 			->expects($this->once())
@@ -91,7 +91,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 				->willReturn($queryBuilder)
 			;
 		}
-		
+
 		$queryCount
 			->expects($this->once())
 			->method('getSingleScalarResult')
@@ -102,7 +102,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 			->method('getResult')
 			->willReturn([ 'RESULT1', 'RESULT2', 'RESULT3' ])
 		;
-		
+
 		$apiFinderRepository = new ApiFinderRepositoryTestApiFindBy($em, $metadata);
 		$apiFinderRepository->queryBuilder = $queryBuilder;
 
@@ -111,7 +111,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$this->assertEquals($result->getData(), [ 'RESULT1', 'RESULT2', 'RESULT3' ]);
 		$this->assertEquals($result->getTotal(), 42);
 	}
-	
+
 	public function testApiFindByException() {
 
 		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
@@ -120,30 +120,27 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
 		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-		
+
+		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
+			[[ 'COUNT(t)' ], [ 't' ]],
+			[$queryBuilder, $queryBuilder]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($selectCount))
 			->method('select')
-			->withConsecutive(
-				[ 'COUNT(t)' ],
-				[ 't' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				$queryBuilder,
-				$queryBuilder
-			)
+			->willReturnCallback($selectCallback)
 		;
-		
+
+		[$getQueryCallback, $getQueryCount] = self::withConsecutiveArgs(
+			[[], []],
+			[$queryCount, $query]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($getQueryCount))
 			->method('getQuery')
-			->willReturn($queryCount)
-			->willReturnOnConsecutiveCalls(
-				$queryCount,
-				$query
-			)
+			->willReturnCallback($getQueryCallback)
 		;
-		
+
 		$queryBuilder
 			->expects($this->once())
 			->method('setMaxResults')
@@ -156,7 +153,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 			->with(0)
 			->willReturn($queryBuilder)
 		;
-		
+
 		$queryCount
 			->expects($this->once())
 			->method('getSingleScalarResult')
@@ -186,28 +183,25 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
 		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
 		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-		
-		
+
+
+		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
+			[[ 'COUNT(t)' ], [ 't' ]],
+			[$queryBuilder, $queryBuilder]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($selectCount))
 			->method('select')
-			->withConsecutive(
-				[ 'COUNT(t)' ],
-				[ 't' ]
-			)
-			->willReturnOnConsecutiveCalls(
-				$queryBuilder,
-				$queryBuilder
-			)
+			->willReturnCallback($selectCallback)
 		;
+		[$getQueryCallback, $getQueryCount] = self::withConsecutiveArgs(
+			[[], []],
+			[$queryCount, $query]
+		);
 		$queryBuilder
-			->expects($this->exactly(2))
+			->expects($this->exactly($getQueryCount))
 			->method('getQuery')
-			->willReturn($queryCount)
-			->willReturnOnConsecutiveCalls(
-				$queryCount,
-				$query
-			)
+			->willReturnCallback($getQueryCallback)
 		;
 		$queryBuilder
 			->expects($this->once())
@@ -221,7 +215,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 			->with(0)
 			->willReturn($queryBuilder)
 		;
-		
+
 		$queryCount
 			->expects($this->once())
 			->method('getSingleScalarResult')
@@ -238,7 +232,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 			$called = true;
 			$this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
 		};
-		
+
 		$apiFinderRepository = new ApiFinderRepositoryTestApiFindBy($em, $metadata);
 		$apiFinderRepository->queryBuilder = $queryBuilder;
 
@@ -248,5 +242,5 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$this->assertEquals($result->getTotal(), 42);
 		$this->assertTrue($called);
 	}
-	
+
 }

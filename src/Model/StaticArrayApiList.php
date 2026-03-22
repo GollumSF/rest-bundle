@@ -84,7 +84,7 @@ class StaticArrayApiList extends ApiList {
 				$valueB = $b;
 			}
 			$result = ($this->sortPropertiesCallback)($valueA, $valueB, $a, $b, $order);
-			return $direction === Direction::DESC ? -$result : $result;
+			return $direction === Direction::DESC->value ? -$result : $result;
 		};
 	}
 

@@ -13,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Kernel;
 
 class ApiSearch implements ApiSearchInterface {
 
@@ -47,7 +46,7 @@ class ApiSearch implements ApiSearchInterface {
 	}
 
 	protected function getMasterRequest(): Request {
-		return version_compare(Kernel::VERSION, '6.0.0', '<') ? $this->requestStack->getMasterRequest() : $this->requestStack->getMainRequest();
+		return $this->requestStack->getMainRequest();
 	}
 
 	public function apiFindBy(string $entityClass, \Closure $queryCallback = null): ApiList {

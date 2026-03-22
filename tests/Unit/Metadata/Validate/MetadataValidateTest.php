@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MetadataValidateTest extends TestCase {
 	
-	public function provideConstruct() {
+	public static function provideConstruct() {
 		return [
 			[ [] ],
 			[ [ 'group1' ] ],

@@ -2,10 +2,10 @@
 namespace GollumSF\RestBundle\Traits;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Persistence\ObjectRepository;
 use Doctrine\Persistence\Proxy;
-use Symfony\Bridge\Doctrine\ManagerRegistry;
 
 /**
  * @property ManagerRegistry managerRegistry

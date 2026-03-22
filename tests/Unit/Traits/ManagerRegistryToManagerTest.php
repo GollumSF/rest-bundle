@@ -59,7 +59,7 @@ class ManagerRegistryToManagerTest extends TestCase
 
 	use ReflectionPropertyTrait;
 
-	public function providerGetEntityClass() {
+	public static function providerGetEntityClass() {
 		return [
 			[ new \stdClass(), \stdClass::class],
 			[ new DummyProxy(), \stdClass::class],

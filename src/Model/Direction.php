@@ -1,10 +1,11 @@
 <?php
-
 namespace GollumSF\RestBundle\Model;
 
-use GollumSF\Enum\Enum;
+enum Direction: string {
+	case ASC = 'ASC';
+	case DESC = 'DESC';
 
-class Direction extends Enum {
-	const ASC = 'ASC';
-	const DESC = 'DESC';
+	public static function isValid(string $value): bool {
+		return self::tryFrom($value) !== null;
+	}
 }

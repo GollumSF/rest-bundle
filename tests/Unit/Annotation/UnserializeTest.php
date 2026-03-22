@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UnserializeTest extends TestCase
 {
-	public function provideConstructLegacy() {
+	public static function provideConstructLegacy() {
 		return [
 			[ [],  '', [], true ],
 			[ [
@@ -40,7 +40,7 @@ class UnserializeTest extends TestCase
 		$this->assertEquals($annotation->isSave(), $save);
 	}
 	
-	public function provideConstruct() {
+	public static function provideConstruct() {
 		return [
 			[ '', [], true, [] ],
 			[ 'anno_name', [], Response::HTTP_OK, [] ],

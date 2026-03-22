@@ -44,7 +44,7 @@ class DoctrineIdDenormalizerTest extends TestCase {
 		);
 	}
 	
-	public function provideSupportsDenormalization() {
+	public static function provideSupportsDenormalization() {
 		return [
 			[ 'STRING', true, \stdClass::class, true],
 			[ 1, true, \stdClass::class, true],

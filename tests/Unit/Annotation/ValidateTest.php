@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class ValidateTest extends TestCase
 {
-	public function provideConstructLegacy() {
+	public static function provideConstructLegacy() {
 		return [
 			[ [],  [ 'Default' ] ],
 			[ [
@@ -33,7 +33,7 @@ class ValidateTest extends TestCase
 		$this->assertEquals($annotation->getGroups(), $groups);
 	}
 	
-	public function provideConstruct() {
+	public static function provideConstruct() {
 		return [
 			[ [],  [ 'Default' ] ],
 			[ [ 'group1' ], [ 'group1' ] ],

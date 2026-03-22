@@ -35,7 +35,7 @@ class ExceptionSubscriber implements EventSubscriberInterface {
 	/** @var TokenStorageInterface */
 	private $tokenStorage;
 
-	public static function getSubscribedEvents() {
+	public static function getSubscribedEvents(): array {
 		return [
 			KernelEvents::EXCEPTION => [
 				['onKernelException', 256],
