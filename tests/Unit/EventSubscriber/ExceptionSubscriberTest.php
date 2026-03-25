@@ -254,6 +254,52 @@ class ExceptionSubscriberTest extends TestCase {
 
 	}
 
+	public function testOnKernelExceptionNoControllerAction() {
+		$serializer                = $this->getMockForAbstractClass(SerializerInterface::class);
+		$configuration             = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager  = $this->getMockForAbstractClass(MetadataSerializeManagerInterface::class);
+		$kernel                    = $this->getMockForAbstractClass(KernelInterface::class);
+		$request                   = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn(null)
+		;
+
+		$metadataSerializeManager
+			->expects($this->never())
+			->method('getMetadata')
+		;
+
+		$configuration
+			->expects($this->once())
+			->method('isAlwaysSerializedException')
+			->willReturn(false)
+		;
+
+		$serializer
+			->expects($this->never())
+			->method('serialize')
+		;
+
+		$event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new \Exception('ERROR'));
+
+		$exceptionSubscriber = new ExceptionSubscriber(
+			$serializer,
+			$configuration,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			true
+		);
+
+		$exceptionSubscriber->onKernelException($event);
+
+		$this->assertNull($event->getResponse());
+	}
+
 	public function testSerialize() {
 		$serializer                = $this->getMockForAbstractClass(SerializerInterface::class);
 		$configuration             = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
