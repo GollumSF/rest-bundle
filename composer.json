@@ -38,7 +38,7 @@
         "symfony/yaml": "^6.4|^7.0|^8.0"
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^3.4",
+        "doctrine/doctrine-fixtures-bundle": "^3.4|^4.0",
         "gollumsf/reflection-property-test": "^1.0",
         "phpunit/phpunit": "^11.0",
         "matthiasnoback/symfony-dependency-injection-test": "^4.1|^5.0|^6.0|^7.0",
