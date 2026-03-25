@@ -42,8 +42,7 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.symfony_version }}" != "" ]; then composer require "symfony/symfony:${{ inputs.symfony_version }}.*" --no-update; fi;
-        if [ "${{ inputs.symfony_version }}" != "" ]; then composer require "monolog/monolog" "masterminds/html5" --no-update; fi;
-        composer update --prefer-dist --no-interaction ${{ inputs.composer_flags }}
+        composer update --prefer-dist --no-interaction --no-audit ${{ inputs.composer_flags }}
 
     - name: Run tests
       shell: bash
