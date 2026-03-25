@@ -5,6 +5,7 @@ use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\Model\Direction;
@@ -17,7 +18,7 @@ class ApiFinderRepositoryTestApiFindBy extends ApiFinderRepository {
 
 	public $queryBuilder;
 
-	public function createQueryBuilder($alias, $indexBy = null) {
+	public function createQueryBuilder(string $alias, ?string $indexBy = null): QueryBuilder {
 		return $this->queryBuilder;
 	}
 
@@ -46,11 +47,11 @@ class ApiFinderRepositoryTest extends WebTestCase {
 	public function testApiFindBy($limit, $page, $order, $direction, $limitResult, $firstResult, $orderResult, $directionResult) {
 
 		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$metadata = $this->getMockBuilder(ClassMetadata::class)->disableOriginalConstructor()->getMock();
+		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
-		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
+		$queryCount   = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
+		$query        = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
 			[[ 'COUNT(t)' ], [ 't' ]],
@@ -115,11 +116,11 @@ class ApiFinderRepositoryTest extends WebTestCase {
 	public function testApiFindByException() {
 
 		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$metadata = $this->getMockBuilder(ClassMetadata::class)->disableOriginalConstructor()->getMock();
+		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
-		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
+		$queryCount   = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
+		$query        = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
 			[[ 'COUNT(t)' ], [ 't' ]],
@@ -178,11 +179,11 @@ class ApiFinderRepositoryTest extends WebTestCase {
 	public function testApiFindByQueryCallback() {
 
 		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$metadata = $this->getMockBuilder(ClassMetadata::class)->disableOriginalConstructor()->getMock();
+		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
-		$queryCount   = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
-		$query        = $this->getMockBuilder(AbstractQuery::class)->disableOriginalConstructor()->getMock();
+		$queryCount   = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
+		$query        = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
 
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(

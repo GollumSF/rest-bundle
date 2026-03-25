@@ -1,7 +1,7 @@
 <?php
 namespace Test\GollumSF\RestBundle\Unit\Metadata\Validate\Handler;
 
-use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\Metadata\Validate\Handler\AttributeHandler;
 use PHPUnit\Framework\TestCase;
 

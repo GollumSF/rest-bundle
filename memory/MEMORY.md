@@ -1,0 +1,4 @@
+- [project_migration_status.md](project_migration_status.md) - État de la migration SF 6.4→8.0 du RestBundle
+- [feedback_keep_external_bundle.md](feedback_keep_external_bundle.md) - Garder controller-action-extractor comme bundle séparé
+- [feedback_docker_images.md](feedback_docker_images.md) - Utiliser les images Docker pré-configurées de l'utilisateur
+- [feedback_auto_approve.md](feedback_auto_approve.md) - Ne pas demander de permission pour les commandes safe

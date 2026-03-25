@@ -3,7 +3,7 @@ namespace GollumSF\RestBundle\Request\ValueResolver;
 
 use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
-use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
 use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;
 use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\HttpFoundation\Request;

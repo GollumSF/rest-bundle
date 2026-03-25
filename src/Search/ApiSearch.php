@@ -49,13 +49,13 @@ class ApiSearch implements ApiSearchInterface {
 		return $this->requestStack->getMainRequest();
 	}
 
-	public function apiFindBy(string $entityClass, \Closure $queryCallback = null): ApiList {
+	public function apiFindBy(string $entityClass, ?\Closure $queryCallback = null): ApiList {
 
 		$request   = $this->getMasterRequest();
-		$limit     = (int)$request->get('limit', $this->apiConfiguration->getDefaultLimitItem());
-		$page      = (int)$request->get('page' , 0);
-		$order     = $request->get('order');
-		$direction = strtoupper($request->get('direction', ''));
+		$limit     = (int)$request->query->get('limit', $this->apiConfiguration->getDefaultLimitItem());
+		$page      = (int)$request->query->get('page' , 0);
+		$order     = $request->query->get('order');
+		$direction = strtoupper($request->query->get('direction', ''));
 
 		$maxtLimitItem = $this->apiConfiguration->getMaxLimitItem();
 		if ($maxtLimitItem && $limit >  $maxtLimitItem) {
@@ -85,7 +85,7 @@ class ApiSearch implements ApiSearchInterface {
 		}
 	}
 
-	public function staticArrayList(array $data, \Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {
+	public function staticArrayList(array $data, ?\Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {
 		$request   = $this->getMasterRequest();
 		$arrayList = new StaticArrayApiList($data, $request);
 		$arrayList->setMaxLimitItem($this->apiConfiguration->getMaxLimitItem());

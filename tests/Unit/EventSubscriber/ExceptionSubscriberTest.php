@@ -4,7 +4,7 @@ namespace ExceptionSubscriberTestGollumSF\RestBundle\Unit\EventSubscriber;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerAction;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
-use GollumSF\RestBundle\Annotation\Serialize;
+use GollumSF\RestBundle\Attribute\Serialize;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
 use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
 use GollumSF\RestBundle\Metadata\Serialize\MetadataSerialize;

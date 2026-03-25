@@ -2,7 +2,7 @@
 
 namespace Test\GollumSF\RestBundle\ProjectTest\Controller\Api;
 
-use GollumSF\RestBundle\Annotation\Serialize;
+use GollumSF\RestBundle\Attribute\Serialize;
 use Symfony\Component\Routing\Attribute\Route;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Author;
 

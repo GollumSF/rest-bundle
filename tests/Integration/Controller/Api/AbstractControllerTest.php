@@ -51,6 +51,9 @@ abstract class AbstractControllerTest extends KernelTestCase {
 				$kernel->addTestBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 				$kernel->addTestBundle(GollumSFControllerActionExtractorBundle::class);
 				$kernel->addTestConfig($configPath . '/Resources/config/config.yaml');
+				if (PHP_VERSION_ID >= 80400) {
+					$kernel->addTestConfig($configPath . '/Resources/config/config_native_lazy.yaml');
+				}
 				$kernel->setTestProjectDir($projectPath);
 				$kernel->setClearCacheAfterShutdown(false);
 				$kernel->addTestCompilerPass(new class implements CompilerPassInterface {

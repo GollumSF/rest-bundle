@@ -18,7 +18,7 @@ trait DoctrineObjectDenormalizerTrait {
 		$this->recursiveObjectNormalizer = $recursiveObjectNormalizer;
 	}
 	
-	public function denormalizeImplement($data, string $class, string $format = null, array $context = []) {
+	public function denormalizeImplement($data, string $class, ?string $format = null, array $context = []) {
 		
 		if (is_null($data)) {
 			return null;
@@ -49,7 +49,7 @@ trait DoctrineObjectDenormalizerTrait {
 		return $this->recursiveObjectNormalizer->denormalize($data, $class, $format, $context);
 	}
 	
-	public function supportsDenormalizationImplement($data, string $type, string $format = null): bool {
+	public function supportsDenormalizationImplement($data, string $type, ?string $format = null): bool {
 		if (!array_key_exists($type, $this->cache)) {
 			$this->cache[$type] = class_exists($type) && $this->isEntity($type) && (is_array($data) || is_null($data));
 		}

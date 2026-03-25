@@ -50,8 +50,8 @@ class ClassManagerRegistryToManagerNoProperty {
 }
 
 class DummyProxy extends \stdClass implements Proxy {
-	public function __load() {}
-	public function __isInitialized() {}
+	public function __load(): void {}
+	public function __isInitialized(): bool { return true; }
 }
 
 class ManagerRegistryToManagerTest extends TestCase

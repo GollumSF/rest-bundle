@@ -2,7 +2,7 @@
 
 namespace GollumSF\RestBundle\Metadata\Validate\Handler;
 
-use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\Metadata\Validate\MetadataValidate;
 
 /**

@@ -1,7 +1,7 @@
 <?php
 namespace Test\GollumSF\RestBundle\Unit\Metadata\Unserialize\Handler;
 
-use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
 use GollumSF\RestBundle\Metadata\Unserialize\Handler\AttributeHandler;
 use PHPUnit\Framework\TestCase;
 

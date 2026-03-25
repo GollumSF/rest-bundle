@@ -1,9 +1,8 @@
 # GollumSFRestBundle
 
-[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_4.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
-[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_5.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
-[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.0.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
-[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.3.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_6.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_7.4.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
+[![Build Status](https://github.com/GollumSF/rest-bundle/actions/workflows/symfony_8.0.yml/badge.svg?branch=master)](https://github.com/GollumSF/rest-bundle/actions)
 
 [![Coverage](https://coveralls.io/repos/github/GollumSF/rest-bundle/badge.svg?branch=master)](https://coveralls.io/github/GollumSF/rest-bundle)
 [![License](https://poser.pugx.org/gollumsf/rest-bundle/license)](https://packagist.org/packages/gollumsf/rest-bundle)
@@ -12,6 +11,11 @@
 [![Discord](https://img.shields.io/discord/671741944149573687?color=purple&label=discord)](https://discord.gg/xMBc5SQ)
 
 Very simple REST Api implementation
+
+## Requirements:
+
+- PHP >= 8.2
+- Symfony 6.4, 7.x or 8.0
 
 ## Installation:
 
@@ -33,7 +37,7 @@ config.yml
 gollum_sf_rest:
     max_limit_item:              100   # (optional, default : 100) Max limit item API support when call ApiSearch, if 0 no limit.
     default_limit_item:          25    # (optional, default : 25) Default limit item API support if no limit on request when call ApiSearch
-    always_serialized_exception: false # (optional, default : false) All symfony exception return json response. If false only route with Serialize annotation
+    always_serialized_exception: false # (optional, default : false) All symfony exception return json response. If false only route with Serialize attribute
 ```
 
 ## Usages:

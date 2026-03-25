@@ -6,9 +6,9 @@ use Doctrine\Persistence\Proxy;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerAction;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
-use GollumSF\RestBundle\Annotation\Serialize;
-use GollumSF\RestBundle\Annotation\Unserialize;
-use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Attribute\Serialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
+use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\EventSubscriber\SerializerSubscriber;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
 use GollumSF\RestBundle\Metadata\Serialize\MetadataSerialize;
@@ -124,9 +124,10 @@ interface StubSerializer extends SerializerInterface, NormalizerInterface, Encod
 }
 
 class StubProxy extends \stdClass implements Proxy {
-	public function __load() {
+	public function __load(): void {
 	}
-	public function __isInitialized() {
+	public function __isInitialized(): bool {
+		return true;
 	}
 }
 

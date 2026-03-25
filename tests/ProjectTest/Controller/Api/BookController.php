@@ -3,9 +3,9 @@
 namespace Test\GollumSF\RestBundle\ProjectTest\Controller\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
-use GollumSF\RestBundle\Annotation\Serialize;
-use GollumSF\RestBundle\Annotation\Unserialize;
-use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Attribute\Serialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
+use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
 use Symfony\Component\HttpFoundation\Response;

@@ -7,7 +7,7 @@ use GollumSF\RestBundle\Model\ApiList;
 
 trait ApiFinderRepositoryTrait {
 	
-	public function apiFindBy(int $limit, int $page, string $order = null, string $direction = null, \Closure $queryCallback = null): ApiList {
+	public function apiFindBy(int $limit, int $page, ?string $order = null, ?string $direction = null, ?\Closure $queryCallback = null): ApiList {
 		
 		if ($limit < 1 ) {
 			$limit = 1;

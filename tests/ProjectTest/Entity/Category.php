@@ -4,7 +4,7 @@ namespace Test\GollumSF\RestBundle\ProjectTest\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use GollumSF\EntityRelationSetter\OneToManySetter;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\CategoryRepository;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]

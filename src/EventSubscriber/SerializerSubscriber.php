@@ -3,8 +3,8 @@ namespace GollumSF\RestBundle\EventSubscriber;
 
 use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface;
-use GollumSF\RestBundle\Annotation\Serialize;
-use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Attribute\Serialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
 use GollumSF\RestBundle\Exceptions\UnserializeValidateException;
 use GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface;
 use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserializeManagerInterface;

@@ -75,7 +75,6 @@ class ApiSearchTest extends TestCase {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
 		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
 		$closure         = function () {};
@@ -91,15 +90,9 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[$limit, 0, 'prop1', $direction]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$query = ['limit' => $limit, 'page' => 0, 'order' => 'prop1'];
+		if ($direction !== null && $direction !== '') { $query['direction'] = $direction; }
+		$request = new Request($query);
 
 		$repository
 			->expects($this->once())
@@ -122,7 +115,6 @@ class ApiSearchTest extends TestCase {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
@@ -136,15 +128,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[20, 0, 'prop1', Direction::ASC->value]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$request = new Request(['limit' => 20, 'page' => 0, 'order' => 'prop1', 'direction' => Direction::ASC->value]);
 
 		$repository
 			->expects($this->once())
@@ -172,7 +156,6 @@ class ApiSearchTest extends TestCase {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
 
 		$configuration
@@ -186,15 +169,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[25, 0, 'prop1', Direction::ASC->value]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$request = new Request(['limit' => 25, 'page' => 0, 'order' => 'prop1', 'direction' => Direction::ASC->value]);
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
 		$apiSearch->repository = $repository;
@@ -210,7 +185,6 @@ class ApiSearchTest extends TestCase {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
 			->expects($this->once())
@@ -223,15 +197,7 @@ class ApiSearchTest extends TestCase {
 			->willReturn(100)
 		;
 
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[25, 0, 'prop1', Direction::ASC->value]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$request = new Request(['limit' => 25, 'page' => 0, 'order' => 'prop1', 'direction' => Direction::ASC->value]);
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
 		$apiSearch->request = $request;
@@ -245,7 +211,7 @@ class ApiSearchTest extends TestCase {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
 		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
+		$request         = new Request();
 
 		$configuration
 			->expects($this->any())

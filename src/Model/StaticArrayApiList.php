@@ -121,10 +121,10 @@ class StaticArrayApiList extends ApiList {
 	 */
 	public function getData(): array {
 
-		$limit     = (int)$this->request->get('limit', $this->defaultLimitItem);
-		$page      = (int)$this->request->get('page' , 0);
-		$order     = $this->request->get('order');
-		$direction = strtoupper($this->request->get('direction', ''));
+		$limit     = (int)$this->request->query->get('limit', $this->defaultLimitItem);
+		$page      = (int)$this->request->query->get('page' , 0);
+		$order     = $this->request->query->get('order');
+		$direction = strtoupper($this->request->query->get('direction', ''));
 
 		if ($this->maxLimitItem && $limit > $this->maxLimitItem) {
 			$limit = $this->maxLimitItem;

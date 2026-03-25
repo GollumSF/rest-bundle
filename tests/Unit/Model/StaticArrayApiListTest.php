@@ -305,16 +305,12 @@ class StaticArrayApiListTest extends TestCase {
 	 */
 	public function testGetData($list, $limit, $page, $order, $direction, $result) {
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[$limit, $page, $order, $direction]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$query = [];
+		if ($limit !== null) { $query['limit'] = $limit; }
+		if ($page !== null) { $query['page'] = $page; }
+		if ($order !== null) { $query['order'] = $order; }
+		if ($direction !== null && $direction !== '') { $query['direction'] = $direction; }
+		$request = new Request($query);
 
 		$apiList = new StaticArrayApiList($list, $request);
 
@@ -398,16 +394,9 @@ class StaticArrayApiListTest extends TestCase {
 	 */
 	public function testGetDataClosureProperties($list, $direction, $result) {
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[100, 0, 'prop1', $direction]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$query = ['limit' => 100, 'page' => 0, 'order' => 'prop1'];
+		if ($direction !== null && $direction !== '') { $query['direction'] = $direction; }
+		$request = new Request($query);
 
 		$apiList = new StaticArrayApiList($list, $request);
 
@@ -444,16 +433,7 @@ class StaticArrayApiListTest extends TestCase {
 
 	public function testGetDataClosureGlobal() {
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[100, 0, 'ORDER', Direction::DESC->value]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$request = new Request(['limit' => 100, 'page' => 0, 'order' => 'ORDER', 'direction' => Direction::DESC->value]);
 
 		$apiList = new StaticArrayApiList([
 			'AAA',
@@ -488,16 +468,7 @@ class StaticArrayApiListTest extends TestCase {
 
 	public function testGetDataException() {
 
-		$request = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'limit' ], [ 'page' ], [ 'order' ], [ 'direction' ]],
-			[100, 0, 'prop1', Direction::ASC->value]
-		);
-		$request
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
+		$request = new Request(['limit' => 100, 'page' => 0, 'order' => 'prop1', 'direction' => Direction::ASC->value]);
 
 		$apiList = new StaticArrayApiList([
 			new DumyClass('BBB'),

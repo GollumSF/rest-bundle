@@ -1,7 +1,7 @@
 <?php
 namespace GollumSF\RestBundle\Model;
 
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 class ApiList {
 

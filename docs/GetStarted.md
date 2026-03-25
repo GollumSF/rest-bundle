@@ -7,55 +7,33 @@ Create your model or entity, with serialize groups and validator
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ORM\Entity]
 class Book {
 
-	/**
-	 * @ORM\Column(type="integer")
-	 * @ORM\Id()
-	 * @ORM\GeneratedValue()
-	 *
-	 * @Groups({
-	 * 	"book_get", "book_getc"
-	 * })
-	 *
-	 * @var int
-	 */
-	private $id;
-	
-	/**
-	 * @ORM\Column(type="string")
-	 * 
-	 * @Groups({
-	 * 	"book_get", "book_getc", "book_post", "book_put", "book_patch_title",
-	 * })
-	 * 
-	 * @Assert\NotBlank(groups={"book_post", "book_put", "book_patch_title"})
-	 * 
-	 * @var string
-	 */
-	private $title;
+	#[ORM\Column(type: "integer")]
+	#[ORM\Id]
+	#[ORM\GeneratedValue]
+	#[Groups(["book_get", "book_getc"])]
+	private ?int $id = null;
 
-	/**
-	 * @ORM\Column(type="string")
-	 * 
-	 * @Groups({
-	 * 	"book_get", "book_post", "book_put",
-	 * })
-	 *
-	 * @Assert\Length(max=512, groups={"book_post", "book_put"})
-	 * @Assert\NotBlank(groups={"book_post", "book_put"})
-	 *
-	 * @var string
-	 */
-	private $description;
-	
+	#[ORM\Column(type: "string")]
+	#[Groups(["book_get", "book_getc", "book_post", "book_put", "book_patch_title"])]
+	#[Assert\NotBlank(groups: ["book_post", "book_put", "book_patch_title"])]
+	private string $title;
+
+	#[ORM\Column(type: "string")]
+	#[Groups(["book_get", "book_post", "book_put"])]
+	#[Assert\Length(max: 512, groups: ["book_post", "book_put"])]
+	#[Assert\NotBlank(groups: ["book_post", "book_put"])]
+	private string $description;
+
 	/////////////
 	// Getters //
 	/////////////
-	
+
 	public function getId(): ?int {
 		return $this->id;
 	}
@@ -67,7 +45,7 @@ class Book {
 	public function getDescription(): string {
 		return $this->description;
 	}
-	
+
 	/////////////
 	// Setters //
 	/////////////
@@ -92,68 +70,53 @@ namespace App\Controller\Api;
 
 use App\Entity\Book;
 use Doctrine\ORM\EntityManagerInterface;
-use GollumSF\RestBundle\Annotation\Serialize;
-use GollumSF\RestBundle\Annotation\Unserialize;
-use GollumSF\RestBundle\Annotation\Validate;
+use GollumSF\RestBundle\Attribute\Serialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
+use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\Search\ApiSearchInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route("/api/books")
- */
+#[Route('/api/books')]
 class BookController {
 
-	/**
-	 * @Route("", methods={"GET"})
-	 * @Serialize(groups="book_getc")
-	 */
-	public function list(ApiSearchInterface $apiSearch) { // Load Service
+	#[Route('', methods: ['GET'])]
+	#[Serialize(groups: 'book_getc')]
+	public function list(ApiSearchInterface $apiSearch) {
 		return $apiSearch->apiFindBy(Book::class);
 	}
-	
-	/**
-	 * @Route("/{id}", methods={"GET"})
-	 * @Serialize(groups="book_get")
-	 */
+
+	#[Route('/{id}', methods: ['GET'])]
+	#[Serialize(groups: 'book_get')]
 	public function find(Book $book) {
 		return $book;
 	}
 
-	/**
-	 * @Route("", methods={"POST"})
-	 * @Unserialize("book", groups="book_post")
-	 * @Validate({ "book_post" })
-	 * @Serialize(groups="book_get", code=Response::HTTP_CREATED)
-	 *
-	 */
+	#[Route('', methods: ['POST'])]
+	#[Unserialize('book', groups: 'book_post')]
+	#[Validate(['book_post'])]
+	#[Serialize(groups: 'book_get', code: Response::HTTP_CREATED)]
 	public function post(Book $book) {
 		return $book;
 	}
 
-	/**
-	 * @Route("/{id}", methods={"PUT"})
-	 * @Unserialize("book", groups="book_put")
-	 * @Validate({ "book_put" })
-	 * @Serialize(groups="book_get")
-	 */
+	#[Route('/{id}', methods: ['PUT'])]
+	#[Unserialize('book', groups: 'book_put')]
+	#[Validate(['book_put'])]
+	#[Serialize(groups: 'book_get')]
 	public function put(Book $book) {
 		return $book;
 	}
 
-	/**
-	 * @Route("/{id}/title", methods={"PATCH"})
-	 * @Unserialize"book", groups="book_patch_title")
-	 * @Serialize(groups="book_get")
-	 */
+	#[Route('/{id}/title', methods: ['PATCH'])]
+	#[Unserialize('book', groups: 'book_patch_title')]
+	#[Serialize(groups: 'book_get')]
 	public function patchTitle(Book $book) {
 		return $book;
 	}
 
-	/**
-	 * @Route("/{id}", methods={"DELETE"})
-	 * @Serialize(groups="book_get")
-	 */
+	#[Route('/{id}', methods: ['DELETE'])]
+	#[Serialize(groups: 'book_get')]
 	public function delete(Book $book, EntityManagerInterface $em) {
 		$em->remove($book);
 		$em->flush();
@@ -166,7 +129,7 @@ class BookController {
 
 ### `list` action:
  - url: `GET http://127.0.0.1/api/books`
- - request: 
+ - request:
 	- query parameters: (example : `GET http://127.0.0.1/api/books?limit=10&page1&order=title&directionp=desc`)
 		- limit (**integer**): Number returned items
 		- page: (**integer**): Page of returned items into total
@@ -249,7 +212,7 @@ class BookController {
 	- body content:
 ```json
 {
-	"title": "Deus ex machina - The Book",
+	"title": "Deus ex machina - The Book"
 }
 ```
  - response:

@@ -2,7 +2,7 @@
 
 namespace GollumSF\RestBundle\Metadata\Unserialize\Handler;
 
-use GollumSF\RestBundle\Annotation\Unserialize;
+use GollumSF\RestBundle\Attribute\Unserialize;
 use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserialize;
 
 /**
