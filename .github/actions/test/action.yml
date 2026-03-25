@@ -41,7 +41,14 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        if [ "${{ inputs.symfony_version }}" != "" ]; then composer require "symfony/symfony:${{ inputs.symfony_version }}.*" --no-update; fi;
+        if [ "${{ inputs.symfony_version }}" != "" ]; then
+          SF_MAJOR=$(echo "${{ inputs.symfony_version }}" | cut -d. -f1)
+          if [ "$SF_MAJOR" -ge 8 ]; then
+            composer require "symfony/framework-bundle:${{ inputs.symfony_version }}.*" --no-update
+          else
+            composer require "symfony/symfony:${{ inputs.symfony_version }}.*" --no-update
+          fi
+        fi
         composer update --prefer-dist --no-interaction --no-audit ${{ inputs.composer_flags }}
 
     - name: Run tests
