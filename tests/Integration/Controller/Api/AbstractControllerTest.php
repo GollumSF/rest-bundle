@@ -51,8 +51,15 @@ abstract class AbstractControllerTest extends KernelTestCase {
 				$kernel->addTestBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 				$kernel->addTestBundle(GollumSFControllerActionExtractorBundle::class);
 				$kernel->addTestConfig($configPath . '/Resources/config/config.yaml');
-				if (PHP_VERSION_ID >= 80400) {
-					$kernel->addTestConfig($configPath . '/Resources/config/config_native_lazy.yaml');
+				// doctrine-bundle v2 needs these options, v3 removed them
+				if (class_exists(\Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration::class) &&
+					method_exists(new \Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration(false), 'getConfigTreeBuilder') &&
+					str_contains(file_get_contents((new \ReflectionClass(\Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration::class))->getFileName()), 'enable_lazy_ghost_objects')
+				) {
+					$kernel->addTestConfig($configPath . '/Resources/config/config_doctrine_legacy.yaml');
+					if (PHP_VERSION_ID >= 80400) {
+						$kernel->addTestConfig($configPath . '/Resources/config/config_native_lazy.yaml');
+					}
 				}
 				$kernel->setTestProjectDir($projectPath);
 				$kernel->setClearCacheAfterShutdown(false);

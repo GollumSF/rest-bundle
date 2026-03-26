@@ -11,7 +11,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 class TokenStoragePass implements CompilerPassInterface {
 	
-	public function process(ContainerBuilder $container) {
+	public function process(ContainerBuilder $container): void {
 		if (!$container->hasDefinition(TokenStorageInterface::class) && !$container->hasAlias(TokenStorageInterface::class)) {
 			return;
 		}

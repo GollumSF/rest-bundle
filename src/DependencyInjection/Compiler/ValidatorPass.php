@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ValidatorPass implements CompilerPassInterface {
 	
-	public function process(ContainerBuilder $container) {
+	public function process(ContainerBuilder $container): void {
 		if (!$container->hasDefinition(ValidatorInterface::class) && !$container->hasAlias(ValidatorInterface::class)) {
 			return;
 		}
