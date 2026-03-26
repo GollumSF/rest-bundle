@@ -16,7 +16,7 @@ class ClassManagerRegistryToManager {
 
 	private $managerRegistry;
 
-	public function __construct(ManagerRegistry $managerRegistry = null) {
+	public function __construct(?ManagerRegistry $managerRegistry = null) {
 		$this->managerRegistry = $managerRegistry;
 	}
 }
