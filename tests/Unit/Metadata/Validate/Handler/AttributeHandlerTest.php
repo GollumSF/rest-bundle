@@ -4,6 +4,7 @@ namespace Test\GollumSF\RestBundle\Unit\Metadata\Validate\Handler;
 use GollumSF\RestBundle\Attribute\Validate;
 use GollumSF\RestBundle\Metadata\Validate\Handler\AttributeHandler;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class AnnoDummyNull {
 	public function action() {}
@@ -25,9 +26,6 @@ class AnnoDummyFull {
 	public function action() {}
 }
 
-/**
- * @requires PHP 8.0.0
- */
 class AttributeHandlerTest extends TestCase {
 	
 	public static function provideGetMetadata() {
@@ -39,9 +37,7 @@ class AttributeHandlerTest extends TestCase {
 		];
 	}
 	
-	/**
-	 * @dataProvider provideGetMetadata
-	 */
+	#[DataProvider('provideGetMetadata')]
 	public function testGetMetadata($class, $group) {
 		
 		$handler = new AttributeHandler();

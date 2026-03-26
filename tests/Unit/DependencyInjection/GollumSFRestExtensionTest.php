@@ -10,6 +10,7 @@ use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use Matthias\SymfonyDependencyInjectionTest\PhpUnit\AbstractExtensionTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 
@@ -56,9 +57,7 @@ class GollumSFRestExtensionTest extends AbstractExtensionTestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider providerLoadConfiguration
-	 */
+	#[DataProvider('providerLoadConfiguration')]
 	public function testLoadConfiguration(
 		$config,
 		$maxLimitItem,

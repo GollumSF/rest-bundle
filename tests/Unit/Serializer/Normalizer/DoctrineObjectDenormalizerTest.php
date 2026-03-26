@@ -8,6 +8,7 @@ use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer;
 use GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 
 class DoctrineObjectDenormalizerTestaDenormalize extends DoctrineObjectDenormalizer {
@@ -34,11 +35,9 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 
 	public function testDenormalize() {
 
-		$em = $this->getMockBuilder(ObjectManager::class)
-			->getMockForAbstractClass()
+		$em = $this->createMock(ObjectManager::class)
 		;
-		$repository = $this->getMockBuilder(ObjectRepository::class)
-			->getMockForAbstractClass()
+		$repository = $this->createMock(ObjectRepository::class)
 		;
 		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
 			->disableOriginalConstructor()
@@ -97,8 +96,7 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 
 	public function testDenormalizeNoIds() {
 
-		$em = $this->getMockBuilder(ObjectManager::class)
-			->getMockForAbstractClass()
+		$em = $this->createMock(ObjectManager::class)
 		;
 		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
 			->disableOriginalConstructor()
@@ -139,8 +137,7 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 	
 	public function testDenormalizeObjectPopulate() {
 
-		$em = $this->getMockBuilder(ObjectManager::class)
-			->getMockForAbstractClass()
+		$em = $this->createMock(ObjectManager::class)
 		;
 		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
 			->disableOriginalConstructor()
@@ -167,8 +164,7 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 
 	public function testDenormalizeObjectNull() {
 
-		$em = $this->getMockBuilder(ObjectManager::class)
-			->getMockForAbstractClass()
+		$em = $this->createMock(ObjectManager::class)
 		;
 		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
 			->disableOriginalConstructor()
@@ -198,9 +194,7 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider provideSupportsDenormalization
-	 */
+	#[DataProvider('provideSupportsDenormalization')]
 	public function testSupportsDenormalization($data, $isEntity, $type, $result) {
 		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)->disableOriginalConstructor()->getMock();
 		

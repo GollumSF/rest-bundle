@@ -5,8 +5,9 @@ namespace Test\GollumSF\RestBundle\Integration\Controller\Api;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
+use PHPUnit\Framework\Attributes\DataProvider;
 
-class AuthorControllerTest extends AbstractControllerTest {
+class AuthorControllerTest extends AbstractControllerTestCase {
 	
 	public static function provideFind() {
 		return [
@@ -37,9 +38,8 @@ class AuthorControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider provideFind
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('provideFind')]
 	public function testFind($id, $result)
 	{
 

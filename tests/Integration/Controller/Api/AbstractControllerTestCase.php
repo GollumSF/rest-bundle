@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-abstract class AbstractControllerTest extends KernelTestCase {
+abstract class AbstractControllerTestCase extends KernelTestCase {
 
 	protected function getProjectPath(): string {
 		return __DIR__ . '/../../../ProjectTest';

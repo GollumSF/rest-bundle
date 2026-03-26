@@ -73,6 +73,7 @@ class GollumSFRestBundleTest extends KernelTestCase {
 		return self::$kernel->getContainer();
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testInitBundle() {
 		$container = $this->bootTestKernel([__DIR__.'/Resources/config.yaml']);
 
@@ -109,6 +110,7 @@ class GollumSFRestBundleTest extends KernelTestCase {
 		$this->assertNull($this->reflectionGetValue($container->get(ExceptionSubscriber::class), 'tokenStorage'));
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testInitBundleWithDoctrine() {
 		$container = $this->bootTestKernel(
 			[__DIR__ . '/Resources/config_doctrine.yaml'],
@@ -121,11 +123,13 @@ class GollumSFRestBundleTest extends KernelTestCase {
 		$this->assertInstanceOf(ManagerRegistry::class, $this->reflectionGetValue($container->get(DoctrineObjectDenormalizer::class), 'managerRegistry'));
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testInitBundleWithValidator() {
 		$container = $this->bootTestKernel([__DIR__ . '/Resources/config_validator.yaml']);
 		$this->assertInstanceOf(ValidatorInterface::class, $this->reflectionGetValue($container->get(SerializerSubscriber::class), 'validator'));
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testInitBundleWithTokenStorage() {
 		$container = $this->bootTestKernel(
 			[__DIR__ . '/Resources/config_token_storage.yaml'],

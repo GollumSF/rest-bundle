@@ -5,6 +5,7 @@ namespace Test\GollumSF\RestBundle\Unit\Attribute;
 use GollumSF\RestBundle\Attribute\Serialize;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class SerializeTest extends TestCase
 {
@@ -18,9 +19,7 @@ class SerializeTest extends TestCase
 		];
 	}
 
-	/**
-	 * @dataProvider provideConstruct
-	 */
+	#[DataProvider('provideConstruct')]
 	public function testConstruct($headers, $groups, $code, $groupsResult) {
 		$annotation = new Serialize($code, $groups, $headers);
 		$this->assertEquals($annotation->getHeaders(), $headers);

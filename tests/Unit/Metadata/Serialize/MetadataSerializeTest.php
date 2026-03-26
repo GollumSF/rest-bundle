@@ -4,6 +4,7 @@ namespace Test\GollumSF\RestBundle\Unit\Metadata\Serialize;
 use GollumSF\RestBundle\Metadata\Serialize\MetadataSerialize;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class MetadataSerializeTest extends TestCase {
 	
@@ -17,9 +18,7 @@ class MetadataSerializeTest extends TestCase {
 		];
 	}
 	
-	/**
-	 * @dataProvider provideConstruct
-	 */
+	#[DataProvider('provideConstruct')]
 	public function testConstruct($headers, $groups, $code) {
 		$annotation = new MetadataSerialize($code, $groups, $headers);
 		$this->assertEquals($annotation->getHeaders(), $headers);

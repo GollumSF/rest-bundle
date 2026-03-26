@@ -19,16 +19,13 @@ class RecursiveObjectNormalizerTest extends TestCase {
 	public function testConstructor() {
 
 		$classMetadataFactory = $this
-			->getMockBuilder(ClassMetadataFactoryInterface::class)
-			->getMockForAbstractClass()
+			->createMock(ClassMetadataFactoryInterface::class)
 		;
 		$nameConverter = $this
-			->getMockBuilder(NameConverterInterface::class)
-			->getMockForAbstractClass()
+			->createMock(NameConverterInterface::class)
 		;
 		$propertyAccessor = $this
-			->getMockBuilder(PropertyAccessorInterface::class)
-			->getMockForAbstractClass()
+			->createMock(PropertyAccessorInterface::class)
 		;
 
 		$recursiveObjectNormalizer = new RecursiveObjectNormalizer(

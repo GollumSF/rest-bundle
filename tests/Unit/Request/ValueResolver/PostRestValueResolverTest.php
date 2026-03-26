@@ -30,8 +30,8 @@ class PostRestValueResolverTest extends TestCase {
 		?MetadataUnserialize $metadata = null,
 		?ManagerRegistry $managerRegistry = null
 	): PostRestValueResolver {
-		$controllerActionExtractor = $this->getMockForAbstractClass(ControllerActionExtractorInterface::class);
-		$metadataUnserializeManager = $this->getMockForAbstractClass(MetadataUnserializeManagerInterface::class);
+		$controllerActionExtractor = $this->createMock(ControllerActionExtractorInterface::class);
+		$metadataUnserializeManager = $this->createMock(MetadataUnserializeManagerInterface::class);
 
 		$controllerActionExtractor
 			->method('extractFromRequest')
@@ -159,10 +159,10 @@ class PostRestValueResolverTest extends TestCase {
 		$repository = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
 		$repository->method('find')->with(42)->willReturn($entity);
 
-		$em = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->with(DummyEntity::class)->willReturn($repository);
 
-		$managerRegistry = $this->getMockForAbstractClass(ManagerRegistry::class);
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->with(DummyEntity::class)->willReturn($em);
 
 		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);
@@ -187,10 +187,10 @@ class PostRestValueResolverTest extends TestCase {
 		$repository = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
 		$repository->method('find')->with(7)->willReturn($entity);
 
-		$em = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->with(DummyEntity::class)->willReturn($repository);
 
-		$managerRegistry = $this->getMockForAbstractClass(ManagerRegistry::class);
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->with(DummyEntity::class)->willReturn($em);
 
 		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);
@@ -212,10 +212,10 @@ class PostRestValueResolverTest extends TestCase {
 		$repository = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
 		$repository->method('find')->willReturn(null);
 
-		$em = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->willReturn($repository);
 
-		$managerRegistry = $this->getMockForAbstractClass(ManagerRegistry::class);
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->willReturn($em);
 
 		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);
@@ -246,7 +246,7 @@ class PostRestValueResolverTest extends TestCase {
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
 		$metadata->method('getName')->willReturn('book');
 
-		$managerRegistry = $this->getMockForAbstractClass(ManagerRegistry::class);
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->willReturn(null);
 
 		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);
@@ -263,8 +263,8 @@ class PostRestValueResolverTest extends TestCase {
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
 		$metadata->method('getName')->willReturn('book');
 
-		$em = $this->getMockForAbstractClass(EntityManagerInterface::class);
-		$managerRegistry = $this->getMockForAbstractClass(ManagerRegistry::class);
+		$em = $this->createMock(EntityManagerInterface::class);
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->willReturn($em);
 
 		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);

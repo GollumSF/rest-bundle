@@ -7,11 +7,13 @@ use Doctrine\Persistence\ManagerRegistry;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\EventSubscriber\ExceptionSubscriber;
 use Test\GollumSF\RestBundle\ProjectTest\Entity\Book;
+use PHPUnit\Framework\Attributes\DataProvider;
 
-class BookControllerTest extends AbstractControllerTest {
+class BookControllerTest extends AbstractControllerTestCase {
 	
 	use ReflectionPropertyTrait;
 	
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testList() {
 
 		$this->loadFixture();
@@ -136,9 +138,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider provideFind
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('provideFind')]
 	public function testFind($id, $result)
 	{
 
@@ -153,6 +154,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($response->getContent(), \json_encode($result));
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testFind404() {
 
 		$this->loadFixture();
@@ -253,9 +255,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider providePostSuccess
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('providePostSuccess')]
 	public function testPostSuccess($content, $result, $categoryId, $authorId, $authorName) {
 
 		$this->loadFixture();
@@ -323,9 +324,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider providerPostValidatorError
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('providerPostValidatorError')]
 	public function testPostValidatorError($content, $key) {
 
 		$this->loadFixture();
@@ -388,9 +388,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider providerPostBadRequest
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('providerPostBadRequest')]
 	public function testPostBadRequest($content, $key) {
 
 		$this->loadFixture();
@@ -438,9 +437,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider providerPut
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('providerPut')]
 	public function testPut($content) {
 
 		$this->loadFixture();
@@ -472,6 +470,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($book->getDescription(), 'DESCRIPTION_NEW_1');
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testPostIsGranted() {
 		$this->loadFixture();
 
@@ -491,6 +490,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($response->getStatusCode(), 401);
 	}
 
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testPut404() {
 		$this->loadFixture();
 
@@ -545,9 +545,8 @@ class BookControllerTest extends AbstractControllerTest {
 		];
 	}
 
-	/**
-	 * @dataProvider providerPatchTitle
-	 */
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+	#[DataProvider('providerPatchTitle')]
 	public function testPatchTitle($content) {
 
 		$this->loadFixture();
@@ -581,6 +580,7 @@ class BookControllerTest extends AbstractControllerTest {
 		$this->assertEquals($book->getCategory()->getId(), 1);
 	}
 	
+	#[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
 	public function testDelete() {
 
 		$this->loadFixture();

@@ -4,6 +4,7 @@ namespace Test\GollumSF\RestBundle\Unit\Metadata\Unserialize;
 use GollumSF\RestBundle\Metadata\Unserialize\MetadataUnserialize;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class MetadataUnserializeTest extends TestCase {
 	
@@ -16,9 +17,7 @@ class MetadataUnserializeTest extends TestCase {
 		];
 	}
 	
-	/**
-	 * @dataProvider provideConstruct
-	 */
+	#[DataProvider('provideConstruct')]
 	public function testConstruct($name, $groups, $isSave) {
 		$annotation = new MetadataUnserialize($name, $groups, $isSave);
 		$this->assertEquals($annotation->getName(), $name);

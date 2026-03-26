@@ -13,6 +13,7 @@ use GollumSF\RestBundle\Repository\ApiFinderRepository;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ApiFinderRepositoryTestApiFindBy extends ApiFinderRepository {
 
@@ -41,12 +42,10 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider providerApiFindBy
-	 */
+	#[DataProvider('providerApiFindBy')]
 	public function testApiFindBy($limit, $page, $order, $direction, $limitResult, $firstResult, $orderResult, $directionResult) {
 
-		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em       = $this->createMock(EntityManagerInterface::class);
 		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
@@ -115,7 +114,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 
 	public function testApiFindByException() {
 
-		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em       = $this->createMock(EntityManagerInterface::class);
 		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();
@@ -178,7 +177,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 
 	public function testApiFindByQueryCallback() {
 
-		$em       = $this->getMockForAbstractClass(EntityManagerInterface::class);
+		$em       = $this->createMock(EntityManagerInterface::class);
 		$metadata = new ClassMetadata(\stdClass::class);
 
 		$queryBuilder = $this->getMockBuilder(QueryBuilder::class)->disableOriginalConstructor()->getMock();

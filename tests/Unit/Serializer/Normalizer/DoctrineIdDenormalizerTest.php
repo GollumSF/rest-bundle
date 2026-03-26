@@ -5,6 +5,7 @@ use Doctrine\Persistence\ObjectRepository;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DoctrineIdDenormalizerTestDenormalize extends DoctrineIdDenormalizer {
 	public $repository;
@@ -25,8 +26,7 @@ class DoctrineIdDenormalizerTest extends TestCase {
 	
 	public function testDenormalize() {
 
-		$repository = $this->getMockBuilder(ObjectRepository::class)
-			->getMockForAbstractClass()
+		$repository = $this->createMock(ObjectRepository::class)
 		;
 		$entity = new \stdClass();
 
@@ -58,9 +58,7 @@ class DoctrineIdDenormalizerTest extends TestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider provideSupportsDenormalization
-	 */
+	#[DataProvider('provideSupportsDenormalization')]
 	public function testSupportsDenormalization($data, $isEntity, $type, $result) {
 		$doctrineIdDenormalizer = new DoctrineIdDenormalizerTestSupportsDenormalization();
 		$doctrineIdDenormalizer->isEntity = $isEntity;

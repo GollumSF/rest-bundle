@@ -5,6 +5,7 @@ namespace Test\GollumSF\RestBundle\Unit\Attribute;
 use GollumSF\RestBundle\Attribute\Unserialize;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class UnserializeTest extends TestCase
 {
@@ -18,9 +19,7 @@ class UnserializeTest extends TestCase
 		];
 	}
 
-	/**
-	 * @dataProvider provideConstruct
-	 */
+	#[DataProvider('provideConstruct')]
 	public function testConstruct($name, $groups, $save, $groupsResult) {
 		$annotation = new Unserialize($name, $groups, $save);
 		$this->assertEquals($annotation->getName(), $name);

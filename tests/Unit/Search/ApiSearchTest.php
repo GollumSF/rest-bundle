@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ApiSearchTestApiFind extends ApiSearch {
 
@@ -41,8 +42,8 @@ class ApiSearchTest extends TestCase {
 	public function testGetMasterRequest() {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$logger          = $this->createMock(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
 		$request         = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
 
 		$requestStack
@@ -67,14 +68,12 @@ class ApiSearchTest extends TestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider providerApiFind
-	 */
+	#[DataProvider('providerApiFind')]
 	public function testApiFind($limit, $limitResult, $direction, $directionResult) {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$logger          = $this->createMock(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
 		$list            = $this->getMockBuilder(ApiList::class)->disableOriginalConstructor()->getMock();
 		$closure         = function () {};
@@ -113,8 +112,8 @@ class ApiSearchTest extends TestCase {
 	public function testApiFindQueryException() {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
+		$logger          = $this->createMock(LoggerInterface::class);
 		$repository      = $this->getMockBuilder(ApiFinderRepository::class)->disableOriginalConstructor()->getMock();
 
 		$configuration
@@ -154,9 +153,9 @@ class ApiSearchTest extends TestCase {
 	public function testApiFindNoInstanceOfApiFindRepository() {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
-		$repository      = $this->getMockForAbstractClass(ObjectRepository::class);
+		$logger          = $this->createMock(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
+		$repository      = $this->createMock(ObjectRepository::class);
 
 		$configuration
 			->expects($this->once())
@@ -183,8 +182,8 @@ class ApiSearchTest extends TestCase {
 	public function testApiFindNoInstanceNoRepository() {
 
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$logger          = $this->createMock(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
 
 		$configuration
 			->expects($this->once())
@@ -209,8 +208,8 @@ class ApiSearchTest extends TestCase {
 
 	public function testStaticArrayList() {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
-		$logger          = $this->getMockForAbstractClass(LoggerInterface::class);
-		$configuration   = $this->getMockForAbstractClass(ApiConfigurationInterface::class);
+		$logger          = $this->createMock(LoggerInterface::class);
+		$configuration   = $this->createMock(ApiConfigurationInterface::class);
 		$request         = new Request();
 
 		$configuration

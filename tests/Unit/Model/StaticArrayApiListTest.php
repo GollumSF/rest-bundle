@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Test\GollumSF\RestBundle\Helper\WithConsecutiveTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DumyClass {
 
@@ -300,9 +301,7 @@ class StaticArrayApiListTest extends TestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider providerGetData
-	 */
+	#[DataProvider('providerGetData')]
 	public function testGetData($list, $limit, $page, $order, $direction, $result) {
 
 		$query = [];
@@ -389,9 +388,7 @@ class StaticArrayApiListTest extends TestCase {
 		];
 	}
 
-	/**
-	 * @dataProvider providerGetDataClosure
-	 */
+	#[DataProvider('providerGetDataClosure')]
 	public function testGetDataClosureProperties($list, $direction, $result) {
 
 		$query = ['limit' => 100, 'page' => 0, 'order' => 'prop1'];

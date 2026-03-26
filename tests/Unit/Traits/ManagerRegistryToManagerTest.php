@@ -9,6 +9,7 @@ use Doctrine\Persistence\Proxy;
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
 use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ClassManagerRegistryToManager {
 
@@ -68,9 +69,7 @@ class ManagerRegistryToManagerTest extends TestCase
 		];
 	}
 
-	/**
-	 * @dataProvider providerGetEntityClass
-	 */
+	#[DataProvider('providerGetEntityClass')]
 	public function testGetEntityClass($obj, $className) {
 		$managerRegistryToManager = new ClassManagerRegistryToManager();
 		$this->assertEquals(
@@ -80,7 +79,7 @@ class ManagerRegistryToManagerTest extends TestCase
 
 	public function testGetEntityManagerForClass() {
 		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-		$em = $this->getMockForAbstractClass(ObjectManager::class);
+		$em = $this->createMock(ObjectManager::class);
 		$managerRegistryToManager = new ClassManagerRegistryToManagerTestGetEntityManagerForClass($managerRegistry);
 
 		$managerRegistry
@@ -97,8 +96,8 @@ class ManagerRegistryToManagerTest extends TestCase
 	
 	public function testIsEntity() {
 		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-		$metadataFactory = $this->getMockForAbstractClass(ClassMetadataFactory::class);
-		$em = $this->getMockForAbstractClass(ObjectManager::class);
+		$metadataFactory = $this->createMock(ClassMetadataFactory::class);
+		$em = $this->createMock(ObjectManager::class);
 		$managerRegistryToManager = new ClassManagerRegistryToManagerTestIsEntity($managerRegistry);
 		$managerRegistryToManager->em = $em;
 		
@@ -118,8 +117,8 @@ class ManagerRegistryToManagerTest extends TestCase
 
 	public function testGetEntityRepositoryForClass() {
 		$managerRegistry = $this->getMockBuilder(ManagerRegistry::class)->disableOriginalConstructor()->getMock();
-		$em = $this->getMockForAbstractClass(ObjectManager::class);
-		$repository = $this->getMockForAbstractClass(ObjectRepository::class);
+		$em = $this->createMock(ObjectManager::class);
+		$repository = $this->createMock(ObjectRepository::class);
 		$managerRegistryToManager = new ClassManagerRegistryToManagerTestGetEntityRepositoryForClass($managerRegistry);
 		$managerRegistryToManager->em = $em;
 

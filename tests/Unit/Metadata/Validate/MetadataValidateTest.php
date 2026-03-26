@@ -4,6 +4,7 @@ namespace Test\GollumSF\RestBundle\Unit\Metadata\Validate;
 use GollumSF\RestBundle\Metadata\Validate\MetadataValidate;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class MetadataValidateTest extends TestCase {
 	
@@ -14,9 +15,7 @@ class MetadataValidateTest extends TestCase {
 		];
 	}
 	
-	/**
-	 * @dataProvider provideConstruct
-	 */
+	#[DataProvider('provideConstruct')]
 	public function testConstruct($groups) {
 		$annotation = new MetadataValidate($groups);
 		$this->assertEquals($annotation->getGroups(), $groups);

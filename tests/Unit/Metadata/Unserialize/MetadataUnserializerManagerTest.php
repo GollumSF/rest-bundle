@@ -15,8 +15,8 @@ class MetadataUnserializerManagerTest extends TestCase {
 
 	public function testConstructor() {
 
-		$handler1 = $this->getMockForAbstractClass(HandlerInterface::class);
-		$handler2 = $this->getMockForAbstractClass(HandlerInterface::class);
+		$handler1 = $this->createMock(HandlerInterface::class);
+		$handler2 = $this->createMock(HandlerInterface::class);
 
 		$manager = new MetadataUnserializeManager();
 		$manager->addHandler($handler1);
@@ -34,8 +34,8 @@ class MetadataUnserializerManagerTest extends TestCase {
 	public function testGetMetadata() {
 
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
-		$handler1 = $this->getMockForAbstractClass(HandlerInterface::class);
-		$handler2 = $this->getMockForAbstractClass(HandlerInterface::class);
+		$handler1 = $this->createMock(HandlerInterface::class);
+		$handler2 = $this->createMock(HandlerInterface::class);
 
 		[$callback, $count] = self::withConsecutiveArgs(
 			[[ 'CONTROLLER1', 'ACTIONS1' ], [ 'CONTROLLER2', 'ACTIONS2' ]],
