@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class GollumSFRestBundle extends Bundle {
 	
-	public function build(ContainerBuilder $container) {
+	public function build(ContainerBuilder $container): void {
 		$container->addCompilerPass(new DoctrinePass());
 		$container->addCompilerPass(new ValidatorPass());
 		$container->addCompilerPass(new TokenStoragePass());
