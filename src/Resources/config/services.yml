@@ -18,8 +18,13 @@ services:
         public: false
         tags: [ 'serializer.normalizer' ]
 
+    GollumSF\RestBundle\Serializer\Normalizer\DoctrineIdDenormalizer:
+        tags:
+            - { name: 'serializer.normalizer', priority: 110 }
+
     GollumSF\RestBundle\Serializer\Normalizer\DoctrineObjectDenormalizer:
-        tags: [ 'serializer.normalizer' ]
+        tags:
+            - { name: 'serializer.normalizer', priority: 100 }
         arguments:
             - '@GollumSF\RestBundle\Serializer\Normalizer\RecursiveObjectNormalizer'
 

@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class DummyEntity {
 	public ?int $id = null;
@@ -28,7 +29,8 @@ class PostRestValueResolverTest extends TestCase {
 	private function createResolver(
 		?ControllerAction $controllerAction = null,
 		?MetadataUnserialize $metadata = null,
-		?ManagerRegistry $managerRegistry = null
+		?ManagerRegistry $managerRegistry = null,
+		?SerializerInterface $serializer = null
 	): PostRestValueResolver {
 		$controllerActionExtractor = $this->createMock(ControllerActionExtractorInterface::class);
 		$metadataUnserializeManager = $this->createMock(MetadataUnserializeManagerInterface::class);
@@ -43,7 +45,11 @@ class PostRestValueResolverTest extends TestCase {
 			->willReturn($metadata)
 		;
 
-		$resolver = new PostRestValueResolver($controllerActionExtractor, $metadataUnserializeManager);
+		$resolver = new PostRestValueResolver(
+			$controllerActionExtractor,
+			$metadataUnserializeManager,
+			$serializer ?? $this->createMock(SerializerInterface::class)
+		);
 		if ($managerRegistry) {
 			$resolver->setManagerRegistry($managerRegistry);
 		}
@@ -70,15 +76,19 @@ class PostRestValueResolverTest extends TestCase {
 	}
 
 	public function testResolveAlreadyResolvedDifferentName() {
-		$resolver = $this->createResolver();
-		$request = new Request();
-		$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_NAME, 'other');
-
 		$controllerAction = new ControllerAction('Controller', 'action');
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
 		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
 
-		$resolver = $this->createResolver($controllerAction, $metadata);
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer->method('deserialize')->willReturn(new DummyEntity());
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_NAME, 'other');
+
 		$argument = $this->createArgument('book', DummyEntity::class);
 
 		$result = iterator_to_array($resolver->resolve($request, $argument));
@@ -131,21 +141,49 @@ class PostRestValueResolverTest extends TestCase {
 		$this->assertEquals([], $result);
 	}
 
-	public function testResolvePostNewEntity() {
+	public function testResolvePostDeserializeBody() {
 		$controllerAction = new ControllerAction('Controller', 'action');
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
 		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn(['post']);
 
-		$resolver = $this->createResolver($controllerAction, $metadata);
+		$entity = new DummyEntity();
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer->expects($this->once())
+			->method('deserialize')
+			->with('{"title":"test"}', DummyEntity::class, 'json', ['groups' => ['post']])
+			->willReturn($entity)
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$argument = $this->createArgument('book', DummyEntity::class);
+
+		$result = iterator_to_array($resolver->resolve($request, $argument));
+
+		$this->assertCount(1, $result);
+		$this->assertSame($entity, $result[0]);
+		$this->assertEquals('book', $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_NAME));
+		$this->assertEquals(DummyEntity::class, $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS));
+	}
+
+	public function testResolvePostNoContent() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
+
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer->expects($this->never())->method('deserialize');
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
 		$request = new Request();
 		$argument = $this->createArgument('book', DummyEntity::class);
 
 		$result = iterator_to_array($resolver->resolve($request, $argument));
 
 		$this->assertCount(1, $result);
-		$this->assertInstanceOf(DummyEntity::class, $result[0]);
-		$this->assertEquals('book', $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_NAME));
-		$this->assertEquals(DummyEntity::class, $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS));
+		$this->assertNull($result[0]);
 	}
 
 	public function testResolveWithIdentifierFromDoctrine() {
@@ -161,6 +199,10 @@ class PostRestValueResolverTest extends TestCase {
 
 		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->with(DummyEntity::class)->willReturn($repository);
+		$em->method('getMetadataFactory')->willReturn($this->createConfiguredMock(
+			\Doctrine\ORM\Mapping\ClassMetadataFactory::class,
+			['isTransient' => false]
+		));
 
 		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->with(DummyEntity::class)->willReturn($em);
@@ -189,6 +231,10 @@ class PostRestValueResolverTest extends TestCase {
 
 		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->with(DummyEntity::class)->willReturn($repository);
+		$em->method('getMetadataFactory')->willReturn($this->createConfiguredMock(
+			\Doctrine\ORM\Mapping\ClassMetadataFactory::class,
+			['isTransient' => false]
+		));
 
 		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->with(DummyEntity::class)->willReturn($em);
@@ -214,6 +260,10 @@ class PostRestValueResolverTest extends TestCase {
 
 		$em = $this->createMock(EntityManagerInterface::class);
 		$em->method('getRepository')->willReturn($repository);
+		$em->method('getMetadataFactory')->willReturn($this->createConfiguredMock(
+			\Doctrine\ORM\Mapping\ClassMetadataFactory::class,
+			['isTransient' => false]
+		));
 
 		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->willReturn($em);
@@ -231,12 +281,17 @@ class PostRestValueResolverTest extends TestCase {
 		$controllerAction = new ControllerAction('Controller', 'action');
 		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
 		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
 
-		$resolver = $this->createResolver($controllerAction, $metadata, null);
-		$request = new Request();
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer->method('deserialize')->willReturn(new DummyEntity());
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"id":42}');
 		$request->attributes->set('book', 42);
 		$argument = $this->createArgument('book', DummyEntity::class);
 
+		// No managerRegistry → isEntity returns false → resolveFromDoctrine returns null → NotFoundHttpException
 		$this->expectException(NotFoundHttpException::class);
 		iterator_to_array($resolver->resolve($request, $argument));
 	}
@@ -264,6 +319,11 @@ class PostRestValueResolverTest extends TestCase {
 		$metadata->method('getName')->willReturn('book');
 
 		$em = $this->createMock(EntityManagerInterface::class);
+		$em->method('getMetadataFactory')->willReturn($this->createConfiguredMock(
+			\Doctrine\ORM\Mapping\ClassMetadataFactory::class,
+			['isTransient' => false]
+		));
+
 		$managerRegistry = $this->createMock(ManagerRegistry::class);
 		$managerRegistry->method('getManagerForClass')->willReturn($em);
 

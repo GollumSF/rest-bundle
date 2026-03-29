@@ -9,7 +9,10 @@ use GollumSF\RestBundle\Traits\ManagerRegistryToManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class PostRestValueResolver implements ValueResolverInterface
 {
@@ -17,14 +20,17 @@ class PostRestValueResolver implements ValueResolverInterface
 
 	private ControllerActionExtractorInterface $controllerActionExtractor;
 	private MetadataUnserializeManagerInterface $metadataUnserializeManager;
+	private SerializerInterface $serializer;
 	private ?ManagerRegistry $managerRegistry = null;
 
 	public function __construct(
 		ControllerActionExtractorInterface $controllerActionExtractor,
-		MetadataUnserializeManagerInterface $metadataUnserializeManager
+		MetadataUnserializeManagerInterface $metadataUnserializeManager,
+		SerializerInterface $serializer
 	) {
 		$this->controllerActionExtractor = $controllerActionExtractor;
 		$this->metadataUnserializeManager = $metadataUnserializeManager;
+		$this->serializer = $serializer;
 	}
 
 	public function setManagerRegistry(ManagerRegistry $managerRegistry): void {
@@ -33,7 +39,7 @@ class PostRestValueResolver implements ValueResolverInterface
 
 	public function resolve(Request $request, ArgumentMetadata $argument): iterable
 	{
-		// If already resolved by a previous pass
+		// If already resolved by a previous pass (e.g. by the SerializerSubscriber)
 		if (
 			$request->attributes->has(Unserialize::REQUEST_ATTRIBUTE_NAME) &&
 			$request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_NAME) === $argument->getName()
@@ -62,7 +68,7 @@ class PostRestValueResolver implements ValueResolverInterface
 
 		$argumentName = $argument->getName();
 
-		// If we have an identifier (PUT/PATCH), load entity from Doctrine
+		// If we have an identifier in the route (PUT/PATCH with {id}), load entity from Doctrine
 		if ($this->hasIdentifier($request, $argumentName)) {
 			$entity = $this->resolveFromDoctrine($request, $class, $argumentName);
 			if ($entity) {
@@ -71,12 +77,19 @@ class PostRestValueResolver implements ValueResolverInterface
 				throw new NotFoundHttpException(sprintf('"%s" object not found by "%s".', $class, self::class));
 			}
 		} else {
-			// For POST (no identifier), create an empty instance so that
-			// the SerializerSubscriber can populate it via object_to_populate
-			if (class_exists($class)) {
-				$ref = new \ReflectionClass($class);
-				if ($ref->isInstantiable()) {
-					$request->attributes->set($argumentName, $ref->newInstanceWithoutConstructor());
+			// No identifier in route: deserialize the body to create/find the entity
+			// This replicates the old PostRestParamConverter behavior
+			$content = $request->getContent();
+			if ($content) {
+				try {
+					$entity = $this->serializer->deserialize($content, $class, 'json', [
+						'groups' => $metadata->getGroups(),
+					]);
+					$request->attributes->set($argumentName, $entity);
+				} catch (MissingConstructorArgumentsException $e) {
+					throw new BadRequestHttpException($e->getMessage());
+				} catch (\UnexpectedValueException $e) {
+					throw new BadRequestHttpException($e->getMessage());
 				}
 			}
 		}
@@ -100,7 +113,7 @@ class PostRestValueResolver implements ValueResolverInterface
 
 	private function resolveFromDoctrine(Request $request, string $class, string $argumentName): ?object
 	{
-		if (!$this->managerRegistry) {
+		if (!$this->isEntity($class)) {
 			return null;
 		}
 
