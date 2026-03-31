@@ -40,6 +40,12 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 		$_ENV['SHELL_VERBOSITY'] = 1;
 	}
 
+	protected function tearDown(): void {
+		parent::tearDown();
+		restore_exception_handler();
+		restore_error_handler();
+	}
+
 	protected function getTestKernel(): KernelInterface {
 		if (!$this->testKernel) {
 			$projectPath = realpath($this->getProjectPath() . '/../..');
