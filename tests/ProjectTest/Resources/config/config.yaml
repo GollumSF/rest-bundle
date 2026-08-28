@@ -6,8 +6,6 @@ framework:
         enable_attributes: true
     router:
         utf8: true
-        resource: '%kernel.project_dir%/tests/ProjectTest/Resources/config/routing.yaml'
-        type: 'yaml'
     session:
         handler_id: ~
 

@@ -20,7 +20,6 @@ use GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface;
 use GollumSF\RestBundle\Serializer\Transform\SerializerTransformInterface;
 use GollumSF\RestBundle\Serializer\Transform\UnserializerTransformInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -176,12 +175,14 @@ class SerializerSubscriberTest extends TestCase {
 		$metadataValidateManager    = $this->createMock(MetadataValidateManagerInterface::class);
 		$kernel                     = $this->createMock(KernelInterface::class);
 
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
 		$entity = new \stdClass();
 		$controller = function () {};
+
+		$request = Request::create('/', $method, [], [], [], [], 'CONTENT');
+		$request->attributes->set('ENTITY_NAME', $entity);
+		if ($class) {
+			$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, $class);
+		}
 
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
 		$metadata = new MetadataUnserialize('ENTITY_NAME', $groups, false);
@@ -202,33 +203,6 @@ class SerializerSubscriberTest extends TestCase {
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MAIN_REQUEST);
 
-		$request
-			->expects($this->once())
-			->method('getContent')
-			->willReturn('CONTENT')
-		;
-		$request
-			->expects($this->once())
-			->method('getMethod')
-			->willReturn($method)
-		;
-
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'ENTITY_NAME' ], [ Unserialize::REQUEST_ATTRIBUTE_CLASS ]],
-			[$entity, $class]
-		);
-		$attributes
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
-
-		$attributes
-			->expects($this->once())
-			->method('set')
-			->with('ENTITY_NAME', $entity)
-		;
-
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer,
 			$controllerActionExtractor,
@@ -239,6 +213,7 @@ class SerializerSubscriberTest extends TestCase {
 
 		$serializerSubscriber->onKernelControllerArguments($event);
 		$this->assertEquals($serializerSubscriber->groups, $groupResults);
+		$this->assertSame($entity, $request->attributes->get('ENTITY_NAME'));
 	}
 
 
@@ -251,11 +226,9 @@ class SerializerSubscriberTest extends TestCase {
 		$metadataValidateManager    = $this->createMock(MetadataValidateManagerInterface::class);
 		$kernel                     = $this->createMock(KernelInterface::class);
 
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
 		$controller = function () {};
+
+		$request = Request::create('/', 'POST', [], [], [], [], 'CONTENT');
 
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
 		$metadata = new MetadataUnserialize('ENTITY_NAME', [], false );
@@ -275,27 +248,6 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MAIN_REQUEST);
-
-		$request
-			->expects($this->once())
-			->method('getContent')
-			->willReturn('CONTENT')
-		;
-		$request
-			->expects($this->once())
-			->method('getMethod')
-			->willReturn('POST')
-		;
-
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'ENTITY_NAME' ], [ Unserialize::REQUEST_ATTRIBUTE_CLASS ]],
-			[null, null]
-		);
-		$attributes
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer,
@@ -320,11 +272,10 @@ class SerializerSubscriberTest extends TestCase {
 		$metadataValidateManager    = $this->createMock(MetadataValidateManagerInterface::class);
 		$kernel                     = $this->createMock(KernelInterface::class);
 
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
-
 		$controller = function () {};
+
+		$request = Request::create('/', 'POST');
+		$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class);
 
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
 		$metadata = new MetadataUnserialize('ENTITY_NAME', [], false );
@@ -344,27 +295,6 @@ class SerializerSubscriberTest extends TestCase {
 		;
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MAIN_REQUEST);
-
-		$request
-			->expects($this->once())
-			->method('getContent')
-			->willReturn(null)
-		;
-		$request
-			->expects($this->once())
-			->method('getMethod')
-			->willReturn('POST')
-		;
-
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'ENTITY_NAME' ], [ Unserialize::REQUEST_ATTRIBUTE_CLASS ]],
-			[null, \stdClass::class]
-		);
-		$attributes
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
 
 		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
 			$serializer,
@@ -399,9 +329,11 @@ class SerializerSubscriberTest extends TestCase {
 		$em                         = $this->createMock(ObjectManager::class);
 		$kernel                     = $this->createMock(KernelInterface::class);
 
-		$attributes = $this->getMockBuilder(ParameterBag::class)->disableOriginalConstructor()->getMock();
-		$request    = $this->getMockBuilder(Request::class)->disableOriginalConstructor()->getMock();
-		$request->attributes = $attributes;
+		$entity = new \stdClass();
+
+		$request = Request::create('/', 'post', [], [], [], [], 'CONTENT');
+		$request->attributes->set('ENTITY_NAME', $entity);
+		$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, \stdClass::class);
 
 		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
 		$metadata = new MetadataUnserialize('ENTITY_NAME', [], $save );
@@ -420,7 +352,6 @@ class SerializerSubscriberTest extends TestCase {
 			->willReturn($metadata)
 		;
 
-		$entity = new \stdClass();
 		$controller = function () {};
 
 		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MAIN_REQUEST);
@@ -434,33 +365,6 @@ class SerializerSubscriberTest extends TestCase {
 			$em,
 			$isEntity
 		);
-
-		$request
-			->expects($this->once())
-			->method('getContent')
-			->willReturn('CONTENT')
-		;
-		$request
-			->expects($this->once())
-			->method('getMethod')
-			->willReturn('post')
-		;
-
-		[$callback, $count] = self::withConsecutiveArgs(
-			[[ 'ENTITY_NAME' ], [ Unserialize::REQUEST_ATTRIBUTE_CLASS ]],
-			[$entity, \stdClass::class]
-		);
-		$attributes
-			->expects($this->exactly($count))
-			->method('get')
-			->willReturnCallback($callback)
-		;
-
-		$attributes
-			->expects($this->once())
-			->method('set')
-			->with('ENTITY_NAME', $entity)
-		;
 
 		if ($called) {
 			$em
@@ -484,6 +388,7 @@ class SerializerSubscriberTest extends TestCase {
 		}
 
 		$serializerSubscriber->onKernelControllerArguments($event);
+		$this->assertSame($entity, $request->attributes->get('ENTITY_NAME'));
 	}
 
 	public static function providerUnserializeSuccess() {

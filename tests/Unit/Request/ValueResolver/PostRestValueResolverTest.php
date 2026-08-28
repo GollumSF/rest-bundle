@@ -15,7 +15,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class DummyEntity {
@@ -311,6 +313,74 @@ class PostRestValueResolverTest extends TestCase {
 
 		$this->expectException(NotFoundHttpException::class);
 		iterator_to_array($resolver->resolve($request, $argument));
+	}
+
+	public function testResolvePostDeserializeMissingConstructorArguments() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
+
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer
+			->method('deserialize')
+			->willThrowException(new MissingConstructorArgumentsException('MISSING_ARGUMENTS'))
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$argument = $this->createArgument('book', DummyEntity::class);
+
+		$this->expectException(BadRequestHttpException::class);
+		$this->expectExceptionMessage('MISSING_ARGUMENTS');
+		iterator_to_array($resolver->resolve($request, $argument));
+	}
+
+	public function testResolvePostDeserializeUnexpectedValue() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
+
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer
+			->method('deserialize')
+			->willThrowException(new \UnexpectedValueException('UNEXPECTED_VALUE'))
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$argument = $this->createArgument('book', DummyEntity::class);
+
+		$this->expectException(BadRequestHttpException::class);
+		$this->expectExceptionMessage('UNEXPECTED_VALUE');
+		iterator_to_array($resolver->resolve($request, $argument));
+	}
+
+	public function testResolveFromDoctrineNoEntityManager() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+
+		$em = $this->createMock(EntityManagerInterface::class);
+		$em->method('getMetadataFactory')->willReturn($this->createConfiguredMock(
+			\Doctrine\ORM\Mapping\ClassMetadataFactory::class,
+			['isTransient' => false]
+		));
+
+		// isEntity() resolves the manager, then it is gone when the entity is loaded
+		$managerRegistry = $this->createMock(ManagerRegistry::class);
+		$managerRegistry
+			->method('getManagerForClass')
+			->willReturnOnConsecutiveCalls($em, null)
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, $managerRegistry);
+
+		$request = new Request();
+		$request->attributes->set('book', 42);
+		$result = $this->reflectionCallMethod($resolver, 'resolveFromDoctrine', [$request, DummyEntity::class, 'book']);
+		$this->assertNull($result);
 	}
 
 	public function testResolveFromDoctrineNullId() {

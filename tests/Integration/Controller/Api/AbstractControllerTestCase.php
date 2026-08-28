@@ -57,6 +57,7 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 				$kernel->addTestBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 				$kernel->addTestBundle(GollumSFControllerActionExtractorBundle::class);
 				$kernel->addTestConfig($configPath . '/Resources/config/config.yaml');
+				$kernel->addTestRoutingFile($configPath . '/Resources/config/routing.yaml');
 				// doctrine-bundle v2 needs these options, v3 removed them
 				if (class_exists(\Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration::class) &&
 					method_exists(new \Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration(false), 'getConfigTreeBuilder') &&
@@ -88,7 +89,7 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 		return $this->testKernel;
 	}
 
-	protected function runCommand(string $name, array $params = []): CommandTester
+	protected function executeCommand(string $name, array $params = []): CommandTester
 	{
 		$application = new Application($this->getTestKernel());
 
@@ -106,9 +107,22 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 	}
 
 	protected function loadFixture(): void {
-		$this->runCommand('doctrine:schema:drop',  [ '--force' => true ]);
-		$this->runCommand('doctrine:schema:update',  [ '--force' => true, '--complete' => true ]);
-		$this->runCommand('doctrine:fixtures:load', [ '--no-interaction' => true ]);
+		$this->removeSchemaListeners();
+		$this->executeCommand('doctrine:schema:drop',  [ '--force' => true ]);
+		$this->executeCommand('doctrine:schema:update',  [ '--force' => true, '--complete' => true ]);
+		$this->executeCommand('doctrine:fixtures:load', [ '--no-interaction' => true ]);
+	}
+
+	/**
+	 * The test project uses none of the Symfony features shipping a `postGenerateSchema`
+	 * listener (DBAL cache pool, remember me token provider, PDO session handler, lock store)
+	 * and some Symfony/Doctrine ORM/DBAL combinations make them fail on `doctrine:schema:*`.
+	 */
+	protected function removeSchemaListeners(): void {
+		$eventManager = $this->getServiceContainer()->get('doctrine')->getManager()->getEventManager();
+		foreach ($eventManager->getListeners('postGenerateSchema') as $listener) {
+			$eventManager->removeEventListener('postGenerateSchema', $listener);
+		}
 	}
 
 	protected function getServiceContainer(): ContainerInterface {

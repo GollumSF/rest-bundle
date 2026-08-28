@@ -135,6 +135,53 @@ class DoctrineObjectDenormalizerTest extends TestCase {
 		);
 	}
 	
+	public function testDenormalizeEntityNotFound() {
+
+		$em = $this->createMock(ObjectManager::class)
+		;
+		$repository = $this->createMock(ObjectRepository::class)
+		;
+		$recursiveObjectNormalizer = $this->getMockBuilder(RecursiveObjectNormalizer::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+		$metadata = $this->getMockBuilder(ClassMetadata::class)
+			->disableOriginalConstructor()
+			->getMock()
+		;
+
+		$em
+			->method('getClassMetadata')
+			->with('STUB_CLASS')
+			->willReturn($metadata)
+		;
+
+		$metadata
+			->method('getIdentifier')
+			->willReturn([ 'ID' ])
+		;
+
+		$repository
+			->expects($this->once())
+			->method('findOneBy')
+			->with(['ID' => 'VALUE_ID'])
+			->willReturn(null)
+		;
+
+		$recursiveObjectNormalizer
+			->expects($this->never())
+			->method('denormalize')
+		;
+
+		$doctrineObjectDenormalizer = new DoctrineObjectDenormalizerTestaDenormalize($recursiveObjectNormalizer);
+		$doctrineObjectDenormalizer->em = $em;
+		$doctrineObjectDenormalizer->repository = $repository;
+
+		$this->assertNull(
+			$doctrineObjectDenormalizer->denormalize([ 'ID' => 'VALUE_ID' ], 'STUB_CLASS', 'format')
+		);
+	}
+
 	public function testDenormalizeObjectPopulate() {
 
 		$em = $this->createMock(ObjectManager::class)

@@ -56,6 +56,8 @@ class ExceptionSubscriberTest extends TestCase {
 			[ false, true, new UnauthorizedHttpException('', 'UNAUTHORIZED'), 'UNAUTHORIZED', 0, 401 ],
 			[ false, true, new AccessDeniedHttpException('HTTP_DENIED'), 'HTTP_DENIED', 0, 401 ],
 			[ false, true, new AccessDeniedException('DENIED'), 'DENIED', 403, 401 ],
+			[ true, true, new AccessDeniedHttpException('HTTP_DENIED'), 'HTTP_DENIED', 0, 403 ],
+			[ true, true, new AccessDeniedException('DENIED'), 'DENIED', 403, 403 ],
 		];
 	}
 

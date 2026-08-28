@@ -40,9 +40,13 @@ runs:
 
     - name: Install dependencies
       shell: bash
+      env:
+        SYMFONY_REQUIRE: ${{ inputs.symfony_version != '' && format('{0}.*', inputs.symfony_version) || '' }}
       run: |
         if [ "${{ inputs.symfony_version }}" != "" ]; then
-          composer require "symfony/framework-bundle:${{ inputs.symfony_version }}.*" --no-update
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-progress --no-scripts --no-plugins symfony/flex
+          composer config --no-plugins audit.block-insecure false
         fi
         composer update --prefer-dist --no-interaction --no-audit ${{ inputs.composer_flags }}
 
