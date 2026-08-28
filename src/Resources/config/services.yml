@@ -35,6 +35,9 @@ services:
 
     GollumSF\RestBundle\Search\ApiSearchInterface:
         class: GollumSF\RestBundle\Search\ApiSearch
+        calls:
+            - [ setApiOrderResolver, [ '@GollumSF\RestBundle\Sort\ApiOrderResolverInterface' ] ]
+            - [ setControllerActionExtractor, [ '@GollumSF\ControllerActionExtractorBundle\Extractor\ControllerActionExtractorInterface' ] ]
 
     GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManagerInterface:
         class: GollumSF\RestBundle\Metadata\Serialize\MetadataSerializeManager
@@ -56,6 +59,26 @@ services:
     GollumSF\RestBundle\Metadata\Validate\Handler\AttributeHandler:
         tags:
             - { name: !php/const 'GollumSF\RestBundle\Metadata\Validate\MetadataValidateManagerInterface::HANDLER_TAG' }
+
+    GollumSF\RestBundle\Metadata\Sort\MetadataSortManagerInterface:
+        class: GollumSF\RestBundle\Metadata\Sort\MetadataSortManager
+
+    GollumSF\RestBundle\Metadata\Sort\Handler\AttributeHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Metadata\Sort\MetadataSortManagerInterface::HANDLER_TAG' }
+
+    GollumSF\RestBundle\Sort\ApiOrderResolverInterface:
+        class: GollumSF\RestBundle\Sort\ApiOrderResolver
+
+    GollumSF\RestBundle\Sort\Handler\MetadataHandler:
+        arguments:
+            $sorters: !service { class: Symfony\Component\DependencyInjection\ServiceLocator, arguments: [[]] }
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Sort\ApiOrderResolverInterface::HANDLER_TAG', priority: 100 }
+
+    GollumSF\RestBundle\Sort\Handler\PropertyPathHandler:
+        tags:
+            - { name: !php/const 'GollumSF\RestBundle\Sort\ApiOrderResolverInterface::HANDLER_TAG', priority: 0 }
 
     GollumSF\RestBundle\Request\ValueResolver\:
         resource: '../../Request/ValueResolver/*'

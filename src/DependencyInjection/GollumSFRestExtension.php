@@ -3,6 +3,7 @@ namespace GollumSF\RestBundle\DependencyInjection;
 
 use GollumSF\RestBundle\Configuration\ApiConfiguration;
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
+use GollumSF\RestBundle\Sort\ApiSorterInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -14,6 +15,11 @@ class GollumSFRestExtension extends Extension
 	{
 		$loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 		$loader->load('services.yml');
+
+		$container
+			->registerForAutoconfiguration(ApiSorterInterface::class)
+			->addTag(ApiSorterInterface::TAG)
+		;
 
 		$config = $this->processConfiguration(new Configuration(), $configs);
 

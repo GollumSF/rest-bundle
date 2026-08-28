@@ -1,8 +1,10 @@
 <?php
 namespace GollumSF\RestBundle;
 
+use GollumSF\RestBundle\DependencyInjection\Compiler\ApiOrderResolverPass;
 use GollumSF\RestBundle\DependencyInjection\Compiler\DoctrinePass;
 use GollumSF\RestBundle\DependencyInjection\Compiler\MetadataSerializeManagerPass;
+use GollumSF\RestBundle\DependencyInjection\Compiler\MetadataSortManagerPass;
 use GollumSF\RestBundle\DependencyInjection\Compiler\MetadataUnserializeManagerPass;
 use GollumSF\RestBundle\DependencyInjection\Compiler\MetadataValidateManagerPass;
 use GollumSF\RestBundle\DependencyInjection\Compiler\TokenStoragePass;
@@ -24,5 +26,7 @@ class GollumSFRestBundle extends Bundle {
 		$container->addCompilerPass(new MetadataSerializeManagerPass());
 		$container->addCompilerPass(new MetadataUnserializeManagerPass());
 		$container->addCompilerPass(new MetadataValidateManagerPass());
+		$container->addCompilerPass(new MetadataSortManagerPass());
+		$container->addCompilerPass(new ApiOrderResolverPass());
 	}
 }

@@ -150,11 +150,11 @@ another parameter type.
 ### `list` action:
  - url: `GET http://127.0.0.1/api/books`
  - request:
-	- query parameters: (example : `GET http://127.0.0.1/api/books?limit=10&page1&order=title&directionp=desc`)
+	- query parameters: (example : `GET http://127.0.0.1/api/books?limit=10&page=1&order=author:desc,title`)
 		- limit (**integer**): Number returned items
 		- page: (**integer**): Page of returned items into total
-		- order (**string**): Name or property for sort
-		- direction (**asc** or **desc**): Direction of sort
+		- order (**string**): Sort keys, comma separated, each optionally suffixed by `:asc` or `:desc`. See [Sorting](Sorting.md)
+		- direction (**asc** or **desc**): *Deprecated*, use `order=field:direction`
  - response:
 	- body content:
 ```json

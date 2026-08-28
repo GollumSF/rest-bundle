@@ -75,7 +75,7 @@ class BookControllerTest extends AbstractControllerTestCase {
 		]));
 
 
-		$client->request('GET', '/api/books?limit=10&order=title&direction=desc');
+		$client->request('GET', '/api/books?limit=10&order=title:desc');
 		$response = $client->getResponse();
 		$this->assertEquals($response->getStatusCode(), 200);
 		$this->assertEquals($response->getContent(), \json_encode([
@@ -95,6 +95,71 @@ class BookControllerTest extends AbstractControllerTestCase {
 		]));
 	}
 	
+	/**
+	 * The `direction` parameter is deprecated but still honoured.
+	 */
+	public function testListDeprecatedDirection() {
+
+		$this->loadFixture();
+
+		$this->expectUserDeprecationMessage('Since gollumsf/rest-bundle 5.0: The "direction" query parameter is deprecated, use "order=field:direction" instead.');
+
+		$client = $this->getClient();
+		$client->request('GET', '/api/books?limit=3&order=title&direction=desc');
+		$response = $client->getResponse();
+
+		$this->assertEquals(200, $response->getStatusCode());
+		$this->assertEquals(\json_encode([
+			'data' => [
+				[ 'id' => 9 , 'title' => 'TITLE_9' ],
+				[ 'id' => 8 , 'title' => 'TITLE_8' ],
+				[ 'id' => 7 , 'title' => 'TITLE_7' ],
+			],
+			'total' => 50,
+		]), $response->getContent());
+	}
+
+	/**
+	 * `author` is declared with the path `author.name`: the ordering joins the relation.
+	 */
+	public function testListOrderOnAJoin() {
+
+		$this->loadFixture();
+
+		$client = $this->getClient();
+		$client->request('GET', '/api/books?limit=4&order=author:desc,title:asc');
+		$response = $client->getResponse();
+
+		$this->assertEquals(200, $response->getStatusCode());
+
+		$data = \json_decode($response->getContent(), true);
+		$this->assertEquals(50, $data['total']);
+		$this->assertCount(4, $data['data']);
+
+		$client->request('GET', '/api/books?limit=50&order=author:asc,title:asc');
+		$titles = array_column(\json_decode($client->getResponse()->getContent(), true)['data'], 'title');
+
+		$client->request('GET', '/api/books?limit=50&order=author:desc,title:asc');
+		$reversed = array_column(\json_decode($client->getResponse()->getContent(), true)['data'], 'title');
+
+		$this->assertNotEquals($titles, $reversed);
+		$this->assertEquals(50, count($titles));
+		$this->assertEquals([], array_diff($titles, $reversed));
+	}
+
+	/**
+	 * Book declares sortables, so anything else is refused.
+	 */
+	public function testListOrderOutsideTheWhitelist() {
+
+		$this->loadFixture();
+
+		$client = $this->getClient();
+		$client->request('GET', '/api/books?order=description');
+
+		$this->assertEquals(400, $client->getResponse()->getStatusCode());
+	}
+
 	public static function provideFind() {
 		return [
 			[ 1, [

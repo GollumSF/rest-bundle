@@ -40,6 +40,16 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 		$_ENV['SHELL_VERBOSITY'] = 1;
 	}
 
+	/**
+	 * Symfony leaves its exception handler registered after the kernel shuts down on some
+	 * versions. Restoring the error handler as well is what PHPUnit reports as risky, so
+	 * only this one is put back.
+	 */
+	protected function tearDown(): void {
+		parent::tearDown();
+		restore_exception_handler();
+	}
+
 	protected function getTestKernel(): KernelInterface {
 		if (!$this->testKernel) {
 			$projectPath = realpath($this->getProjectPath() . '/../..');

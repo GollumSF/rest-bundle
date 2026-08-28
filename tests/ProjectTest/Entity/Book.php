@@ -3,6 +3,7 @@ namespace Test\GollumSF\RestBundle\ProjectTest\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use GollumSF\EntityRelationSetter\ManyToOneSetter;
+use GollumSF\RestBundle\Attribute\ApiSortable;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\BookRepository;
@@ -16,12 +17,14 @@ class Book {
 	#[ORM\Id]
 	#[ORM\GeneratedValue]
 	#[Groups(["book_get", "book_getc", "author_get"])]
+	#[ApiSortable]
 	/** @var int */
 	private $id;
 
 	#[ORM\Column(type: "string")]
 	#[Groups(["book_get", "book_getc", "book_post", "book_put", "book_patch_title"])]
 	#[Assert\NotBlank(groups: ["book_post", "book_put", "book_patch_title"])]
+	#[ApiSortable]
 	/** @var string */
 	private $title;
 
@@ -35,6 +38,7 @@ class Book {
 	#[ORM\ManyToOne(targetEntity: Author::class, inversedBy: "books", fetch: "EAGER", cascade: ["persist"])]
 	#[Groups(["book_get", "book_post", "book_put"])]
 	#[Assert\NotNull(groups: ["book_post", "book_put"])]
+	#[ApiSortable(key: 'author', path: 'author.name')]
 	/** @var Author */
 	private $author;
 
