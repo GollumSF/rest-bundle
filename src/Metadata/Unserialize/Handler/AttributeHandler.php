@@ -22,15 +22,38 @@ class AttributeHandler implements HandlerInterface
 			return new MetadataUnserialize(
 				$methodAnnotation->getName(),
 				$methodAnnotation->getGroups(),
-				$methodAnnotation->isSave()
+				$methodAnnotation->isSave(),
+				$this->resolveType($rMethod, $methodAnnotation)
 			);
 		}
 		if ($classAnnotation) {
 			return new MetadataUnserialize(
 				$classAnnotation->getName(),
 				$classAnnotation->getGroups(),
-				$classAnnotation->isSave()
+				$classAnnotation->isSave(),
+				$this->resolveType($rMethod, $classAnnotation)
 			);
+		}
+		return null;
+	}
+
+	/**
+	 * The target class is the type of the action parameter the attribute points at,
+	 * unless the attribute forces one.
+	 */
+	private function resolveType(\ReflectionMethod $rMethod, Unserialize $annotation): ?string {
+		if ($annotation->getType()) {
+			return $annotation->getType();
+		}
+		foreach ($rMethod->getParameters() as $rParameter) {
+			if ($rParameter->getName() !== $annotation->getName()) {
+				continue;
+			}
+			$rType = $rParameter->getType();
+			return $rType instanceof \ReflectionNamedType && !$rType->isBuiltin()
+				? $rType->getName()
+				: null
+			;
 		}
 		return null;
 	}

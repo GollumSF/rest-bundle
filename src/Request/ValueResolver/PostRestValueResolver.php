@@ -61,7 +61,7 @@ class PostRestValueResolver implements ValueResolverInterface
 			return [];
 		}
 
-		$class = $argument->getType();
+		$class = $metadata->getType() ?: $argument->getType();
 		if (!$class) {
 			return [];
 		}

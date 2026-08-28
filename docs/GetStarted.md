@@ -125,6 +125,26 @@ class BookController {
 }
 ```
 
+## Unserialization target type
+
+`#[Unserialize('book')]` points at the `$book` parameter of the action, and the request
+body is unserialized into **the type of that parameter** — `Book` above. The same type is
+what `gollumsf/rest-doc-bundle` documents as the request body, so the documentation and
+the runtime can no longer disagree.
+
+When the parameter is untyped, or typed with a scalar, pass the target type explicitly:
+
+```php
+#[Route('', methods: ['POST'])]
+#[Unserialize('book', groups: 'book_post', type: BookInput::class)]
+public function post($book) {
+	return $book;
+}
+```
+
+`type` also lets you unserialize into a dedicated input object while the action keeps
+another parameter type.
+
 ## Request and Response
 
 ### `list` action:

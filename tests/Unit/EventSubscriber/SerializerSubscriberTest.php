@@ -46,6 +46,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubscriber {
 
 	public $groups;
+	public $class;
 
 	protected function validate(Request $request, $entity): void {
 	}
@@ -56,6 +57,7 @@ class SerializerSubscriberOnKernelControllerArgumentsTest extends SerializerSubs
 
 	protected function unserialize(string $content, $entity, string $class, array $groups) {
 		$this->groups = $groups;
+		$this->class = $class;
 		return $entity;
 	}
 }
@@ -216,6 +218,62 @@ class SerializerSubscriberTest extends TestCase {
 		$this->assertSame($entity, $request->attributes->get('ENTITY_NAME'));
 	}
 
+
+	public static function provideonKernelControllerArgumentsType() {
+		return [
+			'metadata type wins over the request attribute' => [ \ArrayObject::class, \stdClass::class, \ArrayObject::class ],
+			'falls back on the request attribute'           => [ null, \stdClass::class, \stdClass::class ],
+		];
+	}
+
+	#[DataProvider('provideonKernelControllerArgumentsType')]
+	public function testonKernelControllerArgumentsType($metadataType, $requestAttributeClass, $expectedClass) {
+
+		$serializer                 = $this->createMock(StubSerializer::class);
+		$controllerActionExtractor  = $this->createMock(ControllerActionExtractorInterface::class);
+		$metadataSerializeManager   = $this->createMock(MetadataSerializeManagerInterface::class);
+		$metadataUnserializeManager = $this->createMock(MetadataUnserializeManagerInterface::class);
+		$metadataValidateManager    = $this->createMock(MetadataValidateManagerInterface::class);
+		$kernel                     = $this->createMock(KernelInterface::class);
+
+		$entity = new \stdClass();
+		$controller = function () {};
+
+		$request = Request::create('/', 'POST', [], [], [], [], 'CONTENT');
+		$request->attributes->set('ENTITY_NAME', $entity);
+		$request->attributes->set(Unserialize::REQUEST_ATTRIBUTE_CLASS, $requestAttributeClass);
+
+		$controllerAction = new ControllerAction('CONTROLLER', 'ACTION');
+		$metadata = new MetadataUnserialize('ENTITY_NAME', [], false, $metadataType);
+
+		$controllerActionExtractor
+			->expects($this->once())
+			->method('extractFromRequest')
+			->with($request)
+			->willReturn($controllerAction)
+		;
+
+		$metadataUnserializeManager
+			->expects($this->once())
+			->method('getMetadata')
+			->with('CONTROLLER', 'ACTION')
+			->willReturn($metadata)
+		;
+
+		$event = new ControllerArgumentsEvent($kernel, $controller, [], $request, HttpKernelInterface::MAIN_REQUEST);
+
+		$serializerSubscriber = new SerializerSubscriberOnKernelControllerArgumentsTest(
+			$serializer,
+			$controllerActionExtractor,
+			$metadataSerializeManager,
+			$metadataUnserializeManager,
+			$metadataValidateManager
+		);
+
+		$serializerSubscriber->onKernelControllerArguments($event);
+
+		$this->assertEquals($expectedClass, $serializerSubscriber->class);
+	}
 
 	public function testonKernelControllerArgumentsNoClassNoEntity() {
 

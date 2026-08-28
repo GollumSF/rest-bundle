@@ -24,6 +24,10 @@ class DummyEntity {
 	public ?int $id = null;
 }
 
+class DummyInput {
+	public ?string $title = null;
+}
+
 class PostRestValueResolverTest extends TestCase {
 
 	use ReflectionPropertyTrait;
@@ -313,6 +317,58 @@ class PostRestValueResolverTest extends TestCase {
 
 		$this->expectException(NotFoundHttpException::class);
 		iterator_to_array($resolver->resolve($request, $argument));
+	}
+
+	public function testResolveUsesTheMetadataTypeOverTheArgumentType() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
+		$metadata->method('getType')->willReturn(DummyInput::class);
+
+		$entity = new DummyInput();
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer
+			->expects($this->once())
+			->method('deserialize')
+			->with('{"title":"test"}', DummyInput::class, 'json', ['groups' => []])
+			->willReturn($entity)
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$argument = $this->createArgument('book', DummyEntity::class);
+
+		$result = iterator_to_array($resolver->resolve($request, $argument));
+
+		$this->assertSame($entity, $result[0]);
+		$this->assertEquals(DummyInput::class, $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS));
+	}
+
+	public function testResolveFallsBackOnTheArgumentTypeWithoutMetadataType() {
+		$controllerAction = new ControllerAction('Controller', 'action');
+		$metadata = $this->getMockBuilder(MetadataUnserialize::class)->disableOriginalConstructor()->getMock();
+		$metadata->method('getName')->willReturn('book');
+		$metadata->method('getGroups')->willReturn([]);
+		$metadata->method('getType')->willReturn(null);
+
+		$entity = new DummyEntity();
+		$serializer = $this->createMock(SerializerInterface::class);
+		$serializer
+			->expects($this->once())
+			->method('deserialize')
+			->with('{"title":"test"}', DummyEntity::class, 'json', ['groups' => []])
+			->willReturn($entity)
+		;
+
+		$resolver = $this->createResolver($controllerAction, $metadata, null, $serializer);
+		$request = new Request([], [], [], [], [], [], '{"title":"test"}');
+		$argument = $this->createArgument('book', DummyEntity::class);
+
+		$result = iterator_to_array($resolver->resolve($request, $argument));
+
+		$this->assertSame($entity, $result[0]);
+		$this->assertEquals(DummyEntity::class, $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS));
 	}
 
 	public function testResolvePostDeserializeMissingConstructorArguments() {

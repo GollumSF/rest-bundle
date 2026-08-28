@@ -26,6 +26,39 @@ class AnnoDummyFull {
 	public function action() {}
 }
 
+class AnnoDummyEntity {}
+class AnnoDummyInput {}
+
+class AnnoDummyTyped {
+	#[Unserialize('entity')]
+	public function action(AnnoDummyEntity $entity) {}
+}
+
+class AnnoDummyForcedType {
+	#[Unserialize('entity', type: AnnoDummyInput::class)]
+	public function action(AnnoDummyEntity $entity) {}
+}
+
+class AnnoDummyUntyped {
+	#[Unserialize('entity')]
+	public function action($entity) {}
+}
+
+class AnnoDummyBuiltinType {
+	#[Unserialize('entity')]
+	public function action(string $entity) {}
+}
+
+class AnnoDummyMissingParameter {
+	#[Unserialize('entity')]
+	public function action(AnnoDummyEntity $other) {}
+}
+
+#[Unserialize('entity')]
+class AnnoDummyClassLevelTyped {
+	public function action(AnnoDummyEntity $entity) {}
+}
+
 class AttributeHandlerTest extends TestCase {
 	
 	public static function provideGetMetadata() {
@@ -35,6 +68,28 @@ class AttributeHandlerTest extends TestCase {
 			[ AnnoDummyMethod::class, 'name2', [ 'group2' ], true ],
 			[ AnnoDummyFull::class, 'name2', [ 'group2' ], true ],
 		];
+	}
+
+	public static function provideGetMetadataType() {
+		return [
+			'type from the targeted parameter'   => [ AnnoDummyTyped::class, AnnoDummyEntity::class ],
+			'type forced on the attribute'       => [ AnnoDummyForcedType::class, AnnoDummyInput::class ],
+			'untyped parameter'                  => [ AnnoDummyUntyped::class, null ],
+			'builtin typed parameter'            => [ AnnoDummyBuiltinType::class, null ],
+			'no parameter with that name'        => [ AnnoDummyMissingParameter::class, null ],
+			'class level attribute'              => [ AnnoDummyClassLevelTyped::class, AnnoDummyEntity::class ],
+			'no parameter at all'                => [ AnnoDummyMethod::class, null ],
+		];
+	}
+
+	#[DataProvider('provideGetMetadataType')]
+	public function testGetMetadataType($class, $type) {
+
+		$handler = new AttributeHandler();
+
+		$metadata = $handler->getMetadata($class, 'action');
+
+		$this->assertEquals($type, $metadata->getType());
 	}
 	
 	#[DataProvider('provideGetMetadata')]

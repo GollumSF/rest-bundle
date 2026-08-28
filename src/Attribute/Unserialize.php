@@ -15,18 +15,24 @@ class Unserialize {
 
 	private bool $save;
 
+	private ?string $type;
+
 	/**
 	 * @param string|string[] $groups
+	 * @param string|null $type Target class of the unserialization. Defaults to the
+	 *                          type of the controller parameter named $name.
 	 */
 	public function __construct(
 		string $name = '',
 		string|array $groups = [],
-		bool $save = true
+		bool $save = true,
+		?string $type = null
 	)
 	{
 		$this->name = $name;
 		$this->groups = is_array($groups) ? $groups : [ $groups ];
 		$this->save = $save;
+		$this->type = $type;
 	}
 
 	/////////////
@@ -43,6 +49,10 @@ class Unserialize {
 
 	public function isSave(): bool {
 		return $this->save;
+	}
+
+	public function getType(): ?string {
+		return $this->type;
 	}
 
 }

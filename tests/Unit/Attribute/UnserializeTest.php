@@ -11,20 +11,27 @@ class UnserializeTest extends TestCase
 {
 	public static function provideConstruct() {
 		return [
-			[ '', [], true, [] ],
-			[ 'anno_name', [], Response::HTTP_OK, [] ],
-			[ '', 'group1', true, ['group1'] ],
-			[ '', [ 'group1' ], true, [ 'group1' ] ],
-			[ '', [], false, []],
+			[ '', [], true, [], null ],
+			[ 'anno_name', [], Response::HTTP_OK, [], null ],
+			[ '', 'group1', true, ['group1'], null ],
+			[ '', [ 'group1' ], true, [ 'group1' ], null ],
+			[ '', [], false, [], null ],
+			[ 'anno_name', [], true, [], \stdClass::class ],
 		];
 	}
 
 	#[DataProvider('provideConstruct')]
-	public function testConstruct($name, $groups, $save, $groupsResult) {
-		$annotation = new Unserialize($name, $groups, $save);
+	public function testConstruct($name, $groups, $save, $groupsResult, $type) {
+		$annotation = new Unserialize($name, $groups, $save, $type);
 		$this->assertEquals($annotation->getName(), $name);
 		$this->assertEquals($annotation->getGroups(), $groupsResult);
 		$this->assertEquals($annotation->isSave(), $save);
+		$this->assertEquals($annotation->getType(), $type);
+	}
+
+	public function testTypeDefaultsToNull() {
+		$annotation = new Unserialize('book');
+		$this->assertNull($annotation->getType());
 	}
 
 }

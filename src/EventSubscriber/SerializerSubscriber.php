@@ -105,7 +105,10 @@ class SerializerSubscriber implements EventSubscriberInterface {
 				$metadata->getGroups()
 			);
 
-			$class = $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS);
+			$class = $metadata->getType();
+			if (!$class) {
+				$class = $request->attributes->get(Unserialize::REQUEST_ATTRIBUTE_CLASS);
+			}
 			if (!$class && $entity) {
 				$class = get_class($entity);
 			}
