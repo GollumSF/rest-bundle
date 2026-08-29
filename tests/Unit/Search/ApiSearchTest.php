@@ -131,7 +131,7 @@ class ApiSearchTest extends TestCase {
 		;
 
 		if ($direction !== '') {
-			$this->expectUserDeprecationMessage('Since gollumsf/rest-bundle 5.0: The "direction" query parameter is deprecated, use "order=field:direction" instead.');
+			$this->expectUserDeprecationMessage('Since gollumsf/rest-bundle 4.1: The "direction" query parameter is deprecated, use "order=field:direction" instead.');
 		}
 
 		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);

@@ -102,7 +102,7 @@ class BookControllerTest extends AbstractControllerTestCase {
 
 		$this->loadFixture();
 
-		$this->expectUserDeprecationMessage('Since gollumsf/rest-bundle 5.0: The "direction" query parameter is deprecated, use "order=field:direction" instead.');
+		$this->expectUserDeprecationMessage('Since gollumsf/rest-bundle 4.1: The "direction" query parameter is deprecated, use "order=field:direction" instead.');
 
 		$client = $this->getClient();
 		$client->request('GET', '/api/books?limit=3&order=title&direction=desc');
