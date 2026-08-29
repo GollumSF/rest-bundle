@@ -54,6 +54,39 @@ class MetadataValidateManagerPassTest extends AbstractCompilerPassTestCase {
 		
 	}
 	
+	/**
+	 * The tag used to be capitalised by mistake; services still carrying it are collected.
+	 */
+	public function testProcessLegacyTag() {
+
+		$legacy = new Definition();
+		$legacy->addTag(MetadataValidateManagerInterface::HANDLER_TAG_LEGACY);
+		$this->setDefinition('legacyTag', $legacy);
+
+		$current = new Definition();
+		$current->addTag(MetadataValidateManagerInterface::HANDLER_TAG);
+		$this->setDefinition('currentTag', $current);
+
+		$both = new Definition();
+		$both->addTag(MetadataValidateManagerInterface::HANDLER_TAG);
+		$both->addTag(MetadataValidateManagerInterface::HANDLER_TAG_LEGACY);
+		$this->setDefinition('bothTags', $both);
+
+		$service = new Definition();
+		$this->setDefinition(MetadataValidateManagerInterface::class, $service);
+
+		$this->compile();
+
+		$registered = array_map(
+			function ($call) { return $call[1][0]->__toString(); },
+			$service->getMethodCalls()
+		);
+
+		$this->assertContains('legacyTag', $registered);
+		$this->assertContains('currentTag', $registered);
+		$this->assertEquals(1, count(array_keys($registered, 'bothTags')));
+	}
+
 	public function testProcessNotDeclared() {
 
 		$container = $this->getMockBuilder(ContainerBuilder::class)->disableOriginalConstructor()->getMock();

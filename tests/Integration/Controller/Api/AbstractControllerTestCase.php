@@ -17,6 +17,13 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 abstract class AbstractControllerTestCase extends KernelTestCase {
 
+	/**
+	 * @return string[] Extra config files of the test project, loaded after config.yaml.
+	 */
+	protected function getExtraConfigFiles(): array {
+		return [];
+	}
+
 	protected function getProjectPath(): string {
 		return __DIR__ . '/../../../ProjectTest';
 	}
@@ -61,6 +68,9 @@ abstract class AbstractControllerTestCase extends KernelTestCase {
 				$kernel->addTestBundle(\Symfony\Bundle\SecurityBundle\SecurityBundle::class);
 				$kernel->addTestBundle(GollumSFControllerActionExtractorBundle::class);
 				$kernel->addTestConfig($configPath . '/Resources/config/config.yaml');
+				foreach ($this->getExtraConfigFiles() as $configFile) {
+					$kernel->addTestConfig($configPath . '/Resources/config/' . $configFile);
+				}
 				$kernel->addTestRoutingFile($configPath . '/Resources/config/routing.yaml');
 				// doctrine-bundle v2 needs these options, v3 removed them
 				if (class_exists(\Doctrine\Bundle\DoctrineBundle\DependencyInjection\Configuration::class) &&

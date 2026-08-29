@@ -1,0 +1,13 @@
+# Declares in configuration what the attributes declare in the code, and overrides them:
+# a lower priority handler is walked first, so the configuration wins.
+gollum_sf_rest:
+    metadata:
+        entities:
+            Test\GollumSF\RestBundle\ProjectTest\Entity\Book:
+                sortable:
+                    description: ~
+                    writer: { path: author.name }
+        controllers:
+            Test\GollumSF\RestBundle\ProjectTest\Controller\Api\BookController::list:
+                serialize:
+                    groups: book_get

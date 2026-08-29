@@ -19,6 +19,12 @@ class MetadataValidateManagerPass implements CompilerPassInterface
 		$definition = $container->findDefinition(MetadataValidateManagerInterface::class);
 
 		$taggedServices = $container->findTaggedServiceIds(MetadataValidateManagerInterface::HANDLER_TAG);
+		// The tag used to be capitalised by mistake; services still using it are collected.
+		foreach ($container->findTaggedServiceIds(MetadataValidateManagerInterface::HANDLER_TAG_LEGACY) as $id => $tags) {
+			if (!isset($taggedServices[$id])) {
+				$taggedServices[$id] = $tags;
+			}
+		}
 		uasort($taggedServices, function ($a, $b) {
 			$aVal = isset($a[0]) && isset($a[0]['priority']) ? $a[0]['priority'] : 0;
 			$bVal = isset($b[0]) && isset($b[0]['priority']) ? $b[0]['priority'] : 0;

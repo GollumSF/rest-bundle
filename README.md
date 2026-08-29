@@ -47,4 +47,5 @@ gollum_sf_rest:
  - [Unserialize](docs/GetStarted.md)
  - [Validation](docs/Validation.md)
  - [Sorting](docs/Sorting.md)
+ - [Metadata in configuration](docs/Metadata.md)
  - [ApiDoc / Swagger](https://github.com/GollumSF/rest-doc-bundle)
