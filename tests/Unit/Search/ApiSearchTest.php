@@ -371,6 +371,70 @@ class ApiSearchTest extends TestCase {
 		$apiSearch->apiFindBy(\stdClass::class);
 	}
 
+	public static function provideStaticArrayListEntityClass() {
+		return [
+			'objects drive the sortables' => [ true ],
+			'scalars carry no class'      => [ false ],
+		];
+	}
+
+	/**
+	 * A static list has no entity class of its own: the one of its items is used, so the
+	 * #[ApiSortable] of that class apply just like on a collection coming from Doctrine.
+	 */
+	#[DataProvider('provideStaticArrayListEntityClass')]
+	public function testStaticArrayListResolvesTheOrder($withObjects) {
+
+		$requestStack  = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
+		$logger        = $this->createMock(LoggerInterface::class);
+		$configuration = $this->createMock(ApiConfigurationInterface::class);
+
+		$configuration->method('getMaxLimitItem')->willReturn(4242);
+		$configuration->method('getDefaultLimitItem')->willReturn(42);
+
+		$context = null;
+		$handler = $this->createMock(HandlerInterface::class);
+		$handler
+			->method('getOrder')
+			->willReturnCallback(function (ApiSortContext $sortContext) use (&$context) {
+				$context = $sortContext;
+				return null;
+			})
+		;
+		$resolver = new ApiOrderResolver();
+		$resolver->addHandler($handler);
+
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
+		$apiSearch->setApiOrderResolver($resolver);
+		$apiSearch->request = new Request([ 'order' => 'prop1' ]);
+
+		$data = $withObjects ? [ 'SCALAR', new \stdClass() ] : [ 'SCALAR1', 'SCALAR2' ];
+		$arrayList = $apiSearch->staticArrayList($data);
+
+		$this->assertInstanceOf(
+			ApiOrderCollection::class,
+			$this->reflectionGetValue($arrayList, 'orders')
+		);
+		$this->assertEquals($withObjects ? \stdClass::class : '', $context->getEntityClass());
+	}
+
+	public function testStaticArrayListWithoutResolverLeavesTheLegacyReading() {
+
+		$requestStack  = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
+		$logger        = $this->createMock(LoggerInterface::class);
+		$configuration = $this->createMock(ApiConfigurationInterface::class);
+
+		$configuration->method('getMaxLimitItem')->willReturn(4242);
+		$configuration->method('getDefaultLimitItem')->willReturn(42);
+
+		$apiSearch = new ApiSearchTestApiFind($requestStack, $logger, $configuration);
+		$apiSearch->request = new Request();
+
+		$arrayList = $apiSearch->staticArrayList([ 'DATA1' ]);
+
+		$this->assertNull($this->reflectionGetValue($arrayList, 'orders'));
+	}
+
 	public function testStaticArrayList() {
 		$requestStack    = $this->getMockBuilder(RequestStack::class)->disableOriginalConstructor()->getMock();
 		$logger          = $this->createMock(LoggerInterface::class);

@@ -125,6 +125,30 @@ services:
             - { name: gollumsf.rest.sort_resolver.handler, priority: 200 }
 ```
 
+## Static lists
+
+`ApiSearchInterface::staticArrayList()` answers the same `order` syntax, keys and
+directions included, walking the property path through the `get`/`has`/`is` accessors:
+
+```
+GET /api/things?order=author.name:desc,id
+```
+
+A list built by hand, `new StaticArrayApiList($data, $request)`, understands the syntax
+too; going through `staticArrayList()` additionally applies the `#[ApiSortable]`
+declarations of the class of its items.
+
+Its second argument replaces the comparison of two values of the same key, the third one
+switches to replacing the whole comparison:
+
+```php
+// compares two values of the sorted key
+$apiSearch->staticArrayList($data, function ($valueA, $valueB, $objA, $objB, $order) { ... });
+
+// compares two items, key and direction in hand
+$apiSearch->staticArrayList($data, function ($objA, $objB, $order, $direction) { ... }, true);
+```
+
 ## Custom repositories
 
 `ApiFinderRepositoryTrait` implements the ordering. A repository writing `apiFindBy()`

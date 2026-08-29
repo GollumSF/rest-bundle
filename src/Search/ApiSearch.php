@@ -74,19 +74,13 @@ class ApiSearch implements ApiSearchInterface {
 		$request   = $this->getMasterRequest();
 		$limit     = (int)$request->query->get('limit', $this->apiConfiguration->getDefaultLimitItem());
 		$page      = (int)$request->query->get('page' , 0);
-		$order     = $request->query->get('order');
-		$direction = $request->query->get('direction');
 
 		$maxtLimitItem = $this->apiConfiguration->getMaxLimitItem();
 		if ($maxtLimitItem && $limit >  $maxtLimitItem) {
 			$limit = $maxtLimitItem;
 		}
 
-		if ($direction !== null && function_exists('trigger_deprecation')) {
-			trigger_deprecation('gollumsf/rest-bundle', '4.1', 'The "direction" query parameter is deprecated, use "order=field:direction" instead.');
-		}
-
-		$orders = $this->resolveOrders($entityClass, $order, $direction);
+		$orders = $this->resolveOrdersFromRequest($entityClass);
 
 		/** @var ApiFinderRepositoryInterface $repository */
 		$repository = $this->getEntityRepositoryForClass($entityClass);
@@ -108,6 +102,23 @@ class ApiSearch implements ApiSearchInterface {
 			}
 			throw new BadRequestHttpException('Bad parameter');
 		}
+	}
+
+	/**
+	 * Reads the ordering off the request, `direction` still applying to the keys that
+	 * carry no direction of their own.
+	 */
+	private function resolveOrdersFromRequest(string $entityClass): ApiOrderCollection {
+
+		$request = $this->getMasterRequest();
+		$order = $request->query->get('order');
+		$direction = $request->query->get('direction');
+
+		if ($direction !== null && function_exists('trigger_deprecation')) {
+			trigger_deprecation('gollumsf/rest-bundle', '4.1', 'The "direction" query parameter is deprecated, use "order=field:direction" instead.');
+		}
+
+		return $this->resolveOrders($entityClass, $order, $direction);
 	}
 
 	private function resolveOrders(string $entityClass, ?string $order, ?string $direction): ApiOrderCollection {
@@ -152,6 +163,18 @@ class ApiSearch implements ApiSearchInterface {
 		);
 	}
 
+	/**
+	 * A static list carries no entity class; the one of its items drives the sortables.
+	 */
+	private function extractEntityClass(array $data): string {
+		foreach ($data as $item) {
+			if (is_object($item)) {
+				return $this->getEntityClass($item);
+			}
+		}
+		return '';
+	}
+
 	public function staticArrayList(array $data, ?\Closure $sortCallback = null, $globalSort = false): StaticArrayApiList {
 		$request   = $this->getMasterRequest();
 		$arrayList = new StaticArrayApiList($data, $request);
@@ -160,10 +183,14 @@ class ApiSearch implements ApiSearchInterface {
 
 		if ($sortCallback) {
 			if ($globalSort) {
-				$arrayList->setSortPropertiesCallback($sortCallback);
+				$arrayList->setSortGlobalCallback($sortCallback);
 			} else {
 				$arrayList->setSortPropertiesCallback($sortCallback);
 			}
+		}
+
+		if ($this->apiOrderResolver) {
+			$arrayList->setOrders($this->resolveOrdersFromRequest($this->extractEntityClass($data)));
 		}
 
 		return $arrayList;

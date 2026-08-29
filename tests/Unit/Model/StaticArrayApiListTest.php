@@ -2,6 +2,8 @@
 namespace Test\GollumSF\RestBundle\Unit\Model;
 
 use GollumSF\ReflectionPropertyTest\ReflectionPropertyTrait;
+use GollumSF\RestBundle\Model\ApiOrder;
+use GollumSF\RestBundle\Model\ApiOrderCollection;
 use GollumSF\RestBundle\Model\Direction;
 use GollumSF\RestBundle\Model\StaticArrayApiList;
 use GollumSF\RestBundle\Repository\ApiFinderRepositoryInterface;
@@ -21,6 +23,25 @@ class DumyClass {
 
 	public function getProp1() {
 		return $this->prop1;
+	}
+}
+
+class DumyClassNested {
+
+	private $child;
+	private $name;
+
+	public function __construct($name, $child = null) {
+		$this->name = $name;
+		$this->child = $child;
+	}
+
+	public function getName() {
+		return $this->name;
+	}
+
+	public function getChild() {
+		return $this->child;
 	}
 }
 
@@ -481,4 +502,201 @@ class StaticArrayApiListTest extends TestCase {
 		$apiList->getData();
 	}
 
+	private function listWithOrders(array $data, ApiOrderCollection $orders, array $query = []): StaticArrayApiList {
+		$list = new StaticArrayApiList($data, new Request($query));
+		$list->setOrders($orders);
+		return $list;
+	}
+
+	public function testGetDataWithResolvedOrder() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A'), new DumyClass('B') ],
+			new ApiOrderCollection([ new ApiOrder('prop1', Direction::ASC, 'prop1') ])
+		);
+
+		$this->assertEquals([ 'A', 'B', 'C' ], array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	public function testGetDataWithResolvedOrderDescending() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A'), new DumyClass('B') ],
+			new ApiOrderCollection([ new ApiOrder('prop1', Direction::DESC, 'prop1') ])
+		);
+
+		$this->assertEquals([ 'C', 'B', 'A' ], array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	/**
+	 * The second key only breaks the ties left by the first.
+	 */
+	public function testGetDataWithSeveralKeys() {
+
+		$data = [
+			new DumyClassNested('b', new DumyClass('SAME')),
+			new DumyClassNested('a', new DumyClass('SAME')),
+			new DumyClassNested('c', new DumyClass('FIRST')),
+		];
+
+		$list = $this->listWithOrders($data, new ApiOrderCollection([
+			new ApiOrder('child', Direction::ASC, 'child.prop1'),
+			new ApiOrder('name', Direction::DESC, 'name'),
+		]));
+
+		$this->assertEquals([ 'c', 'b', 'a' ], array_map(
+			function ($o) { return $o->getName(); },
+			array_values($list->getData())
+		));
+	}
+
+	public function testGetDataWithADottedPath() {
+
+		$list = $this->listWithOrders([
+			new DumyClassNested('x', new DumyClass('C')),
+			new DumyClassNested('y', new DumyClass('A')),
+		], new ApiOrderCollection([ new ApiOrder('child', Direction::ASC, 'child.prop1') ]));
+
+		$this->assertEquals([ 'y', 'x' ], array_map(
+			function ($o) { return $o->getName(); },
+			array_values($list->getData())
+		));
+	}
+
+	public static function provideUnresolvablePath() {
+		return [
+			'unknown accessor'      => [ 'nope' ],
+			'traverses a non object'=> [ 'name.deeper' ],
+			'empty segment'         => [ 'child..prop1' ],
+		];
+	}
+
+	/**
+	 * An unresolvable path yields null on both sides, so the order is left untouched.
+	 */
+	#[DataProvider('provideUnresolvablePath')]
+	public function testGetDataWithAnUnresolvablePath($path) {
+
+		$list = $this->listWithOrders([
+			new DumyClassNested('x', new DumyClass('C')),
+			new DumyClassNested('y', new DumyClass('A')),
+		], new ApiOrderCollection([ new ApiOrder('k', Direction::ASC, $path) ]));
+
+		$this->assertEquals([ 'x', 'y' ], array_map(
+			function ($o) { return $o->getName(); },
+			array_values($list->getData())
+		));
+	}
+
+	public function testGetDataWithAnEmptyOrderCollection() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A') ],
+			new ApiOrderCollection()
+		);
+
+		$this->assertEquals([ 'C', 'A' ], array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	/**
+	 * A key delegating to a sorter cannot apply to a static list, it is skipped.
+	 */
+	public function testGetDataSkipsAnOrderWithoutPath() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A') ],
+			new ApiOrderCollection([ new ApiOrder('popularity', Direction::ASC, null) ])
+		);
+
+		$this->assertEquals([ 'C', 'A' ], array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	public function testGetDataWithResolvedOrderException() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A') ],
+			new ApiOrderCollection([ new ApiOrder('prop1', Direction::ASC, 'prop1') ])
+		);
+		$list->setSortGlobalCallback(function () {
+			throw new \Exception('BOOM');
+		});
+
+		$this->expectException(BadRequestHttpException::class);
+		$list->getData();
+	}
+
+	/**
+	 * Resolved orderings take over the legacy reading of order and direction.
+	 */
+	public function testResolvedOrdersWinOverTheQueryParameters() {
+
+		$list = $this->listWithOrders(
+			[ new DumyClass('C'), new DumyClass('A'), new DumyClass('B') ],
+			new ApiOrderCollection([ new ApiOrder('prop1', Direction::DESC, 'prop1') ]),
+			[ 'order' => 'prop1', 'direction' => 'asc' ]
+		);
+
+		$this->assertEquals([ 'C', 'B', 'A' ], array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	/**
+	 * Built by hand, without going through ApiSearch, the list still understands the
+	 * `order` syntax of a Doctrine backed collection.
+	 */
+	public static function provideNewSyntaxOnDirectConstruction() {
+		return [
+			'suffixed direction' => [ [ 'order' => 'prop1:desc' ], [ 'C', 'B', 'A' ] ],
+			'plain key'          => [ [ 'order' => 'prop1' ], [ 'A', 'B', 'C' ] ],
+			'deprecated direction'=> [ [ 'order' => 'prop1', 'direction' => 'desc' ], [ 'C', 'B', 'A' ] ],
+			'suffix wins'        => [ [ 'order' => 'prop1:asc', 'direction' => 'desc' ], [ 'A', 'B', 'C' ] ],
+			'unknown key'        => [ [ 'order' => 'nope' ], [ 'C', 'A', 'B' ] ],
+			'legacy sanitizing'  => [ [ 'order' => 'pr!op@1' ], [ 'A', 'B', 'C' ] ],
+			'nothing left'       => [ [ 'order' => '!!!' ], [ 'C', 'A', 'B' ] ],
+		];
+	}
+
+	#[DataProvider('provideNewSyntaxOnDirectConstruction')]
+	public function testNewSyntaxOnDirectConstruction($query, $expected) {
+
+		$list = new StaticArrayApiList(
+			[ new DumyClass('C'), new DumyClass('A'), new DumyClass('B') ],
+			new Request($query)
+		);
+
+		$this->assertEquals($expected, array_map(
+			function ($o) { return $o->getProp1(); },
+			array_values($list->getData())
+		));
+	}
+
+	public function testMultipleKeysOnDirectConstruction() {
+
+		$data = [
+			new DumyClassNested('b', new DumyClass('SAME')),
+			new DumyClassNested('a', new DumyClass('SAME')),
+			new DumyClassNested('c', new DumyClass('FIRST')),
+		];
+
+		$list = new StaticArrayApiList($data, new Request([ 'order' => 'child.prop1:asc,name:desc' ]));
+
+		$this->assertEquals([ 'c', 'b', 'a' ], array_map(
+			function ($o) { return $o->getName(); },
+			array_values($list->getData())
+		));
+	}
 }

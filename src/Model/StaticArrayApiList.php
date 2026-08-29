@@ -2,6 +2,7 @@
 namespace GollumSF\RestBundle\Model;
 
 use GollumSF\RestBundle\Configuration\ApiConfigurationInterface;
+use GollumSF\RestBundle\Sort\ApiOrderParser;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -21,6 +22,9 @@ class StaticArrayApiList extends ApiList {
 
 	/** @var \Closure */
 	protected $sortGlobalCallback;
+
+	/** @var ApiOrderCollection|null */
+	private $orders;
 
 	public function __construct(array $data, Request $request) {
 		parent::__construct($data, count($data));
@@ -55,30 +59,8 @@ class StaticArrayApiList extends ApiList {
 			$valueB = null;
 
 			if ($order) {
-				if ($a !== null) {
-					$method = 'get'.ucfirst($order);
-					if (!method_exists($a, $method)) {
-						$method = 'has'.ucfirst($order);
-						if (!method_exists($a, $method)) {
-							$method = 'is'.ucfirst($order);
-						}
-					}
-					if (method_exists($a, $method)) {
-						$valueA = $a->$method();
-					}
-				}
-				if ($b !== null) {
-					$method = 'get'.ucfirst($order);
-					if (!method_exists($b, $method)) {
-						$method = 'has'.ucfirst($order);
-						if (!method_exists($b, $method)) {
-							$method = 'is'.ucfirst($order);
-						}
-					}
-					if (method_exists($b, $method)) {
-						$valueB = $b->$method();
-					}
-				}
+				$valueA = $this->resolveSortValue($a, $order);
+				$valueB = $this->resolveSortValue($b, $order);
 			} else {
 				$valueA = $a;
 				$valueB = $b;
@@ -112,6 +94,39 @@ class StaticArrayApiList extends ApiList {
 		return $this;
 	}
 
+	/**
+	 * Orderings already resolved from the request. Without them the list falls back on
+	 * reading `order` and `direction` itself, which only understands a single key.
+	 */
+	public function setOrders(ApiOrderCollection $orders): self {
+		$this->orders = $orders;
+		return $this;
+	}
+
+	/**
+	 * Walks a property path, the dots crossing relations, through get/has/is accessors.
+	 */
+	private function resolveSortValue($object, string $path) {
+		$value = $object;
+		foreach (explode('.', $path) as $segment) {
+			if (!is_object($value) || $segment === '') {
+				return null;
+			}
+			$method = null;
+			foreach ([ 'get', 'has', 'is' ] as $prefix) {
+				if (method_exists($value, $prefix.ucfirst($segment))) {
+					$method = $prefix.ucfirst($segment);
+					break;
+				}
+			}
+			if (!$method) {
+				return null;
+			}
+			$value = $value->$method();
+		}
+		return $value;
+	}
+
 	/////////////
 	// Getters //
 	/////////////
@@ -121,33 +136,93 @@ class StaticArrayApiList extends ApiList {
 	 */
 	public function getData(): array {
 
-		$limit     = (int)$this->request->query->get('limit', $this->defaultLimitItem);
-		$page      = (int)$this->request->query->get('page' , 0);
-		$order     = $this->request->query->get('order');
-		$direction = strtoupper($this->request->query->get('direction', ''));
+		$limit = (int)$this->request->query->get('limit', $this->defaultLimitItem);
+		$page  = (int)$this->request->query->get('page' , 0);
 
 		if ($this->maxLimitItem && $limit > $this->maxLimitItem) {
 			$limit = $this->maxLimitItem;
 		}
 
-		$order = $order !== null ? preg_replace("/[^(a-zA-Z0-9_)]/", '', $order): null;
-
-		if (!Direction::isValid($direction)) {
-			$direction = null;
-		}
-
 		$data = parent::getData();
-		if ($order || $direction) {
-			try {
-				uasort($data, function ($a, $b) use ($order, $direction) {
-					return ($this->sortGlobalCallback)($a, $b, $order, $direction);
+		$orders = $this->orders ?? $this->parseOrders();
+
+		if (!$orders->isEmpty()) {
+			$this->sortByOrders($data, $orders);
+		} else {
+			// No key, but a direction on its own still sorts the raw values.
+			$direction = ApiOrderParser::parseDirection($this->request->query->get('direction'));
+			if ($direction) {
+				$this->uasortData($data, function ($a, $b) use ($direction) {
+					return ($this->sortGlobalCallback)($a, $b, null, $direction->value);
 				});
-			} catch (\Throwable $e) {
-				throw new BadRequestHttpException('Bad parameter on sort');
 			}
 		}
 
 		return array_slice($data, $page*$limit, $limit);
+	}
+
+	/**
+	 * Same `order` syntax as a Doctrine backed collection, so that both answer the same
+	 * URL the same way. Going through ApiSearch additionally applies the #[ApiSortable]
+	 * whitelist; built by hand, every property path is accepted.
+	 */
+	private function parseOrders(): ApiOrderCollection {
+
+		$orders = new ApiOrderCollection();
+
+		foreach (ApiOrderParser::parse(
+			$this->request->query->get('order'),
+			$this->request->query->get('direction')
+		) as [ $key, $direction ]) {
+			$path = $this->sanitizePath($key);
+			if ($path === '') {
+				continue;
+			}
+			$orders->add(new ApiOrder($key, $direction ?? Direction::ASC, $path));
+		}
+
+		return $orders;
+	}
+
+	/**
+	 * Each segment keeps the character set the list has always accepted, the dots
+	 * separating them: `my-prop` still resolves to `myProp` as before.
+	 */
+	private function sanitizePath(string $key): string {
+		$segments = [];
+		foreach (explode('.', $key) as $segment) {
+			$segment = preg_replace("/[^(a-zA-Z0-9_)]/", '', $segment);
+			if ($segment !== '') {
+				$segments[] = $segment;
+			}
+		}
+		return implode('.', $segments);
+	}
+
+	/**
+	 * Keys are applied in order: the first one deciding wins, the next ones break ties.
+	 */
+	private function sortByOrders(array &$data, ApiOrderCollection $orders): void {
+		$this->uasortData($data, function ($a, $b) use ($orders) {
+			foreach ($orders as $order) {
+				if (!$order->getPath()) {
+					continue;
+				}
+				$result = ($this->sortGlobalCallback)($a, $b, $order->getPath(), $order->getDirection()->value);
+				if ($result !== 0) {
+					return $result;
+				}
+			}
+			return 0;
+		});
+	}
+
+	private function uasortData(array &$data, \Closure $comparator): void {
+		try {
+			uasort($data, $comparator);
+		} catch (\Throwable $e) {
+			throw new BadRequestHttpException('Bad parameter on sort');
+		}
 	}
 
 }
