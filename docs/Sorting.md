@@ -51,6 +51,17 @@ class Book {
 the count query, and two keys pointing at the same relation share a single join. A
 relation already joined by the `queryCallback` is reused rather than joined twice.
 
+### Crossing a collection
+
+A path crossing a to-many relation, `books.title`, would multiply the rows: the same
+entity once per joined row, cutting the page short. Such a key is therefore ordered on an
+aggregate of the joined column, `MIN` ascending and `MAX` descending, grouped by the
+identifier of the root entity. The page keeps holding the number of entities asked for,
+and it still takes two queries.
+
+The count is taken `DISTINCT` for the same reason, so a `queryCallback` joining a
+collection no longer inflates the total either.
+
 On the class, for keys backed by no property:
 
 ```php

@@ -5,6 +5,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use GollumSF\EntityRelationSetter\OneToManySetter;
+use GollumSF\RestBundle\Attribute\ApiSortable;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Test\GollumSF\RestBundle\ProjectTest\Repository\AuthorRepository;
@@ -17,18 +18,20 @@ class Author {
 	#[ORM\Column(type: "integer")]
 	#[ORM\Id]
 	#[ORM\GeneratedValue]
-	#[Groups(["author_get", "book_get", "book_put", "book_post"])]
+	#[Groups(["author_get", "author_getc", "book_get", "book_put", "book_post"])]
 	/** @var int */
 	private $id;
 
 	#[ORM\Column(type: "string")]
-	#[Groups(["author_get", "book_get", "book_put", "book_post"])]
+	#[Groups(["author_get", "author_getc", "book_get", "book_put", "book_post"])]
 	#[Assert\NotBlank(groups: ["book_put", "book_post"])]
+	#[ApiSortable]
 	/** @var string */
 	private $name;
 
 	#[ORM\OneToMany(targetEntity: Book::class, mappedBy: "author")]
 	#[Groups(["author_get"])]
+	#[ApiSortable(key: 'book', path: 'books.title')]
 	/** @var Book[]|ArrayCollection */
 	private $books;
 

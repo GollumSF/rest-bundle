@@ -1,6 +1,7 @@
 <?php
 namespace GollumSF\RestBundle\Repository;
 
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\QueryBuilder;
 use GollumSF\RestBundle\Model\ApiList;
@@ -46,7 +47,9 @@ trait ApiFinderRepositoryTrait {
 			$queryCallback($queryBuilder);
 		}
 
-		$queryBuilder->select('COUNT(t)');
+		// DISTINCT, otherwise a join on a collection added by the query callback counts
+		// the same entity once per joined row.
+		$queryBuilder->select('COUNT(DISTINCT t)');
 		$total = 0;
 		try {
 			$total = $queryBuilder->getQuery()->getSingleScalarResult();
@@ -76,6 +79,8 @@ trait ApiFinderRepositoryTrait {
 		}
 
 		$rootAlias = $queryBuilder->getRootAliases()[0];
+		$rootMetadata = $this->apiRootMetadata($queryBuilder);
+		$index = 0;
 
 		foreach ($orders as $order) {
 
@@ -100,12 +105,62 @@ trait ApiFinderRepositoryTrait {
 			$field = array_pop($segments);
 
 			$alias = $rootAlias;
+			$metadata = $rootMetadata;
+			$crossesCollection = false;
+
 			foreach ($segments as $segment) {
+				if ($metadata && $metadata->hasAssociation($segment)) {
+					$crossesCollection = $crossesCollection || $metadata->isCollectionValuedAssociation($segment);
+					$metadata = $queryBuilder->getEntityManager()->getClassMetadata($metadata->getAssociationTargetClass($segment));
+				} else {
+					$metadata = null;
+				}
 				$alias = $this->apiJoinAlias($queryBuilder, $alias, $segment);
 			}
 
-			$queryBuilder->addOrderBy($alias.'.'.$field, $order->getDirection()->value);
+			$identifier = $crossesCollection ? $this->apiSingleIdentifier($rootMetadata) : null;
+
+			if ($identifier !== null) {
+				// Ordering straight on a collection would multiply the rows, and the limit
+				// would then cut a page short. An aggregate keeps one row per entity.
+				$sortAlias = '_gsf_sort_'.$index;
+				$queryBuilder
+					->addSelect(sprintf(
+						'%s(%s.%s) AS HIDDEN %s',
+						$order->getDirection() === Direction::DESC ? 'MAX' : 'MIN',
+						$alias,
+						$field,
+						$sortAlias
+					))
+					->addGroupBy($rootAlias.'.'.$identifier)
+					->addOrderBy($sortAlias, $order->getDirection()->value)
+				;
+			} else {
+				$queryBuilder->addOrderBy($alias.'.'.$field, $order->getDirection()->value);
+			}
+
+			$index++;
 		}
+	}
+
+	/**
+	 * Null as soon as the query builder cannot tell, which leaves the ordering on the
+	 * plain join it has always used.
+	 */
+	private function apiRootMetadata(QueryBuilder $queryBuilder): ?ClassMetadata {
+		$entities = $queryBuilder->getRootEntities();
+		if (!$entities || !$queryBuilder->getEntityManager()) {
+			return null;
+		}
+		return $queryBuilder->getEntityManager()->getClassMetadata($entities[0]);
+	}
+
+	/**
+	 * Only a single valued identifier can carry the grouping.
+	 */
+	private function apiSingleIdentifier(ClassMetadata $metadata): ?string {
+		$identifiers = $metadata->getIdentifierFieldNames();
+		return count($identifiers) === 1 ? $identifiers[0] : null;
 	}
 
 	/**

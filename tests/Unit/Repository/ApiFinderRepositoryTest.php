@@ -56,7 +56,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$query        = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
-			[[ 'COUNT(t)' ], [ 't' ]],
+			[[ 'COUNT(DISTINCT t)' ], [ 't' ]],
 			[$queryBuilder, $queryBuilder]
 		);
 		$queryBuilder
@@ -134,7 +134,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 		$query        = $this->getMockBuilder(Query::class)->disableOriginalConstructor()->getMock();
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
-			[[ 'COUNT(t)' ], [ 't' ]],
+			[[ 'COUNT(DISTINCT t)' ], [ 't' ]],
 			[$queryBuilder, $queryBuilder]
 		);
 		$queryBuilder
@@ -198,7 +198,7 @@ class ApiFinderRepositoryTest extends WebTestCase {
 
 
 		[$selectCallback, $selectCount] = self::withConsecutiveArgs(
-			[[ 'COUNT(t)' ], [ 't' ]],
+			[[ 'COUNT(DISTINCT t)' ], [ 't' ]],
 			[$queryBuilder, $queryBuilder]
 		);
 		$queryBuilder
